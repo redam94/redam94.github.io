@@ -11,6 +11,7 @@ and keeping notes that might be useful to someone else (often future me).
 
 ## Elsewhere
 
+- **Portfolio:** [Bayesian measurement systems](/portfolio/)
 - **GitHub:** [@redam94](https://github.com/redam94)
 - **Email:** [m.reda94@gmail.com](mailto:m.reda94@gmail.com)
 

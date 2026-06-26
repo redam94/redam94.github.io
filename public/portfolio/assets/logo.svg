@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 80" width="240" height="80">
+  <defs>
+    
+  </defs>
+  <g transform="translate(8, 40)">
+    <path d="M 0 22 Q 6 22 10 14 Q 14 -8 18 -8 Q 22 -8 26 14 Q 30 22 36 22 Z" fill="#b8c08c" opacity="0.55"></path>
+    <path d="M 6 22 Q 10 22 13 16 Q 16 -2 18 -2 Q 20 -2 23 16 Q 26 22 30 22 Z" fill="#7d8a4e" opacity="0.85"></path>
+    <path d="M 0 22 Q 6 22 10 14 Q 14 -10 18 -10 Q 22 -10 26 14 Q 30 22 36 22" fill="none" stroke="#4a5532" stroke-width="1.5" stroke-linejoin="round"></path>
+  </g>
+  <text x="56" y="60" class="wm">mmm</text>
+</svg>
