@@ -3,7 +3,7 @@ title: "The Table 2 Fallacy: Your Control Variables Aren't What You Think"
 author: Matthew Reda
 pubDatetime: 2026-06-26T03:33:55Z
 slug: table-2-fallacy
-draft: true
+draft: false
 tags:
   - causal-inference
   - regression
