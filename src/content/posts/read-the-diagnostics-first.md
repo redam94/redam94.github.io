@@ -12,9 +12,11 @@ tags:
 description: R-hat, ESS, and divergences are not bureaucratic hurdles before you report a ROAS — they're the sampler telling you whether its output is valid. Here's what each one actually measures and what it reveals when it fails.
 ---
 
-I have a rule I've kept since graduate school: if $\hat{R}$, ESS, or divergences fail, I do not report the number. Not "I add a caveat." I throw the result out and fix the model. The discipline sounds easy until you have a client presentation in three hours and the number looks plausible. That's exactly when it matters most.
+I have a rule I've kept since graduate school: if $\hat{R}$, ESS, or divergences fail, I don't report the number until I understand _why_. Not "add a caveat and present it anyway" — I stop and diagnose, and the result doesn't leave my screen until I can explain what produced the diagnostic. Sometimes that investigation ends in a fix to the model; sometimes it ends in the realization that the failure is benign. The discipline is the diagnosis, not a reflex to delete and rerun. And it sounds easy until you have a client presentation in three hours and the number looks plausible. That's exactly when it matters most.
 
 The rule exists because MCMC output is not automatically a valid posterior sample. The algorithm can converge to the wrong place, mix badly between regions of the posterior, or fail to explore the tails — and every one of those failures produces a number you can put in a table. The diagnostics exist to catch the failure before the table reaches anyone who will act on it.
+
+But a failed diagnostic is the start of an investigation, not the verdict. The same symptom can have very different causes. A high $\hat{R}$ from **label switching** in a mixture model — where the chains agree on the components but disagree on which one to call "first" — is a labeling nuisance you can resolve in post-processing without touching the model. A high $\hat{R}$ from chains stuck in genuinely different regions of a multimodal posterior is an identification problem you can't paper over. Same number on the report; very different meaning. The job is to figure out which one you're looking at before you decide what to do about it.
 
 This post is a tour of the three diagnostics I check on every fit: $\hat{R}$, ESS, and divergences. What they actually measure, why each one fails in marketing models specifically, and what the failure usually means about the model rather than the sampler.
 
