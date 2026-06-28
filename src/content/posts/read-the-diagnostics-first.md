@@ -56,7 +56,7 @@ The `ess_tail < 400` filter is a reasonable default alarm. If any parameter trig
 
 Hamiltonian Monte Carlo (HMC) and NUTS — which is what PyMC uses by default — explore the posterior by simulating a particle rolling around the log-probability surface. The simulation uses a fixed step size. When the surface curves sharply enough that the step overshoots and the simulated energy strays too far from the true energy, the transition is flagged as **divergent** and discarded.
 
-Here's the crucial point: a divergent transition is *not* a rejected proposal in the usual Metropolis-Hastings sense. It's a signal that the numerical integrator has failed, which means the trajectory that led there may have passed through regions of high posterior mass that the sampler is now refusing to count. The distribution of accepted samples after discarding divergences is not the posterior — it's some biased shadow of it. Even one divergence is a warning. Ten divergences during warmup is almost certainly fine; ten divergences in the post-warmup draws is a problem.
+Here's the crucial point: a divergent transition is _not_ a rejected proposal in the usual Metropolis-Hastings sense. It's a signal that the numerical integrator has failed, which means the trajectory that led there may have passed through regions of high posterior mass that the sampler is now refusing to count. The distribution of accepted samples after discarding divergences is not the posterior — it's some biased shadow of it. Even one divergence is a warning. Ten divergences during warmup is almost certainly fine; ten divergences in the post-warmup draws is a problem.
 
 In PyMC, divergences show up in the trace object:
 
@@ -92,7 +92,7 @@ The frame I find most useful: diagnostics are information about your model, not 
 - **Tail ESS is low** → slow mixing, often from collinearity or a ridge in the posterior. Check which parameters move together.
 - **Divergences cluster** → bad geometry, most often funnel-shaped posteriors from hierarchical priors or extreme curvature from a tight likelihood fighting a diffuse prior. Non-centered parameterization or a better prior.
 
-One thing I want to be clear about, because I've made the opposite mistake: **passing these diagnostics is necessary but not sufficient.** As I wrote in [the generative MMM post](/posts/generative-mmm-honest-iteration/), models that fail attribution badly can show perfectly healthy R-hat, ESS, and zero divergences. The diagnostics guarantee that your samples are a valid draw from *the posterior you specified*. Whether the posterior you specified reflects the causal structure of the world is a separate question, answered by posterior predictive checks and ultimately by experimental validation.
+One thing I want to be clear about, because I've made the opposite mistake: **passing these diagnostics is necessary but not sufficient.** As I wrote in [the generative MMM post](/posts/generative-mmm-honest-iteration/), models that fail attribution badly can show perfectly healthy R-hat, ESS, and zero divergences. The diagnostics guarantee that your samples are a valid draw from _the posterior you specified_. Whether the posterior you specified reflects the causal structure of the world is a separate question, answered by posterior predictive checks and ultimately by experimental validation.
 
 But failing the computational diagnostics — that's a hard stop. A coefficient with $\hat{R} = 1.08$ and tail ESS of 45 is not an estimate with a caveat. It's a number the sampler made up in a region it barely explored. Shipping it to a CFO isn't "reporting with appropriate uncertainty." It's reporting a fiction with confidence.
 
@@ -100,4 +100,4 @@ Run the diagnostics before you read the coefficients. The sampler is trying to t
 
 ---
 
-*Synthesized from Vehtari, Gelman, Simpson, Carpenter & Bürkner (2021), "Rank-Normalization, Folding, and Localization: An Improved $\hat{R}$ for Assessing Convergence of MCMC," Bayesian Analysis 16(2); Betancourt (2017), "A Conceptual Introduction to Hamiltonian Monte Carlo," arXiv:1701.02434; and the ArviZ documentation on MCMC convergence diagnostics. Related: [Generative MMM and Honest Iteration](/posts/generative-mmm-honest-iteration/).*
+_Synthesized from Vehtari, Gelman, Simpson, Carpenter & Bürkner (2021), "Rank-Normalization, Folding, and Localization: An Improved $\hat{R}$ for Assessing Convergence of MCMC," Bayesian Analysis 16(2); Betancourt (2017), "A Conceptual Introduction to Hamiltonian Monte Carlo," arXiv:1701.02434; and the ArviZ documentation on MCMC convergence diagnostics. Related: [Generative MMM and Honest Iteration](/posts/generative-mmm-honest-iteration/)._
