@@ -3,7 +3,7 @@ title: "The Illusion of Significance: Why p-value Variable Selection Breaks Mark
 author: Matthew Reda
 pubDatetime: 2026-06-27T13:05:22Z
 slug: variable-selection-mmm
-draft: true
+draft: false
 tags:
   - statistics
   - marketing-mix-modeling
