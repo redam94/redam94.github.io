@@ -30,6 +30,7 @@ export default defineAstroPaperConfig({
   },
   socials: [
     { name: "github", url: "https://github.com/redam94" },
+    { name: "notes",  url: "https://redam94.github.io/second-brain/", linkTitle: "Matthew Reda's notes (Second Brain)" },
     { name: "mail",   url: "mailto:m.reda94@gmail.com" },
   ],
   shareLinks: [
