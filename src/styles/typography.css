@@ -44,7 +44,7 @@
     }
 
     img {
-      @apply border-border mx-auto border;
+      @apply border-border mx-auto rounded-lg border shadow-sm;
     }
 
     img[role="button"] {
@@ -66,12 +66,12 @@
       }
 
       th {
-        @apply py-1.5;
+        @apply bg-well py-1.5;
       }
     }
 
     code {
-      @apply bg-muted/75 text-foreground rounded p-1 wrap-break-word before:content-none after:content-none;
+      @apply bg-muted/75 text-foreground rounded p-1 font-mono wrap-break-word before:content-none after:content-none;
     }
 
     .astro-code code {
@@ -97,7 +97,7 @@
 
   /* ===== Code Blocks & Syntax Highlighting ===== */
   .astro-code {
-    @apply outline-border flex border bg-(--shiki-light-bg) text-(--shiki-light) [&_span]:text-(--shiki-light);
+    @apply outline-border flex rounded-lg border bg-(--shiki-light-bg) font-mono text-(--shiki-light) shadow-sm [&_span]:text-(--shiki-light);
   }
 
   html[data-theme="dark"] .astro-code {

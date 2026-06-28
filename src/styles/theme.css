@@ -1,4 +1,6 @@
-/* Register design tokens for Tailwind v4 */
+/* Register design tokens for Tailwind v4 — Augur design system mapping.
+   Augur is an editorial, warm-paper identity (cream surfaces, ink-green text,
+   sage primary, gold/steel/rust accents). Light-only — no dark variant. */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -7,28 +9,44 @@
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
-  --font-app: var(--font-google-sans-code);
+
+  /* Augur surfaces & accents, exposed as Tailwind colors (bg-card, text-gold…) */
+  --color-card: var(--surface-card);
+  --color-well: var(--surface-well);
+  --color-gold: var(--accent-gold);
+  --color-steel: var(--accent-steel);
+  --color-rust: var(--accent-rust);
+
+  /* Fonts — body is IBM Plex Sans; display is Fraunces; numerals/code JetBrains */
+  --font-app: var(--font-plex);
+  --font-display: var(--font-fraunces);
+  --font-mono: var(--font-jetbrains);
 }
 
-/* Light theme values */
+/* Augur palette — single warm-paper theme (light only). */
 :root,
-[data-theme="light"] {
-  --background: #fdfdfd;
-  --foreground: #282728;
-  --accent: #006cac;
-  --accent-foreground: #ffffff;
-  --muted: #e6e6e6;
-  --muted-foreground: #6b7280;
-  --border: #ece9e9;
-}
-
-/* Dark theme values */
+[data-theme="light"],
 [data-theme="dark"] {
-  --background: #212737;
-  --foreground: #eaedf3;
-  --accent: #ff6b01;
+  /* Surfaces — warm cream paper */
+  --background: #faf8f3; /* cream-50 · app background */
+  --surface-card: #ffffff; /* white cards on cream */
+  --surface-well: #f3f0e6; /* cream-100 · inset wells, table headers */
+
+  /* Ink — green-cast neutral text (never pure black) */
+  --foreground: #2a3528; /* ink-900 · primary text */
+  --muted: #f3f0e6; /* cream-100 · code/chip wash */
+  --muted-foreground: #4a5a48; /* ink-600 · secondary text, dates */
+
+  /* Sage primary + accents */
+  --accent: #5a7a3a; /* sage-700 · links, primary */
   --accent-foreground: #ffffff;
-  --muted: #343f60;
-  --muted-foreground: #afb9ca;
-  --border: #ab4b08;
+  --accent-gold: #b8860b; /* gold-600 */
+  --accent-steel: #4a6d8a; /* steel-600 */
+  --accent-rust: #a04535; /* rust-600 */
+
+  /* Hairlines do the structural work */
+  --border: #e8e4d5; /* line-200 */
+
+  /* One soft elevation only — cards lean on the hairline border */
+  --shadow-sm: 0 1px 2px 0 rgb(42 53 40 / 0.05);
 }
