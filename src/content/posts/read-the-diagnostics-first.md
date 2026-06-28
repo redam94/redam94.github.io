@@ -3,7 +3,7 @@ title: "Read the Diagnostics First"
 author: Matthew Reda
 pubDatetime: 2026-06-28T13:06:04Z
 slug: read-the-diagnostics-first
-draft: true
+draft: false
 tags:
   - bayesian
   - pymc
