@@ -45,11 +45,16 @@ const rssHref = getRelativeLocaleUrl(
     <link rel="canonical" href={canonicalURL} />
     <meta name="generator" content={Astro.generator} />
 
-    <!-- Font -->
+    <!-- Fonts — Augur: IBM Plex Sans (body), Fraunces (display), JetBrains Mono -->
     <Font
-      cssVariable="--font-google-sans-code"
+      cssVariable="--font-plex"
       preload={[{ subset: "latin", weight: 400, style: "normal" }]}
     />
+    <Font
+      cssVariable="--font-fraunces"
+      preload={[{ subset: "latin", weight: 600, style: "normal" }]}
+    />
+    <Font cssVariable="--font-jetbrains" />
 
     <!-- Primary meta -->
     <title>{title}</title>
@@ -102,15 +107,11 @@ const rssHref = getRelativeLocaleUrl(
     -->
     <script is:inline>
       (function () {
-        const stored = localStorage.getItem("theme");
-        const prefersDark = window.matchMedia(
-          "(prefers-color-scheme: dark)"
-        ).matches;
-        const theme = stored ?? (prefersDark ? "dark" : "light");
+        // Augur is a light-only, warm-paper identity. Pin the theme to light.
+        const theme = "light";
         const root = document.firstElementChild;
         root?.setAttribute("data-theme", theme);
-        root?.classList.toggle("dark", theme === "dark");
-        // Expose value so theme.ts can skip re-detection.
+        root?.classList.remove("dark");
         window.__theme = { value: theme };
       })();
     </script>

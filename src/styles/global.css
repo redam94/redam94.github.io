@@ -36,3 +36,38 @@
 :target {
   scroll-margin-block: 1rem;
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Augur editorial layer — Fraunces display headings, JetBrains Mono numerals,
+   warm-paper surfaces (white cards on cream with one hairline + one soft shadow).
+   ───────────────────────────────────────────────────────────────────────── */
+@layer base {
+  /* High-contrast serif carries all display type */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+    font-weight: 600;
+  }
+}
+
+/* Numerals — JetBrains Mono + tabular figures (Augur `.num`) */
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* Eyebrow / overline label — uppercase, tracked, muted (Augur `.eyebrow`) */
+.eyebrow {
+  font-family: var(--font-app);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted-foreground);
+}

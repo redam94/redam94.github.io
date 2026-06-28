@@ -62,6 +62,36 @@ export default defineConfig({
     plugins: [tailwindcss()],
   },
   fonts: [
+    // Augur design system — Fraunces (display serif), IBM Plex Sans (UI/body),
+    // JetBrains Mono (numerals/code).
+    {
+      name: "Fraunces",
+      cssVariable: "--font-fraunces",
+      provider: fontProviders.google(),
+      fallbacks: ["Georgia", "Times New Roman", "serif"],
+      weights: [400, 500, 600, 700],
+      styles: ["normal", "italic"],
+      formats: ["woff2", "woff"],
+    },
+    {
+      name: "IBM Plex Sans",
+      cssVariable: "--font-plex",
+      provider: fontProviders.google(),
+      fallbacks: ["system-ui", "-apple-system", "sans-serif"],
+      weights: [400, 500, 600, 700],
+      styles: ["normal", "italic"],
+      formats: ["woff2", "woff"],
+    },
+    {
+      name: "JetBrains Mono",
+      cssVariable: "--font-jetbrains",
+      provider: fontProviders.google(),
+      fallbacks: ["ui-monospace", "SF Mono", "monospace"],
+      weights: [400, 500, 600],
+      styles: ["normal"],
+      formats: ["woff2", "woff"],
+    },
+    // Retained for Open Graph image generation (src/pages/og.png.ts et al.).
     {
       name: "Google Sans Code",
       cssVariable: "--font-google-sans-code",
