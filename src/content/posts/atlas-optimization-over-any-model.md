@@ -24,7 +24,7 @@ $$\max_{b} \; \mathbb{E}[\,\text{KPI}(b)\,] \quad \text{s.t.} \quad \sum_i b_i \
 
 That's the easy version. In practice $\text{KPI}(b)$ is non-convex because response curves saturate, you have multiple KPIs that disagree with each other, and the constraints are business rules nobody wrote as math ("at least 25% to digital," "don't touch print this quarter"). You can solve this by hand in a spreadsheet, evaluating scenarios one at a time, and people do. It's slow, it's inconsistent between analysts, and the "optimum" you land on is mostly an artifact of where you got bored.
 
-The thing I want to push back on is treating the optimizer as a reporting flourish — a prettier allocation chart bolted onto the model. It isn't. The optimizer *is* the decision. Everything upstream is in service of it.
+The thing I want to push back on is treating the optimizer as a reporting flourish — a prettier allocation chart bolted onto the model. It isn't. The optimizer _is_ the decision. Everything upstream is in service of it.
 
 ## Model-agnostic on purpose
 
@@ -74,7 +74,7 @@ print(f"Optimal allocation: {result.optimal_budget}")
 print(f"Expected outcome: {result.optimal_value}")
 ```
 
-The `bounds` are the $[l_i, u_i]$ box on each channel; the `constraints` are the $\sum_i b_i \le B$ and the percentage rules. The result comes back as an `OptimizationResult` carrying `optimal_budget` and `optimal_value` — the allocation and what the model thinks it buys you. Note what's *not* in this snippet: any opinion about how the model was fit. That's the point.
+The `bounds` are the $[l_i, u_i]$ box on each channel; the `constraints` are the $\sum_i b_i \le B$ and the percentage rules. The result comes back as an `OptimizationResult` carrying `optimal_budget` and `optimal_value` — the allocation and what the model thinks it buys you. Note what's _not_ in this snippet: any opinion about how the model was fit. That's the point.
 
 Constraints in Atlas are first-class objects, not afterthoughts. In the worked marketing example shipped in the repo, they're declared explicitly with types — an `EQUALITY` constraint pinning total spend, a `BOUNDS` constraint per channel, and an `INEQUALITY` enforcing a digital floor:
 
@@ -107,4 +107,4 @@ I like that the trade-off is a parameter you have to type out. It forces the con
 
 The repo claims "10x faster scenario evaluation vs. manual methods," and I'll quote it as exactly that — Atlas's own claim, not an independent benchmark I ran. But speed isn't the part I'd sell. The part I'd sell is that the path from model to recommendation is the same every time: same constraint objects, same optimizer interface, same result type, whether the model underneath is an MMM or a gradient-boosted tree behind an API. Reproducible decisions beat fast wrong ones.
 
-The takeaway: before your next planning cycle, write the budget decision as a constrained objective — total $B$, the box $[l_i, u_i]$, the rules that are non-negotiable — and put that in front of stakeholders *before* you tune the model. If your optimizer can't express a constraint someone cares about, you've found the real gap, and it was never in the response curve. That's the work. The allocation chart is just what falls out at the end.
+The takeaway: before your next planning cycle, write the budget decision as a constrained objective — total $B$, the box $[l_i, u_i]$, the rules that are non-negotiable — and put that in front of stakeholders _before_ you tune the model. If your optimizer can't express a constraint someone cares about, you've found the real gap, and it was never in the response curve. That's the work. The allocation chart is just what falls out at the end.

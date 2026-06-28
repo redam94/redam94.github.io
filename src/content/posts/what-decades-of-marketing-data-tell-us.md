@@ -20,7 +20,7 @@ Let me lay out the three that matter most, where they come from, and the functio
 
 The single most stabilizing fact in the literature is the gap between two elasticities.
 
-**Short-run advertising elasticity ≈ 0.1.** Across the major meta-analyses — Assmus, Farley and Lehmann (1984) at 0.22, Sethuraman and Tellis (1991) at 0.10, the Lodish BehaviorScan split-cable tests at 0.13 — the central estimate for how a 1% bump in advertising moves short-run sales lands around a tenth of a percent. It's small. The long-run effect roughly doubles it once you account for carryover, but the headline is that advertising is a *weak* lever in the short term.
+**Short-run advertising elasticity ≈ 0.1.** Across the major meta-analyses — Assmus, Farley and Lehmann (1984) at 0.22, Sethuraman and Tellis (1991) at 0.10, the Lodish BehaviorScan split-cable tests at 0.13 — the central estimate for how a 1% bump in advertising moves short-run sales lands around a tenth of a percent. It's small. The long-run effect roughly doubles it once you account for carryover, but the headline is that advertising is a _weak_ lever in the short term.
 
 **Own-price elasticity ≈ −2.5.** Tellis (1988), Bolton (1989), Hamilton et al. across 100 UK markets — the meta-analytic consensus for price elasticity sits near $-2.5$. Demand is elastic, and price moves sales an order of magnitude harder than advertising does:
 
@@ -34,7 +34,7 @@ Optimal ad spend is about 4% of sales for a typical packaged good. Not a coincid
 
 ## Number two: effects decay fast
 
-The second generalization is about *time*. Advertising doesn't act once and vanish, nor does it last forever — it carries over with geometric decay. The foundational encoding is the Koyck model, which assumes the lag weights fall off as $\beta_1 \lambda^k$ and collapses an infinite distributed lag into one tidy regression:
+The second generalization is about _time_. Advertising doesn't act once and vanish, nor does it last forever — it carries over with geometric decay. The foundational encoding is the Koyck model, which assumes the lag weights fall off as $\beta_1 \lambda^k$ and collapses an infinite distributed lag into one tidy regression:
 
 $$Q_t = (1-\lambda)\beta_0 + \beta_1(1-\lambda)\,X_t + \lambda\, Q_{t-1} + v_t$$
 
@@ -42,9 +42,9 @@ The retention rate $\lambda$ is the whole story, and the half-life follows immed
 
 $$t_{1/2} = \frac{\log 0.5}{\log \lambda}$$
 
-The empirical surprise here is how *short* the memory is. Raw monthly retention estimates run $\lambda \approx 0.43$–$0.50$; correcting for the temporal-aggregation bias that Clarke (1976) identified pushes them to roughly $0.7$. Either way the half-life is on the order of a couple of months, and 90% of an advertising effect has dissipated within six to nine months. This is much faster than practitioner intuition, and it has a sharp implication: advertising effects need continuous feeding. Go dark and the stock drains quickly.
+The empirical surprise here is how _short_ the memory is. Raw monthly retention estimates run $\lambda \approx 0.43$–$0.50$; correcting for the temporal-aggregation bias that Clarke (1976) identified pushes them to roughly $0.7$. Either way the half-life is on the order of a couple of months, and 90% of an advertising effect has dissipated within six to nine months. This is much faster than practitioner intuition, and it has a sharp implication: advertising effects need continuous feeding. Go dark and the stock drains quickly.
 
-Modern Bayesian MMMs (the Google formulation in Jin et al., 2017) write this as a normalized adstock over a finite window with geometric weights $w_m(l) = \alpha_m^l$ — the discrete sibling of Koyck — or a *delayed* version $w_m(l) = \alpha_m^{(l-\theta_m)^2}$ when a channel's effect peaks a few weeks after the spend, as brand TV often does.
+Modern Bayesian MMMs (the Google formulation in Jin et al., 2017) write this as a normalized adstock over a finite window with geometric weights $w_m(l) = \alpha_m^l$ — the discrete sibling of Koyck — or a _delayed_ version $w_m(l) = \alpha_m^{(l-\theta_m)^2}$ when a channel's effect peaks a few weeks after the spend, as brand TV often does.
 
 ## Number three: response is curved
 
@@ -56,8 +56,8 @@ Two parameters carry the meaning. $\mathcal{K}$ is the half-saturation point —
 
 That distinction isn't academic — it dictates how you should spend:
 
-- **Concave response** (diminishing returns everywhere): spread spending *evenly*. Every extra dollar in a heavy period is worth less than the same dollar in a light one, so pulsing wastes money.
-- **S-shaped response** (a threshold to clear): *pulse*. Below threshold you're buying nothing, so it pays to go dark sometimes and concentrate spend hard enough to clear the bend in the periods you're on.
+- **Concave response** (diminishing returns everywhere): spread spending _evenly_. Every extra dollar in a heavy period is worth less than the same dollar in a light one, so pulsing wastes money.
+- **S-shaped response** (a threshold to clear): _pulse_. Below threshold you're buying nothing, so it pays to go dark sometimes and concentrate spend hard enough to clear the bend in the periods you're on.
 
 A full MMM stacks these: adstock first to capture carryover, then Hill to capture saturation, summed across channels over a baseline:
 
@@ -65,11 +65,11 @@ $$y_t = \tau + \sum_{m=1}^{M} \beta_m\, \text{Hill}\!\big(\text{adstock}(x_{\cdo
 
 ## Why this has to be Bayesian — and where the numbers come from
 
-Here's the catch that makes the empirical generalizations more than trivia. A typical MMM dataset is two or three years of weekly data — maybe 150 rows — and you're asking it to identify several *nonlinear* parameters per channel: a retention rate, a half-saturation, a shape, a coefficient. There isn't enough information in the data to pin those down. Jin et al. show this starkly: with 60 years of simulated weekly data the parameters recover beautifully, but with a realistic two years the posteriors are *dominated by the priors*, and shape parameters come back biased by 20–30%.
+Here's the catch that makes the empirical generalizations more than trivia. A typical MMM dataset is two or three years of weekly data — maybe 150 rows — and you're asking it to identify several _nonlinear_ parameters per channel: a retention rate, a half-saturation, a shape, a coefficient. There isn't enough information in the data to pin those down. Jin et al. show this starkly: with 60 years of simulated weekly data the parameters recover beautifully, but with a realistic two years the posteriors are _dominated by the priors_, and shape parameters come back biased by 20–30%.
 
 That's not a bug to engineer around; it's the reason the field's empirical constants matter. When the data can't identify the curve, the honest move is to bring in an informative prior — and a 0.1 advertising elasticity, a $\lambda$ near 0.7, a half-saturation inside the observed spend range are exactly the priors that decades of other people's experiments have earned you. The flip side is a discipline: when your model "discovers" an advertising elasticity of 0.6 or a carryover half-life of two years, the prior is telling you it's far more likely your model is unidentified than that your brand broke physics.
 
-The same humility applies downstream. ROAS and marginal ROAS should be computed across the full posterior, not from plugged-in posterior means, and in realistic samples the *optimal* media mix often comes back with bimodal, high-variance posteriors near the edges of the data. The practical reading: use these numbers to set channel *priorities*, not to defend a budget allocation to the dollar.
+The same humility applies downstream. ROAS and marginal ROAS should be computed across the full posterior, not from plugged-in posterior means, and in realistic samples the _optimal_ media mix often comes back with bimodal, high-variance posteriors near the edges of the data. The practical reading: use these numbers to set channel _priorities_, not to defend a budget allocation to the dollar.
 
 ## The point
 

@@ -12,11 +12,11 @@ tags:
 description: Learning the structure of a causal graph from data used to be a combinatorial search over a space that grows superexponentially. One change of variables turned it into gradient descent.
 ---
 
-For most of its history, learning a causal graph from data was a search problem, and a brutal one. You want the directed acyclic graph that best explains your data, but the number of DAGs on $d$ nodes grows *superexponentially* — faster than $d!$, faster than $2^{d^2}$. So the field built clever heuristics: add an edge, check it doesn't create a cycle, score the result, greedily keep going. PC, GES, FGS — all variations on walking the discrete space one edge at a time, because you can't enumerate it and you can't differentiate it.
+For most of its history, learning a causal graph from data was a search problem, and a brutal one. You want the directed acyclic graph that best explains your data, but the number of DAGs on $d$ nodes grows _superexponentially_ — faster than $d!$, faster than $2^{d^2}$. So the field built clever heuristics: add an edge, check it doesn't create a cycle, score the result, greedily keep going. PC, GES, FGS — all variations on walking the discrete space one edge at a time, because you can't enumerate it and you can't differentiate it.
 
-In 2018, Zheng, Aragam, Ravikumar, and Xing published a paper with a title that tells you exactly how the field felt about this: *DAGs with NO TEARS*. Their move was to stop searching the discrete space at all. They found a way to write "this graph is acyclic" as a smooth equation, and once you can do that, structure learning becomes continuous optimization. You can run a gradient-based solver. The whole thing is about fifty lines of Python.
+In 2018, Zheng, Aragam, Ravikumar, and Xing published a paper with a title that tells you exactly how the field felt about this: _DAGs with NO TEARS_. Their move was to stop searching the discrete space at all. They found a way to write "this graph is acyclic" as a smooth equation, and once you can do that, structure learning becomes continuous optimization. You can run a gradient-based solver. The whole thing is about fifty lines of Python.
 
-I find this one of the cleaner examples of a recurring pattern in applied math: the hard part of a problem is often the *representation*, not the objective. Change how you encode the constraint and an intractable problem becomes a routine one.
+I find this one of the cleaner examples of a recurring pattern in applied math: the hard part of a problem is often the _representation_, not the objective. Change how you encode the constraint and an intractable problem becomes a routine one.
 
 ## The problem, set up honestly
 
@@ -32,15 +32,15 @@ That part is easy. The hard part is the constraint that $W$ has to encode a DAG:
 
 $$\min_{W} F(W) \quad \text{s.t.} \quad W \text{ is acyclic}$$
 
-"Acyclic" is the word doing all the damage. It's a combinatorial property of the *sign pattern* of $W$, and optimizing subject to it is NP-hard. The classical approaches respect that and search; NOTEARS refuses to.
+"Acyclic" is the word doing all the damage. It's a combinatorial property of the _sign pattern_ of $W$, and optimizing subject to it is NP-hard. The classical approaches respect that and search; NOTEARS refuses to.
 
 ## The trick: counting cycles with a matrix exponential
 
 Here is the idea, built up the way it actually works.
 
-A directed graph with binary adjacency matrix $B$ has a cycle of length $k$ exactly when $\mathrm{tr}(B^k) > 0$ — the diagonal of $B^k$ counts closed walks of length $k$. So the graph is acyclic iff *every* power has zero trace. Summing those traces gives a single number that's zero iff there are no cycles of any length. But raw powers of $B$ are numerically unstable and the sum doesn't obviously converge.
+A directed graph with binary adjacency matrix $B$ has a cycle of length $k$ exactly when $\mathrm{tr}(B^k) > 0$ — the diagonal of $B^k$ counts closed walks of length $k$. So the graph is acyclic iff _every_ power has zero trace. Summing those traces gives a single number that's zero iff there are no cycles of any length. But raw powers of $B$ are numerically unstable and the sum doesn't obviously converge.
 
-The fix is to borrow the weighting from the matrix exponential, $e^B = \sum_{k=0}^\infty B^k / k!$. The factorial denominators tame the series — it converges for *any* square matrix — while preserving the "diagonal counts cycles" property. For a binary matrix:
+The fix is to borrow the weighting from the matrix exponential, $e^B = \sum_{k=0}^\infty B^k / k!$. The factorial denominators tame the series — it converges for _any_ square matrix — while preserving the "diagonal counts cycles" property. For a binary matrix:
 
 $$\mathrm{tr}(e^B) = d \iff B \text{ is a DAG}$$
 
@@ -50,7 +50,7 @@ To extend this from binary to real, signed weights, they apply the Hadamard (ele
 
 $$h(W) = \mathrm{tr}\!\left(e^{W \circ W}\right) - d = 0 \iff W \text{ is a DAG}$$
 
-Why square the entries? Because without it, a two-cycle $1 \to 2 \to 1$ with weights $+1$ and $-1$ contributes $w_{12}\,w_{21} = -1$ to the trace, and a cycle could *cancel itself out* numerically — you'd certify a cyclic graph as acyclic. Squaring forces every cyclic contribution strictly positive, so $h(W) > 0$ precisely when a cycle exists, and $h(W) = 0$ precisely when it doesn't. As a bonus, $h$ doesn't just test acyclicity — its value *quantifies* how cyclic the graph is, which matters for the optimizer.
+Why square the entries? Because without it, a two-cycle $1 \to 2 \to 1$ with weights $+1$ and $-1$ contributes $w_{12}\,w_{21} = -1$ to the trace, and a cycle could _cancel itself out_ numerically — you'd certify a cyclic graph as acyclic. Squaring forces every cyclic contribution strictly positive, so $h(W) > 0$ precisely when a cycle exists, and $h(W) = 0$ precisely when it doesn't. As a bonus, $h$ doesn't just test acyclicity — its value _quantifies_ how cyclic the graph is, which matters for the optimizer.
 
 And it's smooth, with a gradient you can write in one line:
 
@@ -70,7 +70,7 @@ $$L^\rho(W, \alpha) = F(W) + \frac{\rho}{2}\,|h(W)|^2 + \alpha\, h(W)$$
 
 You minimize over $W$ (L-BFGS, or a proximal quasi-Newton step when the $\ell_1$ term is on), bump the multiplier $\alpha \leftarrow \alpha + \rho\, h(W)$, raise the penalty $\rho$, and repeat. In practice it converges in **fewer than ten outer iterations**. A final hard-threshold step zeroes out tiny weights to round the near-DAG to an exact one. Each iteration costs $O(d^3)$ — the price of one matrix exponential.
 
-The honest caveat: the constraint set $\{W : h(W) = 0\}$ is nonconvex, so you're only guaranteed a stationary point, not the global optimum. But the empirical results are reassuring. On 10-node graphs where an exact integer-programming solver can find the true global minimum, NOTEARS lands within $0.02$–$0.04$ of it in both score and parameter distance. Against FGS it's competitive on sparse graphs and *decisively better* on dense, hub-heavy ones — exactly where edge-at-a-time greedy search struggles. And it's robust across Gaussian, Exponential, and Gumbel noise without being told which it's facing.
+The honest caveat: the constraint set $\{W : h(W) = 0\}$ is nonconvex, so you're only guaranteed a stationary point, not the global optimum. But the empirical results are reassuring. On 10-node graphs where an exact integer-programming solver can find the true global minimum, NOTEARS lands within $0.02$–$0.04$ of it in both score and parameter distance. Against FGS it's competitive on sparse graphs and _decisively better_ on dense, hub-heavy ones — exactly where edge-at-a-time greedy search struggles. And it's robust across Gaussian, Exponential, and Gumbel noise without being told which it's facing.
 
 ## The lesson that outlasts the method
 
@@ -82,4 +82,4 @@ that turned a property everyone treated as inherently combinatorial into somethi
 
 ---
 
-*Based on Zheng, Aragam, Ravikumar & Xing (2018), "DAGs with NO TEARS: Continuous Optimization for Structure Learning," NeurIPS 31, [arXiv:1803.01422](https://arxiv.org/abs/1803.01422).*
+_Based on Zheng, Aragam, Ravikumar & Xing (2018), "DAGs with NO TEARS: Continuous Optimization for Structure Learning," NeurIPS 31, [arXiv:1803.01422](https://arxiv.org/abs/1803.01422)._

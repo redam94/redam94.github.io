@@ -14,18 +14,29 @@ description: Treating a Bayesian marketing-mix model as declarative configuratio
 
 Most of the bad numbers I've shipped were not the model's fault. The model did exactly what I told it to. The problem was that I told it the wrong thing, or fed it a file that quietly disagreed with itself, and I didn't find out until someone in finance asked why a market we don't operate in had a media coefficient. Validate the data first — it's almost always the data.
 
-That experience is the whole reason I like the design behind [BayesInsight](https://github.com/redam94/BayesInsight), a config-driven Bayesian modeling framework I've been building. The bet it makes is simple: the model *specification* should be data, not code. You declare your variables, transforms, normalization, and priors as JSON, you declare what your input data is allowed to contain as JSON, and the fitting machinery is a separate thing that consumes both. The payoff is that a malformed model fails loudly at parse time instead of silently at inference time.
+That experience is the whole reason I like the design behind [BayesInsight](https://github.com/redam94/BayesInsight), a config-driven Bayesian modeling framework I've been building. The bet it makes is simple: the model _specification_ should be data, not code. You declare your variables, transforms, normalization, and priors as JSON, you declare what your input data is allowed to contain as JSON, and the fitting machinery is a separate thing that consumes both. The payoff is that a malformed model fails loudly at parse time instead of silently at inference time.
 
 ## Three files, one model
 
-A model in this framework is a folder. There's an MFF (Master Flat File) CSV — long-format rows of `Geography, Product, Outlet, Campaign, Creative, Period, VariableName, VariableValue`. There's a `metadata.json` describing what that CSV is *allowed* to contain. And there's a `model_def.json` describing the model itself.
+A model in this framework is a folder. There's an MFF (Master Flat File) CSV — long-format rows of `Geography, Product, Outlet, Campaign, Creative, Period, VariableName, VariableValue`. There's a `metadata.json` describing what that CSV is _allowed_ to contain. And there's a `model_def.json` describing the model itself.
 
 The metadata is the contract for your input:
 
 ```json
 {
   "metadata": {
-    "allowed_geos": ["DE", "FR", "KR", "AU", "UK", "MX", "CA", "BR", "JP", "US"],
+    "allowed_geos": [
+      "DE",
+      "FR",
+      "KR",
+      "AU",
+      "UK",
+      "MX",
+      "CA",
+      "BR",
+      "JP",
+      "US"
+    ],
     "allowed_products": ["Laptops", "Desktops", "Phones", "Tablets", "Watches"],
     "allowed_outlets": ["Total"],
     "allowed_campaigns": ["Total"],
@@ -41,7 +52,7 @@ This is not documentation. It's enforced. When you load the MFF, a Pydantic `mod
 
 ## The model is declarative too
 
-The interesting part is that the *model* gets the same treatment. Each entry in `model_def.json` declares a variable's type — one of `control`, `exog`, `base`, `media`, `none` — plus its transform, normalization, and prior. Here's a real control variable:
+The interesting part is that the _model_ gets the same treatment. Each entry in `model_def.json` declares a variable's type — one of `control`, `exog`, `base`, `media`, `none` — plus its transform, normalization, and prior. Here's a real control variable:
 
 ```json
 {
@@ -71,10 +82,17 @@ Media variables carry more declared structure — an `adstock` and a `media_tran
   "variable_type": "media",
   "adstock": "delayed",
   "media_transform": "hill",
-  "coeff_prior": { "coeff_dist": "LogNormal",
-    "coeff_params": { "mu": -2.9957, "sigma": 0.2624 } },
-  "media_transform_prior": { "type": "Hill", "K_ave": 0.85, "K_std": 0.6,
-    "n_ave": 1.5, "n_std": 1.2 }
+  "coeff_prior": {
+    "coeff_dist": "LogNormal",
+    "coeff_params": { "mu": -2.9957, "sigma": 0.2624 }
+  },
+  "media_transform_prior": {
+    "type": "Hill",
+    "K_ave": 0.85,
+    "K_std": 0.6,
+    "n_ave": 1.5,
+    "n_std": 1.2
+  }
 }
 ```
 
