@@ -12,7 +12,7 @@ tags:
 description: There's a single objective that says what makes one experiment better than another — expected information gain. It's beautiful, it's principled, and it's a nightmare to compute. Here's the arc from Lindley in 1956 to policies that design experiments in real time.
 ---
 
-Every experiment is a bet about where to look. You pick a dose, a price point, a question to ask, a stimulus to present — a *design* — and the data you get back depends on it. Some designs teach you a lot; some teach you almost nothing. The question that organizes all of Bayesian experimental design is disarmingly simple: is there a single number that says how good a design is, *before you run it*?
+Every experiment is a bet about where to look. You pick a dose, a price point, a question to ask, a stimulus to present — a _design_ — and the data you get back depends on it. Some designs teach you a lot; some teach you almost nothing. The question that organizes all of Bayesian experimental design is disarmingly simple: is there a single number that says how good a design is, _before you run it_?
 
 There is. Dennis Lindley wrote it down in 1956, and the rest of the field is, to a first approximation, seventy years of learning how to actually compute it.
 
@@ -50,32 +50,32 @@ That $-1/3$ is the villain of the story. Ordinary Monte Carlo gives you $C^{-1/2
 
 ## The escape: amortize the inner problem
 
-The breakthrough — Foster et al. in 2019 — was to stop recomputing the inner integral from scratch for every outcome. Instead, *learn a function* that approximates the troublesome quantity once, then reuse it everywhere. This turns the multiplicative cost into an additive one and recovers the $O(T^{-1/2})$ rate.
+The breakthrough — Foster et al. in 2019 — was to stop recomputing the inner integral from scratch for every outcome. Instead, _learn a function_ that approximates the troublesome quantity once, then reuse it everywhere. This turns the multiplicative cost into an additive one and recovers the $O(T^{-1/2})$ rate.
 
 The cleanest version is the **Barber–Agakov bound**. Train an amortized inference network $q_p(\theta \mid y, \xi)$ to approximate the posterior, and you get a guaranteed lower bound on EIG:
 
 $$\mathcal{L}(\xi) = \mathbb{E}_{p(y, \theta \mid \xi)}\left[\log \frac{q_p(\theta \mid y, \xi)}{p(\theta)}\right] \le \mathrm{EIG}(\xi)$$
 
-with equality exactly when $q_p$ matches the true posterior; the gap is the expected KL between them. There's a dual that approximates the *marginal* instead and gives you an upper bound — useful because you can sandwich the true EIG between a lower and upper estimate. And there's a contrastive variant (VNMC, later ACE/PCE) that's the only one guaranteed to converge to the true EIG even when your approximating family doesn't contain the posterior — it just needs enough contrastive samples.
+with equality exactly when $q_p$ matches the true posterior; the gap is the expected KL between them. There's a dual that approximates the _marginal_ instead and gives you an upper bound — useful because you can sandwich the true EIG between a lower and upper estimate. And there's a contrastive variant (VNMC, later ACE/PCE) that's the only one guaranteed to converge to the true EIG even when your approximating family doesn't contain the posterior — it just needs enough contrastive samples.
 
 Which one to reach for comes down to a couple of clean rules: approximate a distribution over $\theta$ when $\theta$ is lower-dimensional than $y$, approximate over $y$ when it's the other way around; use the marginal/contrastive forms when you have an explicit likelihood and the posterior/implicit forms when you don't. The contrastive bounds, it turns out, are the same InfoNCE bounds people use in representation learning — BOED and contrastive self-supervision are solving the same estimation problem from opposite ends.
 
 ## The payoff: designing in real time
 
-Here's where it stops being an estimation story and becomes a control story. The 2020 follow-up folded the EIG estimate and the design itself into a *single* stochastic-gradient loop — instead of pricing each candidate design and handing it to an outer optimizer, you take gradients with respect to $\xi$ directly and ascend. That scales to designs with hundreds of dimensions, where grid search and Bayesian optimization simply fall over. On a 400-dimensional regression design it roughly doubled the information of the best baseline; on a 100-dimensional molecular docking problem it beat human experts.
+Here's where it stops being an estimation story and becomes a control story. The 2020 follow-up folded the EIG estimate and the design itself into a _single_ stochastic-gradient loop — instead of pricing each candidate design and handing it to an outer optimizer, you take gradients with respect to $\xi$ directly and ascend. That scales to designs with hundreds of dimensions, where grid search and Bayesian optimization simply fall over. On a 400-dimensional regression design it roughly doubled the information of the best baseline; on a 100-dimensional molecular docking problem it beat human experts.
 
-The final move, and my favorite, is **Deep Adaptive Design**. In a sequential experiment, the textbook loop is design → observe → re-infer the posterior → design again. The re-inference is expensive and the greedy step is myopic — it grabs the most informative *next* question without regard to the ones after it. DAD trains a policy network $\pi_\phi$ *offline* that maps the history of an experiment straight to the next design:
+The final move, and my favorite, is **Deep Adaptive Design**. In a sequential experiment, the textbook loop is design → observe → re-infer the posterior → design again. The re-inference is expensive and the greedy step is myopic — it grabs the most informative _next_ question without regard to the ones after it. DAD trains a policy network $\pi_\phi$ _offline_ that maps the history of an experiment straight to the next design:
 
 $$\xi_t = \pi_\phi(h_{t-1}), \qquad h_{t-1} = \{(\xi_k, y_k)\}_{k < t}$$
 
-trained to maximize the *total* information gain over the whole sequence. Because EIG is additive, optimizing the total is automatically non-myopic. And at deployment there's no inference and no optimization — a single forward pass picks the next question. You can run an adaptive experiment in real time on a phone.
+trained to maximize the _total_ information gain over the whole sequence. Because EIG is additive, optimizing the total is automatically non-myopic. And at deployment there's no inference and no optimization — a single forward pass picks the next question. You can run an adaptive experiment in real time on a phone.
 
 ## What I take from it
 
-The arc here is one I find genuinely instructive. Lindley handed us the *right* objective in 1956 and it sat largely unused for decades, not because anyone doubted it but because nobody could compute it at the scales that mattered. The progress since hasn't been about finding a better objective — it's been about the unglamorous, essential work of estimation: spotting that a nested expectation is the bottleneck, amortizing the inner problem, turning a pricing loop into a gradient, and finally compiling the whole design process into a learned policy.
+The arc here is one I find genuinely instructive. Lindley handed us the _right_ objective in 1956 and it sat largely unused for decades, not because anyone doubted it but because nobody could compute it at the scales that mattered. The progress since hasn't been about finding a better objective — it's been about the unglamorous, essential work of estimation: spotting that a nested expectation is the bottleneck, amortizing the inner problem, turning a pricing loop into a gradient, and finally compiling the whole design process into a learned policy.
 
 It's a useful reminder for applied work generally. The bottleneck between a principled idea and a usable tool is almost never the principle. It's the estimator.
 
 ---
 
-*Synthesized from Lindley (1956), Foster et al. (2019, NeurIPS) "Variational Bayesian Optimal Experimental Design," Foster et al. (2020, AISTATS) "A Unified Stochastic Gradient Approach," and Rainforth, Foster, Ivanova & Bickford Smith (2023), "Modern Bayesian Experimental Design," Statistical Science 38(1).*
+_Synthesized from Lindley (1956), Foster et al. (2019, NeurIPS) "Variational Bayesian Optimal Experimental Design," Foster et al. (2020, AISTATS) "A Unified Stochastic Gradient Approach," and Rainforth, Foster, Ivanova & Bickford Smith (2023), "Modern Bayesian Experimental Design," Statistical Science 38(1)._

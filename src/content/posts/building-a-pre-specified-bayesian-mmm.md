@@ -74,7 +74,7 @@ model = BayesianMMM(X_media=..., y=..., channel_names=..., config=config)
 results = model.fit(draws=2000, tune=1000, chains=4, nuts_sampler="numpyro")
 ```
 
-That config object *is* the pre-registration. It exists before `fit()` runs. Trend can be linear, piecewise, B-spline, or a Gaussian process; seasonality is Fourier harmonics you choose up front. Everything that would otherwise be a mid-analysis temptation is a field you set while you can still be honest about it.
+That config object _is_ the pre-registration. It exists before `fit()` runs. Trend can be linear, piecewise, B-spline, or a Gaussian process; seasonality is Fourier harmonics you choose up front. Everything that would otherwise be a mid-analysis temptation is a field you set while you can still be honest about it.
 
 ## Hierarchy instead of one knob per geography
 
@@ -109,11 +109,11 @@ print(contributions.hdi_contributions)   # 94% highest-density intervals
 
 HDIs, not point estimates. A channel whose contribution interval comfortably spans zero is a channel you cannot responsibly claim is working — and the model says so, instead of handing you a single number that begs to be put in a slide. The same posterior drives scenario planning: budget-reallocation simulations come out as distributions of outcomes, not a single optimized line that pretends the future is deterministic.
 
-For harder questions — does media work *through* brand awareness, do promotions on one SKU cannibalize another — the `mmm_extensions` module adds nested mediated pathways (Media → Awareness → Sales), multivariate outcomes with LKJ-priored correlated errors, and cross-product halo and cannibalization effects. Same discipline, more structure: you declare the causal graph before you fit it, including which channels are even allowed to build awareness.
+For harder questions — does media work _through_ brand awareness, do promotions on one SKU cannibalize another — the `mmm_extensions` module adds nested mediated pathways (Media → Awareness → Sales), multivariate outcomes with LKJ-priored correlated errors, and cross-product halo and cannibalization effects. Same discipline, more structure: you declare the causal graph before you fit it, including which channels are even allowed to build awareness.
 
 ## How the discipline ships
 
-A method nobody can run is a method nobody uses. So the framework wraps the library in a FastAPI agent API (`mmm_framework.api.main:app`, fits run in-process) and a React studio that walks through data upload, config building, fitting, and results. That surface matters because it makes the *configuration* a visible, sharable artifact — the specification gets reviewed before the fit, which is exactly when review is worth anything. But it's plumbing. The discipline is the point; the UI just lowers the cost of practicing it.
+A method nobody can run is a method nobody uses. So the framework wraps the library in a FastAPI agent API (`mmm_framework.api.main:app`, fits run in-process) and a React studio that walks through data upload, config building, fitting, and results. That surface matters because it makes the _configuration_ a visible, sharable artifact — the specification gets reviewed before the fit, which is exactly when review is worth anything. But it's plumbing. The discipline is the point; the UI just lowers the cost of practicing it.
 
 ## The takeaway
 

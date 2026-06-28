@@ -22,7 +22,7 @@ When you include a set of confounders $Z = \{z_1, z_2, \ldots\}$ in a regression
 
 That's enough to identify the causal effect of $X$. It says nothing about whether $Z$ is causally identified.
 
-Think about what you'd need to interpret $Z$'s coefficient causally: you'd have to close *all the backdoor paths into Z* as well. But you probably didn't design your study around identifying $Z$. You may not even know what those paths are. The adjustment set you chose for $X$ is unlikely to serve double duty for every other variable in the model.
+Think about what you'd need to interpret $Z$'s coefficient causally: you'd have to close _all the backdoor paths into Z_ as well. But you probably didn't design your study around identifying $Z$. You may not even know what those paths are. The adjustment set you chose for $X$ is unlikely to serve double duty for every other variable in the model.
 
 More concretely: if there's an unobserved confounder $U$ that affects both $Z$ and $Y$, the coefficient on $Z$ is biased. You can't see $U$, so you can't block that path, and your adjustment for $X$'s confounders doesn't help.
 
@@ -46,10 +46,11 @@ The same thing comes up in economics, political science, and public health. You 
 
 ## The Right Frame
 
-There's a useful reframe here: the adjustment set is a cost you pay to identify the effect you care about. The variables in it are *instrumental* to that goal. Their coefficients may be meaningful descriptively, or they may not be — but interpreting them causally requires a separate justification, not just the fact that you included them.
+There's a useful reframe here: the adjustment set is a cost you pay to identify the effect you care about. The variables in it are _instrumental_ to that goal. Their coefficients may be meaningful descriptively, or they may not be — but interpreting them causally requires a separate justification, not just the fact that you included them.
 
 Before reporting a coefficient from a control variable, ask:
-- What are the confounders for *this* variable's effect on the outcome?
+
+- What are the confounders for _this_ variable's effect on the outcome?
 - Did my study design close those paths?
 - Is there any unobserved variable that could be biasing this estimate?
 

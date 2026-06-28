@@ -19,7 +19,7 @@ I studied physics at MIT, where I did undergraduate research on single-molecule
 microscopy — STORM imaging, point-spread-function fitting, Bayesian deconvolution.
 When every pixel starts as noise until you treat it as a measurement problem, you
 develop a particular instinct: write the model down first, decide what would
-falsify it, *then* look at the data. Same instinct now, smaller microscopes and
+falsify it, _then_ look at the data. Same instinct now, smaller microscopes and
 bigger budgets.
 
 Since then I've spent my career in measurement science:
@@ -38,7 +38,7 @@ A few things I keep coming back to, and write about here:
 - **Start with the decision, not the data.** A model exists to support a decision.
   If there's no decision on the table, there's no model — only homework.
 - **Pre-specify, then commit.** Pick a likelihood, priors, and identification
-  strategy *before* you see the fit. Specification shopping is the fastest way to
+  strategy _before_ you see the fit. Specification shopping is the fastest way to
   get an answer that flatters the brief and survives nothing.
 - **It's almost always the data.** Most "modeling" problems are upstream data
   problems. Validate schema, coverage, and collinearity first.
