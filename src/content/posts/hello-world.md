@@ -14,13 +14,14 @@ Welcome! This is the first post on my new blog.
 
 I built this as a place to write down what I'm working on, things I've learned the
 hard way, and ideas I want to think through in public. Topics will probably skew
-toward software and data, but I make no promises about staying on theme.
+toward statistics, data, and the occasional cool tool I'm building, but I make no promises about staying on theme.
 
 ## What to expect
 
 - Short notes and longer write-ups, whenever I have something worth saying
 - Code, with the occasional rough edge left in on purpose
 - No fixed schedule
+- Sometimes rants about bad stats
 
 ## How this site is built
 
