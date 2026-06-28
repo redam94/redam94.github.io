@@ -3,7 +3,7 @@ title: "Noisy Covariates Bias Your Coefficients Toward Zero"
 author: Matthew Reda
 pubDatetime: 2026-06-26T13:05:37Z
 slug: measurement-error-in-predictors
-draft: true
+draft: false
 tags:
   - statistics
   - regression
