@@ -1,7 +1,7 @@
 ---
 title: "The Effect You're Looking For Isn't in Your Panel Data"
 author: Matthew Reda
-pubDatetime: 2026-06-28T16:00:00Z
+pubDatetime: 2026-06-28T02:00:00Z
 slug: within-between-persons
 draft: false
 tags:

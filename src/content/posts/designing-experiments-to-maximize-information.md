@@ -1,7 +1,7 @@
 ---
 title: "Designing Experiments to Maximize Information"
 author: Matthew Reda
-pubDatetime: 2026-06-28T15:00:00Z
+pubDatetime: 2026-06-28T01:00:00Z
 slug: designing-experiments-to-maximize-information
 draft: false
 tags:

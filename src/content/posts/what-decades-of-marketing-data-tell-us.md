@@ -1,7 +1,7 @@
 ---
 title: "What Decades of Marketing-Mix Data Actually Tell Us"
 author: Matthew Reda
-pubDatetime: 2026-06-28T18:00:00Z
+pubDatetime: 2026-06-28T04:00:00Z
 slug: what-decades-of-marketing-data-tell-us
 draft: false
 tags:
