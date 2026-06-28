@@ -1,7 +1,7 @@
 ---
 title: "You Are Your Relationships: The Yoneda Lemma"
 author: Matthew Reda
-pubDatetime: 2026-06-28T17:00:00Z
+pubDatetime: 2026-06-28T03:00:00Z
 slug: yoneda-you-are-your-relationships
 draft: false
 tags:

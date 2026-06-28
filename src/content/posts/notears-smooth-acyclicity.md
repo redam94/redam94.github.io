@@ -1,7 +1,7 @@
 ---
 title: "NO TEARS: How Acyclicity Became Differentiable"
 author: Matthew Reda
-pubDatetime: 2026-06-28T14:00:00Z
+pubDatetime: 2026-06-28T00:00:00Z
 slug: notears-smooth-acyclicity
 draft: false
 tags:

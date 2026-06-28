@@ -1,7 +1,7 @@
 ---
 title: "Your MMM's Control Coefficients Are Not Findings"
 author: Matthew Reda
-pubDatetime: 2026-06-28T19:00:00Z
+pubDatetime: 2026-06-28T05:00:00Z
 slug: table-2-fallacy-in-mmm
 draft: false
 tags:
