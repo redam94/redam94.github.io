@@ -24,7 +24,7 @@ bigger budgets.
 
 Since then I've spent my career in measurement science:
 
-- **Senior Measurement Scientist at Choreograph (now WPP Media), 2024–present** —
+- **Manager Data Science at Choreograph (now WPP Media), 2024–present** —
   building MMM and incrementality systems for portfolios in the high-eight-figure
   media-spend range, owning the methodology and the fitting infrastructure.
 - **Measurement & Modeling at EssenceMediacom, 2022–2024** — hierarchical
