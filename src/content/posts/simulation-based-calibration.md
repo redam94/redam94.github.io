@@ -3,7 +3,7 @@ title: "Simulation-Based Calibration: The Missing Test in Your Bayesian Workflow
 author: Matthew Reda
 pubDatetime: 2026-06-29T13:08:40Z
 slug: simulation-based-calibration
-draft: true
+draft: false
 tags:
   - bayesian
   - statistics
