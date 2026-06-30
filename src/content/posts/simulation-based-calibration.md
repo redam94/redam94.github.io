@@ -36,9 +36,9 @@ That's the whole test. You simulate many pairs $(\theta^\*, y)$, fit the model e
 
 The shape of the deviation from uniformity is diagnostic. Each failure mode has a different signature, and each one points at a different problem.
 
-**Arch shape (∩)** — the posterior is _over-concentrated_. The true value lands in the middle too often, which means the posterior is tighter than it should be. Your credible intervals are too narrow; you're falsely confident. In MMMs this often surfaces in adstock parameters: the model is confidently reporting a 0.7 retention rate with a tight interval when the true generating rate was anywhere in $[0.4, 0.9]$. The sampler is confident; it's just confidently wrong about how uncertain it should be.
+**Trough shape (∪)** — the posterior is _over-dispersed_. The true value lands in the middle too often, which means the posterior is tighter than it should be. Your credible intervals are too narrow; you're falsely confident. In MMMs this often surfaces in adstock parameters: the model is confidently reporting a 0.7 retention rate with a tight interval when the true generating rate was anywhere in $[0.4, 0.9]$. The sampler is confident; it's just confidently wrong about how uncertain it should be.
 
-**Trough shape (∪)** — the posterior is _over-dispersed_. The true value lands in the tails too often. Intervals are too wide. This can happen when you've over-regularized with a very diffuse prior that's pulling the posterior away from where the data should be pointing it.
+**Arch shape (∩)** — the posterior is _over-concentrated_. The true value lands in the tails too often. Intervals are too wide. This can happen when you've over-regularized with a very diffuse prior that's pulling the posterior away from where the data should be pointing it.
 
 **Shifted shape** — the posterior is _biased_. Ranks pile up on the left (systematic underestimation) or on the right (systematic overestimation). A saturated saturation curve where the half-saturation parameter is near-collinear with baseline often produces this pattern: the sampler consistently underestimates one and overestimates the other.
 
