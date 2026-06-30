@@ -26,7 +26,7 @@ Why? Because a calibrated posterior is, on average, centered at the truth. Somet
 
 Formally: if $\theta^\* \sim p(\theta)$ and $y \sim p(y \mid \theta^\*)$, then the rank statistic
 
-$$r = \#\{\theta_s \leq \theta^\* : \theta_s \sim p(\theta \mid y),\ s = 1, \ldots, S\}$$
+$$r = \{\theta_s \leq \theta^\* : \theta_s \sim p(\theta \mid y),\ s = 1, \ldots, S\}$$
 
 should satisfy $r \sim \text{Uniform}(0, S)$ when marginalizing over both $\theta^\*$ and $y$.
 
