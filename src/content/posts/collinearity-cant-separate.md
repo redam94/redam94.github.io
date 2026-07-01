@@ -3,7 +3,7 @@ title: "Collinearity Doesn't Break Your Model — It Tells You What Your Data Ca
 author: Matthew Reda
 pubDatetime: 2026-06-30T13:08:48Z
 slug: collinearity-cant-separate
-draft: true
+draft: false
 tags:
   - statistics
   - regression
