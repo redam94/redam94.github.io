@@ -3,7 +3,7 @@ title: "More Data, More Confident, Still Wrong: The Table 2 Problem at Scale"
 author: Matthew Reda
 pubDatetime: 2026-07-01T13:12:08Z
 slug: more-data-more-confident-still-wrong
-draft: true
+draft: false
 tags:
   - causal-inference
   - statistics
