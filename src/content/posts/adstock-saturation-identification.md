@@ -3,7 +3,7 @@ title: "Adstock and Saturation Are Not Separately Identified"
 author: Matthew Reda
 pubDatetime: 2026-07-02T13:12:17Z
 slug: adstock-saturation-identification
-draft: true
+draft: false
 tags:
   - marketing-mix-modeling
   - bayesian
