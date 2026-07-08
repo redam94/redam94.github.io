@@ -3,7 +3,7 @@ title: "The Sequential-Stopping Worry Is a Frequentist Problem (With a Bayesian 
 author: Matthew Reda
 pubDatetime: 2026-07-07T13:12:46Z
 slug: bayesian-sequential-stopping-likelihood-principle
-draft: true
+draft: false
 tags:
   - bayesian
   - statistics
