@@ -3,7 +3,7 @@ title: "The Gap-by-Gap Update: How Augur's Continuous-Learning Loop Stays Curren
 author: Matthew Reda
 pubDatetime: 2026-07-11T13:11:08Z
 slug: gap-by-gap-bayesian-updating
-draft: true
+draft: false
 tags:
   - bayesian
   - marketing-mix-modeling
