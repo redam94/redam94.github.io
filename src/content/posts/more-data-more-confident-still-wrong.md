@@ -26,11 +26,11 @@ The question Nafa's simulation asks: if you fit a Bayesian regression with all t
 
 ## The results
 
-| $n$ | Coverage, $Z$ confounded | Coverage, $Z$ unconfounded |
-|-----|--------------------------|---------------------------|
-| 2,500 | 1% | 93% |
-| 5,000 | 1% | 91% |
-| 10,000 | 0% | 90% |
+| $n$    | Coverage, $Z$ confounded | Coverage, $Z$ unconfounded |
+| ------ | ------------------------ | -------------------------- |
+| 2,500  | 1%                       | 93%                        |
+| 5,000  | 1%                       | 91%                        |
+| 10,000 | 0%                       | 90%                        |
 
 The treatment effect on $X$ recovers cleanly in both conditions — around 89–91% coverage throughout. The $X$ coefficient is what the study was designed to identify, and the adjustment set closes its backdoor paths. The $Z$ coefficient collapses when $Z$ is confounded, and collapses harder as the sample grows. Meanwhile, the unconfounded version of $Z$ tracks nominal coverage across all three sample sizes.
 

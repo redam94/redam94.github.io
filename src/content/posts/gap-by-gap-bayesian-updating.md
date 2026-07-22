@@ -20,7 +20,7 @@ An MMM in production isn't fit once. Every period — every week, every month �
 
 **Refit from scratch.** Take all the data up to now, run the full MCMC, replace the old posterior. This is always correct. It's also expensive. A production MMM with a couple of years of weekly data and decent convergence requirements takes 10–30 minutes to fit. Doing that every week is a significant compute budget, and it means the model is always a week stale while the fit runs.
 
-**Posterior-as-prior update.** Use last period's posterior as the prior for this period's fit. Add only the new data to the likelihood. This is the sequential Bayesian update and it's mathematically equivalent to the full refit — *under one condition I'll get to in a moment*.
+**Posterior-as-prior update.** Use last period's posterior as the prior for this period's fit. Add only the new data to the likelihood. This is the sequential Bayesian update and it's mathematically equivalent to the full refit — _under one condition I'll get to in a moment_.
 
 The second option is what Augur uses between experiment waves, and it's the approach I'll dig into here.
 
@@ -36,7 +36,7 @@ In the Gaussian linear case this simplifies to a precision-additive update (the 
 
 ## The condition it fails: parameter drift
 
-Here's the condition I deferred. The sequential update is equivalent to a full refit *when the model is stationary* — when the data-generating process at week $T$ is governed by the same $\theta$ as at week $T-1$.
+Here's the condition I deferred. The sequential update is equivalent to a full refit _when the model is stationary_ — when the data-generating process at week $T$ is governed by the same $\theta$ as at week $T-1$.
 
 That is often not true in marketing. Brand equity shifts. Creative effectiveness decays. A competitor enters. Price elasticity changes. The "true" ROAS for paid search this quarter is not the "true" ROAS from two years ago, and a posterior that contains the full history of stationary data is going to be much too confident — it will have pooled two years of evidence into a tight interval around a value that has since moved.
 
@@ -113,4 +113,4 @@ This is the unsexy part of the continuous-learning loop that doesn't make it int
 
 ---
 
-*The ENBS stopping rule is in [`mmm-framework`](https://github.com/redam94/mmm-framework) under `planner.expected_regret`. The gap-by-gap update builds on work in particle filtering (Doucet & Johansen, 2011, "A Tutorial on Particle Filtering and Smoothing") and sequential Bayesian updating (Raftery et al., 2010, "Online Prediction Under Model Uncertainty via Dynamic Model Averaging"). Related posts: [The Sequential-Stopping Worry Is a Frequentist Problem](/posts/bayesian-sequential-stopping-likelihood-principle/), [Wiring Your MMM to Your Experiments](/posts/closing-the-loop-mmm-calibration/), [Simulation-Based Calibration](/posts/simulation-based-calibration/).*
+_The ENBS stopping rule is in [`mmm-framework`](https://github.com/redam94/mmm-framework) under `planner.expected_regret`. The gap-by-gap update builds on work in particle filtering (Doucet & Johansen, 2011, "A Tutorial on Particle Filtering and Smoothing") and sequential Bayesian updating (Raftery et al., 2010, "Online Prediction Under Model Uncertainty via Dynamic Model Averaging"). Related posts: [The Sequential-Stopping Worry Is a Frequentist Problem](/posts/bayesian-sequential-stopping-likelihood-principle/), [Wiring Your MMM to Your Experiments](/posts/closing-the-loop-mmm-calibration/), [Simulation-Based Calibration](/posts/simulation-based-calibration/)._
