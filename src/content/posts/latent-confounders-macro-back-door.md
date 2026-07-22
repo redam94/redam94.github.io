@@ -29,7 +29,7 @@ spend ──► sales
 
 The back-door path `spend ← economic health → sales` inflates channel coefficients in boom times and deflates them in downturns. A good year for Search isn't just because you spent more on it — consumers were already primed. A naive model can't separate those two things.
 
-The indicators don't close this back-door on their own. They are noisy *measurements* of economic health, not economic health itself. As the [measurement error post](/posts/measurement-error-in-predictors/) showed, noisy predictors attenuate coefficients by a reliability ratio $\lambda = \sigma_{x^*}^2 / (\sigma_{x^*}^2 + \sigma_u^2)$. The same logic applies here: noisy controls attenuate the de-confounding, leaving a residual back-door open.
+The indicators don't close this back-door on their own. They are noisy _measurements_ of economic health, not economic health itself. As the [measurement error post](/posts/measurement-error-in-predictors/) showed, noisy predictors attenuate coefficients by a reliability ratio $\lambda = \sigma_{x^*}^2 / (\sigma_{x^*}^2 + \sigma_u^2)$. The same logic applies here: noisy controls attenuate the de-confounding, leaving a residual back-door open.
 
 ## Three rungs of adjustment
 
@@ -89,4 +89,4 @@ The deeper point is this. A latent confounder isn't a reason to give up on obser
 
 ---
 
-*The `LatentFactorSpec` configuration and `build_latent_state` AR(1) implementation are in [`mmm_framework.mmm_extensions`](https://github.com/redam94/mmm-framework) (`mmm_extensions/config.py` and `mmm_extensions/components/latent_states.py`). The three-rung comparison comes from the Causal Inference in Practice notebook series (notebook 04 — "Latent Confounders") in the same repo, which tests against a synthetic world with a sealed answer key. Related posts: [Noisy Covariates Bias Your Coefficients Toward Zero](/posts/measurement-error-in-predictors/), [Coincidence Is Not Contribution](/posts/coincidence-is-not-contribution/), [Wiring Your MMM to Your Experiments](/posts/closing-the-loop-mmm-calibration/).*
+_The `LatentFactorSpec` configuration and `build_latent_state` AR(1) implementation are in [`mmm_framework.mmm_extensions`](https://github.com/redam94/mmm-framework) (`mmm_extensions/config.py` and `mmm_extensions/components/latent_states.py`). The three-rung comparison comes from the Causal Inference in Practice notebook series (notebook 04 — "Latent Confounders") in the same repo, which tests against a synthetic world with a sealed answer key. Related posts: [Noisy Covariates Bias Your Coefficients Toward Zero](/posts/measurement-error-in-predictors/), [Coincidence Is Not Contribution](/posts/coincidence-is-not-contribution/), [Wiring Your MMM to Your Experiments](/posts/closing-the-loop-mmm-calibration/)._
