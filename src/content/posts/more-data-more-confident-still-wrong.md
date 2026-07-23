@@ -26,11 +26,11 @@ The question Nafa's simulation asks: if you fit a Bayesian regression with all t
 
 ## The results
 
-| $n$ | Coverage, $Z$ confounded | Coverage, $Z$ unconfounded |
-|-----|--------------------------|---------------------------|
-| 2,500 | 1% | 93% |
-| 5,000 | 1% | 91% |
-| 10,000 | 0% | 90% |
+| $n$    | Coverage, $Z$ confounded | Coverage, $Z$ unconfounded |
+| ------ | ------------------------ | -------------------------- |
+| 2,500  | 1%                       | 93%                        |
+| 5,000  | 1%                       | 91%                        |
+| 10,000 | 0%                       | 90%                        |
 
 The treatment effect on $X$ recovers cleanly in both conditions — around 89–91% coverage throughout. The $X$ coefficient is what the study was designed to identify, and the adjustment set closes its backdoor paths. The $Z$ coefficient collapses when $Z$ is confounded, and collapses harder as the sample grows. Meanwhile, the unconfounded version of $Z$ tracks nominal coverage across all three sample sizes.
 
@@ -86,7 +86,7 @@ def fit_coverage(n, delta_u=1.0, n_reps=200, ci=0.90):
             bL = pm.Normal("bL", 0, 2.5)
             bJ = pm.Normal("bJ", 0, 2.5)
             sig = pm.HalfNormal("sig", 1)
-            mu = a + bX*d["X"] + bZ*d["Z"] + bW*d["W"] + bL*d["L"] + bJ*d["J"]
+            mu = a + bX * d["X"] + bZ * d["Z"] + bW * d["W"] + bL * d["L"] + bJ * d["J"]
             pm.Normal("Y", mu=mu, sigma=sig, observed=d["Y"])
             tr = pm.sample(500, tune=500, progressbar=False, chains=4)
         for v, bv in [("X", "bX"), ("Z", "bZ")]:
