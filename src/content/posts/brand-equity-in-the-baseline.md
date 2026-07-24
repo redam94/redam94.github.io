@@ -33,7 +33,7 @@ Both are short-term to medium-term. Even a generous carryover window rarely reac
 
 ## Why brand gets absorbed into base
 
-Long-term brand equity — mental availability, pricing power, baseline demand growth driven by sustained media pressure — operates on a horizon of twelve to thirty-six months or more. Binet & Field's long-run analysis and the Nielsen / Analytic Partners brand meta-analyses consistently find that the *total* media effect (short-term activation plus long-run brand building) is roughly 1.5–2× the short-term effect alone, with the multiplier heavier for brand-building channels like TV, video, OOH, and sponsorships.
+Long-term brand equity — mental availability, pricing power, baseline demand growth driven by sustained media pressure — operates on a horizon of twelve to thirty-six months or more. Binet & Field's long-run analysis and the Nielsen / Analytic Partners brand meta-analyses consistently find that the _total_ media effect (short-term activation plus long-run brand building) is roughly 1.5–2× the short-term effect alone, with the multiplier heavier for brand-building channels like TV, video, OOH, and sponsorships.
 
 A weekly model fit on one to two years of data has neither the span nor the functional form to see that horizon. The slow drift in base demand that TV spending built up over eighteen months looks, to a weekly model, like an intercept shift. It gets credited to "base" — the residual after media, price, and promotions are accounted for — not to the channel that caused it.
 
@@ -50,7 +50,7 @@ carryover_pct = 1 - immediate_pct
 effective_weeks = sum(1 for w in weights if w >= 0.01 * sum(weights))
 ```
 
-This tells you how long the *measured* effect keeps working — whether a channel's effect lands mostly in week 0 or spreads across several weeks. A channel with `effective_weeks = 1` is pure activation; one with `effective_weeks = 8` has substantial carryover and likely some brand-building character.
+This tells you how long the _measured_ effect keeps working — whether a channel's effect lands mostly in week 0 or spreads across several weeks. A channel with `effective_weeks = 1` is pure activation; one with `effective_weeks = 8` has substantial carryover and likely some brand-building character.
 
 But this is answering "how long does the modeled effect persist?" — not "how large is the brand equity effect?" Those are different questions, and conflating them is how you get to confident but wrong strategic recommendations. The `LongTermSection` in the framework reports this split under a prominently labeled caveat that explicitly names the gap.
 
@@ -78,4 +78,4 @@ The model's job is to tell you what the data supports. The gap between what it s
 
 ---
 
-*Grounded in the mmm-framework [`long-term-brand-effects.md` technical doc](https://github.com/redam94/mmm-framework) and the `reporting/helpers/longterm.py` implementation. External references: Binet & Field, "The Long and the Short of It" (IPA, 2013); Analytic Partners, "ROI Genome" (2021); Nielsen, "Evaluate the Impact of Your Marketing with Brand Analytics" (2022). Related: [Adstock and Saturation Are Not Separately Identified](/posts/adstock-saturation-identification/), [Noisy Covariates Bias Your Coefficients Toward Zero](/posts/measurement-error-in-predictors/), [Closing the Loop: MMM Calibration](/posts/closing-the-loop-mmm-calibration/).*
+_Grounded in the mmm-framework [`long-term-brand-effects.md` technical doc](https://github.com/redam94/mmm-framework) and the `reporting/helpers/longterm.py` implementation. External references: Binet & Field, "The Long and the Short of It" (IPA, 2013); Analytic Partners, "ROI Genome" (2021); Nielsen, "Evaluate the Impact of Your Marketing with Brand Analytics" (2022). Related: [Adstock and Saturation Are Not Separately Identified](/posts/adstock-saturation-identification/), [Noisy Covariates Bias Your Coefficients Toward Zero](/posts/measurement-error-in-predictors/), [Closing the Loop: MMM Calibration](/posts/closing-the-loop-mmm-calibration/)._
