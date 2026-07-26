@@ -3,7 +3,7 @@ title: "Brand Equity Lives in the Baseline: Why Weekly MMMs Under-Credit Brand B
 author: Matthew Reda
 pubDatetime: 2026-07-24T13:17:10Z
 slug: brand-equity-in-the-baseline
-draft: true
+draft: false
 tags:
   - marketing-mix-modeling
   - bayesian
