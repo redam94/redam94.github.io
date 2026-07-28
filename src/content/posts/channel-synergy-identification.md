@@ -75,7 +75,7 @@ A stress test on a synthetic world with a planted $\beta_{TV \times Search} > 0$
 
 ## What actually identifies a synergy
 
-To properly identify the interaction term, you need the channels to vary *independently* in a way that isolates the joint effect from the main effects. In practice that means:
+To properly identify the interaction term, you need the channels to vary _independently_ in a way that isolates the joint effect from the main effects. In practice that means:
 
 - **Independent geo holdouts.** Run TV in some markets and not others, independent of your search budget. The interaction varies across markets as a function of the TV condition, not just correlated with overall activity level.
 - **Staggered flight timing.** If TV flights and search budgets sometimes coincide and sometimes don't — by design, not accident — the regression can separate "both on," "only TV," "only search," and "neither."
