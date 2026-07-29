@@ -20,7 +20,7 @@ This isn't a data quality issue. It's a model specification issue. Two campaigns
 
 The 3+ frequency threshold is one of the oldest observations in advertising effectiveness research: marginal returns to additional exposures diminish, and at high enough frequency per person you're mostly wasting money on people who've already been moved as much as they're going to be moved. Getting someone from 0 to 1 exposure is worth far more than getting them from 8 to 9.
 
-A volume MMM doesn't model this. Its saturation curve captures diminishing returns on *aggregate spend*, but that's a different thing. Spend saturation reflects what happens when you've bought up the easy inventory and marginal slots are less efficient. Frequency saturation reflects what happens when any individual person has seen your ad too many times. These can happen independently — you can have spend saturation without frequency wearout (if you have high reach and low frequency), or frequency wearout without spend saturation (if you've concentrated many exposures on a narrow audience).
+A volume MMM doesn't model this. Its saturation curve captures diminishing returns on _aggregate spend_, but that's a different thing. Spend saturation reflects what happens when you've bought up the easy inventory and marginal slots are less efficient. Frequency saturation reflects what happens when any individual person has seen your ad too many times. These can happen independently — you can have spend saturation without frequency wearout (if you have high reach and low frequency), or frequency wearout without spend saturation (if you've concentrated many exposures on a narrow audience).
 
 The planning question "more reach or more frequency?" requires separating the two. A volume model can't.
 
@@ -72,7 +72,7 @@ If you only have impressions and reach, you can derive `frequency = impressions 
 
 The fit registers the **effective frequency** threshold: for the exponential shape, the average exposures at which effectiveness reaches 90% of its asymptote; for the Hill shape, the half-saturation frequency $h$. The reporting surface surfaces this as a concrete planning number:
 
-> *"Effectiveness plateaus around N average exposures — beyond this, spend the next dollar on reach, not frequency."*
+> _"Effectiveness plateaus around N average exposures — beyond this, spend the next dollar on reach, not frequency."_
 
 That number is the model's answer to the planning question. If your current plan delivers 6 average exposures and the effective frequency is 3, a large portion of your impressions are past the point of meaningful return. The reallocation prescription follows: shift budget from frequency (fewer GRPs to the same audience) to reach (broader distribution at lower per-person frequency).
 
@@ -80,7 +80,7 @@ That number is the model's answer to the planning question. If your current plan
 
 The frequency curve is only identified by **frequency variation that is not collinear with reach**. This is the catch.
 
-In practice, reach and frequency often move together. A bigger TV buy reaches more people *and* hits each person more often. If the correlation is high, $k$ and $\beta$ trade off in exactly the same way that adstock and the channel coefficient trade off in a volume model — the posterior spreads across a ridge of equally-plausible combinations. The frequency-saturation curve is weakly identified, and the prior is doing most of the work.
+In practice, reach and frequency often move together. A bigger TV buy reaches more people _and_ hits each person more often. If the correlation is high, $k$ and $\beta$ trade off in exactly the same way that adstock and the channel coefficient trade off in a volume model — the posterior spreads across a ridge of equally-plausible combinations. The frequency-saturation curve is weakly identified, and the prior is doing most of the work.
 
 The fix is the same fix as for any identification problem in MMM: design variation that moves the thing you want to measure independently of everything else. A media plan that varies frequency while holding reach approximately constant — or a geo test that runs high-reach/low-frequency in some markets and low-reach/high-frequency in others — manufactures the variation the model needs. Without that variation, treat the effective-frequency number as directional (the sign of the difference from your current plan is more trustworthy than the magnitude), and confirm a reach-vs-frequency reallocation with an experiment.
 
