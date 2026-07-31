@@ -52,14 +52,14 @@ The `saturation_misspec` scenario in the `mmm-framework` [stress test suite](htt
 
 | channel | true contribution | estimated | relative error | in 90% CI |
 | ------- | ----------------: | --------: | -------------: | :-------: |
-| TV      | 2,658             | 4,397     | **+65%**       | ✗         |
-| Search  | 3,868             | 4,294     | +11%           | ✓         |
-| Social  | 3,106             | 4,767     | **+53%**       | ✗         |
-| Display | 2,456             | 3,271     | +33%           | ✗         |
+| TV      |             2,658 |     4,397 |       **+65%** |     ✗     |
+| Search  |             3,868 |     4,294 |           +11% |     ✓     |
+| Social  |             3,106 |     4,767 |       **+53%** |     ✗     |
+| Display |             2,456 |     3,271 |           +33% |     ✗     |
 
 R-hat: 1.01. Divergences: 0. PPC: passes. Refutation: passes. This is a silent failure by the standard definition: the metrics that analysts act on are all green, and three of four channels are materially wrong.
 
-The mechanism is straightforward once you see it. The concave curve must attribute *some* diminishing return to every unit of spend, including spend that was actually in the true response's linear region. Channels that operate predominantly in that region — where the Hill truth says "approximately proportional response" — get credited as if they were already deep into saturation. The model overestimates contributions across the board because it's reading linear-region spend as if it were diminishing-returns spend.
+The mechanism is straightforward once you see it. The concave curve must attribute _some_ diminishing return to every unit of spend, including spend that was actually in the true response's linear region. Channels that operate predominantly in that region — where the Hill truth says "approximately proportional response" — get credited as if they were already deep into saturation. The model overestimates contributions across the board because it's reading linear-region spend as if it were diminishing-returns spend.
 
 ## Why the standard diagnostics can't see it
 
