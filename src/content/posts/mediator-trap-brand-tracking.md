@@ -18,7 +18,7 @@ The second camp asks a different question than you think it's asking, and gets a
 
 ## What you're actually estimating when you add awareness as a covariate
 
-When brand consideration $A_t$ is on the right-hand side of your sales regression alongside media spend $M_t$, you're asking the sampler to estimate the effect of $M_t$ on sales *holding consideration fixed*. That's the direct effect of media: the part that drives a purchase this week, through channels that don't pass through awareness.
+When brand consideration $A_t$ is on the right-hand side of your sales regression alongside media spend $M_t$, you're asking the sampler to estimate the effect of $M_t$ on sales _holding consideration fixed_. That's the direct effect of media: the part that drives a purchase this week, through channels that don't pass through awareness.
 
 The problem is that's usually not what you wanted. You wanted the **total effect** of media — the direct piece plus the part that works by building brand consideration, which then drives purchase down the line. Conditioning on $A_t$ in the regression closes the indirect path. The coefficient on media shrinks toward zero by exactly the fraction of media's total effect that operates through awareness.
 
@@ -31,7 +31,7 @@ Media affects sales through (at least) two distinct paths:
 1. $M_t \to Y_t$ — the direct path: salience, in-period activation, immediate purchase response
 2. $M_t \to A_t \to Y_t$ — the indirect path: brand building, consideration shift, future purchase probability
 
-A traditional MMM estimates one coefficient that absorbs both paths together. That's useful for total ROAS but tells you nothing about *how* the channel is working or on what timescale. Adding $A_t$ as a covariate isolates path 1 but kills path 2 — you're optimizing the direct effect while declaring victory on the total.
+A traditional MMM estimates one coefficient that absorbs both paths together. That's useful for total ROAS but tells you nothing about _how_ the channel is working or on what timescale. Adding $A_t$ as a covariate isolates path 1 but kills path 2 — you're optimizing the direct effect while declaring victory on the total.
 
 The structural fix is to model both paths explicitly:
 
@@ -102,7 +102,7 @@ with pm.Model():
 
 This is more to fit, but you get two things back that a traditional model can't provide: a posterior over the latent awareness trajectory (useful on its own for brand monitoring), and a decomposition of media's effect into the portion that goes through brand and the portion that doesn't.
 
-There's also a third option the mmm-framework makes explicit: a **latent mediator**, where you have *no* tracker data at all but believe the awareness pathway exists based on domain knowledge. You can include a latent state that evolves as a function of media inputs and use the temporal patterns in the sales response to partially constrain its contribution. The identification is weaker than when you have survey data, but representing the pathway explicitly is still better than forcing all media response into the direct channel — it reflects what you believe about the mechanism, and the wide posteriors you get tell you honestly what the data can and can't pin down.
+There's also a third option the mmm-framework makes explicit: a **latent mediator**, where you have _no_ tracker data at all but believe the awareness pathway exists based on domain knowledge. You can include a latent state that evolves as a function of media inputs and use the temporal patterns in the sales response to partially constrain its contribution. The identification is weaker than when you have survey data, but representing the pathway explicitly is still better than forcing all media response into the direct channel — it reflects what you believe about the mechanism, and the wide posteriors you get tell you honestly what the data can and can't pin down.
 
 ## What it means for ROAS and planning
 
