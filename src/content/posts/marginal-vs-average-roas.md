@@ -50,7 +50,7 @@ $$\text{Marginal ROAS} = \beta \cdot \lambda \cdot e^{-\lambda s}$$
 
 Average ROAS starts high and declines slowly as spend grows — the numerator is bounded by $\beta$ but the denominator keeps growing. Marginal ROAS starts at $\beta \lambda$ (the initial slope) and decays exponentially toward zero. At high spend, marginal ROAS collapses well before average ROAS does.
 
-Concretely. Say Search has parameters $\beta = 8$, $\lambda = 3$, and is running at $s = 1.5$ (in millions). Its saturation factor is $1 - e^{-4.5} \approx 0.989$ — nearly fully saturated. Average ROAS: $8 \times 0.989 / 1.5 \approx 5.3$×. Marginal ROAS: $8 \times 3 \times e^{-4.5} \approx 0.26$×. 
+Concretely. Say Search has parameters $\beta = 8$, $\lambda = 3$, and is running at $s = 1.5$ (in millions). Its saturation factor is $1 - e^{-4.5} \approx 0.989$ — nearly fully saturated. Average ROAS: $8 \times 0.989 / 1.5 \approx 5.3$×. Marginal ROAS: $8 \times 3 \times e^{-4.5} \approx 0.26$×.
 
 The dashboard says 5.3×. The next dollar is worth 0.26×. Those are not close, and the gap is the shape of the curve, not noise.
 
@@ -78,7 +78,7 @@ def _greedy_allocate(curves, spend_grid, total_budget, lo_spend, hi_spend, n_ste
     return alloc
 ```
 
-Note what this is optimizing *against*: not which channel has the highest average ROAS, but which has the highest marginal return right now given current allocation. As spend increases in a channel, its marginal return falls and eventually other channels become better uses of the next increment.
+Note what this is optimizing _against_: not which channel has the highest average ROAS, but which has the highest marginal return right now given current allocation. As spend increases in a channel, its marginal return falls and eventually other channels become better uses of the next increment.
 
 ## Uncertainty about the margin
 
@@ -92,7 +92,7 @@ The lifecycle notebooks track this explicitly: a "reallocation with a confidence
 
 A few things to do differently:
 
-**Don't use average ROAS to rank channels for incremental budget.** Average ROAS ranks historical efficiency. It rewards channels that were efficient early and have been spending heavily since. Marginal ROAS ranks what happens to the *next* dollar.
+**Don't use average ROAS to rank channels for incremental budget.** Average ROAS ranks historical efficiency. It rewards channels that were efficient early and have been spending heavily since. Marginal ROAS ranks what happens to the _next_ dollar.
 
 **Check where each channel sits on its curve.** If a channel's spend is in the flat upper range of its saturation function — close to the asymptote — its marginal ROAS is near zero regardless of what the average looks like. The diagnostic: if doubling the spend barely changes predicted contribution, you're saturated.
 
