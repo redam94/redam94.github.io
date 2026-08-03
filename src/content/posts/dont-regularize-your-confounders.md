@@ -32,7 +32,7 @@ A confounder is a variable that causes both your treatment (media spend) and you
 
 You include these variables not because they're good predictors of sales — though they are — but because leaving them out biases your media coefficients. The causal graph has a backdoor path $X \leftarrow Z \rightarrow Y$, and including $Z$ in the model closes it. That's what "controlling for $Z$" means.
 
-Now apply a horseshoe prior to $Z$. When $Z$ has a moderate effect on $Y$ but is also collinear with $X$ (as confounders typically are), the posterior may shrink $Z$'s coefficient toward zero. Not to zero — but toward it. You are, in effect, choosing to adjust *less* for the confounder than a flat prior would.
+Now apply a horseshoe prior to $Z$. When $Z$ has a moderate effect on $Y$ but is also collinear with $X$ (as confounders typically are), the posterior may shrink $Z$'s coefficient toward zero. Not to zero — but toward it. You are, in effect, choosing to adjust _less_ for the confounder than a flat prior would.
 
 ## Why partial adjustment is worse than no adjustment
 
@@ -91,4 +91,4 @@ Pre-specify which variables are confounders and which are candidates before you 
 
 ---
 
-_Source: the confounder/precision-control distinction is documented explicitly in [`mmm-framework`](https://github.com/redam94/mmm-framework)'s model specification API. The bias formula for omitted-variable bias is standard; see Angrist & Pischke (2009), _Mostly Harmless Econometrics_, ch. 3. Related posts: [The Illusion of Significance](/posts/variable-selection-mmm/) on p-value selection, [Coincidence Is Not Contribution](/posts/coincidence-is-not-contribution/) on identification, [The Assumptions Are the Model](/posts/the-assumptions-are-the-model/) on why the modeling decision matters._
+_Source: the confounder/precision-control distinction is documented explicitly in [`mmm-framework`](https://github.com/redam94/mmm-framework)'s model specification API. The bias formula for omitted-variable bias is standard; see Angrist & Pischke (2009), \_Mostly Harmless Econometrics_, ch. 3. Related posts: [The Illusion of Significance](/posts/variable-selection-mmm/) on p-value selection, [Coincidence Is Not Contribution](/posts/coincidence-is-not-contribution/) on identification, [The Assumptions Are the Model](/posts/the-assumptions-are-the-model/) on why the modeling decision matters.\_
