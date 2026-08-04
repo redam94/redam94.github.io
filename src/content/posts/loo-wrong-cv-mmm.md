@@ -35,16 +35,16 @@ The result: row-wise LOO flatters the flexible model relative to the parametric 
 
 I ran this on a controlled simulation: 156 weekly observations with three media channels through geometric adstock and a Hill saturation curve, an AR(1) residual with autocorrelation 0.6, and heteroskedastic noise on fifteen promotional weeks. Both candidate models are linear in their parameters with Gaussian priors, so every posterior is closed-form — no sampler involved, no importance sampling required. The only thing that varies across the rows in the table below is which weeks are available for training.
 
-| Fold | Training weeks | Local-level elpd | Parametric elpd | Δelpd | SE | z |
-|---|---|---|---|---|---|---|
-| Leave-one-out (row-wise) | 155 | 49.9 | 58.6 | **+8.8** | 5.1 | +1.73 |
-| Leave-3-out block | 153 | 65.8 | 64.1 | **−1.7** | 4.1 | −0.41 |
-| Leave-5-out block | 151 | 73.1 | 66.4 | **−6.7** | 3.8 | −1.74 |
-| Leave-future-out (1 step) | 52 to 103 | 58.2 | 57.7 | **−0.5** | 7.9 | −0.06 |
+| Fold                      | Training weeks | Local-level elpd | Parametric elpd | Δelpd    | SE  | z     |
+| ------------------------- | -------------- | ---------------- | --------------- | -------- | --- | ----- |
+| Leave-one-out (row-wise)  | 155            | 49.9             | 58.6            | **+8.8** | 5.1 | +1.73 |
+| Leave-3-out block         | 153            | 65.8             | 64.1            | **−1.7** | 4.1 | −0.41 |
+| Leave-5-out block         | 151            | 73.1             | 66.4            | **−6.7** | 3.8 | −1.74 |
+| Leave-future-out (1 step) | 52 to 103      | 58.2             | 57.7            | **−0.5** | 7.9 | −0.06 |
 
 Δelpd is local-level minus parametric, so positive numbers favor the flexible baseline. Read the first row: row-wise LOO puts the local-level model ahead by 8.8 nats with a standard error of 5.1. The kind of gap that gets written into a slide deck as "the state-space specification fits materially better."
 
-Now read the second row. Leave-3-out block drops the held-out week *and its two immediate neighbors* from the training set. The training set shrinks from 155 weeks to 153 — two observations out of 155. That is the only change. The verdict goes from +8.8 to −1.7 and changes sign. Nothing about the model, the data, or the scored weeks moved.
+Now read the second row. Leave-3-out block drops the held-out week _and its two immediate neighbors_ from the training set. The training set shrinks from 155 weeks to 153 — two observations out of 155. That is the only change. The verdict goes from +8.8 to −1.7 and changes sign. Nothing about the model, the data, or the scored weeks moved.
 
 The honest forward fold — train on the first 52 weeks, forecast the next 52, roll forward — puts them 0.5 nats apart with a standard error of 7.9. That's nothing.
 
