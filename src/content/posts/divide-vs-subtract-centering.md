@@ -54,7 +54,7 @@ The technical term for what you've done is create **ratio-normed dependent varia
 
 ## An additional wrinkle: log of mean vs. mean of log
 
-There is a related mistake where the normalization divides raw sales by the unit's *raw* mean before logging:
+There is a related mistake where the normalization divides raw sales by the unit's _raw_ mean before logging:
 
 $$\tilde{y}_{it} = \frac{y_{it}}{\bar{y}_i}, \qquad z_{it} = \log \tilde{y}_{it} = \log y_{it} - \log \bar{y}_i$$
 
@@ -68,7 +68,7 @@ So even this "divide-then-log" version is subtracting the wrong constant. The ga
 
 This exact prohibition shows up in my [`mmm-framework`](https://github.com/redam94/mmm-framework) documentation. From the data contract section of the continuous-learning implementation guide:
 
-> "Spend is divided by a global per-channel reference constant (e.g. each channel's median or a fixed planning spend)… The reference is a *fixed constant per channel*, never a cluster-specific mean — dividing by per-geo means induces the ratio/between-signal-erasure pathology and is prohibited."
+> "Spend is divided by a global per-channel reference constant (e.g. each channel's median or a fixed planning spend)… The reference is a _fixed constant per channel_, never a cluster-specific mean — dividing by per-geo means induces the ratio/between-signal-erasure pathology and is prohibited."
 
 The same principle applies to the outcome. The outcome is kept in natural units — never normalized, centered, or logged — so that incrementality and marginal ROAS stay interpretable and the KKT funding-line algebra holds. The geo-specific baseline is handled through a random intercept (`a_geo`) in the likelihood, not through a pre-transformation of the data.
 
