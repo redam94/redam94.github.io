@@ -35,7 +35,7 @@ Model A says your next dollar is worth 43 cents on the dollar (you're on a flat 
 
 ## Why adstock is the culprit
 
-This is not the ridge I wrote about in [Adstock and Saturation Are Not Separately Identified](/posts/adstock-saturation-identification/). That post covers weak identification *within* a model family — the banana-shaped joint posterior of $(\alpha, \kappa, \beta)$ when all three trade off inside a single MMM. That failure announces itself: the posterior is wide, the pair-plot has a diagonal smear, the model tells you it doesn't know.
+This is not the ridge I wrote about in [Adstock and Saturation Are Not Separately Identified](/posts/adstock-saturation-identification/). That post covers weak identification _within_ a model family — the banana-shaped joint posterior of $(\alpha, \kappa, \beta)$ when all three trade off inside a single MMM. That failure announces itself: the posterior is wide, the pair-plot has a diagonal smear, the model tells you it doesn't know.
 
 What happens between model families is the opposite. Inside model B, $\beta_t$ is well-identified given the specification. Inside model A, the saturation parameter is well-identified given the specification. Both posteriors are sharp. They're sharp about incompatible things, and nothing inside either fit is aware the other exists.
 
@@ -43,7 +43,7 @@ The mechanism is a single line of algebra. Set the two contributions equal and s
 
 $$\beta_t\, a_t = \beta\, S(a_t) \;\Rightarrow\; \beta_t = \beta\,\frac{S(a_t)}{a_t}$$
 
-The quantity $S(a)/a$ is the **secant slope** — the average productivity of a dollar along the true concave curve at the current operating point. For any concave $S$ with $S(0)=0$, it falls strictly as $a$ rises. So when spend climbs, the secant slope falls, and model B interprets this mechanical movement along a curve as *fading effectiveness over time*. The fabricated fatigue story runs in whatever direction the media budget runs.
+The quantity $S(a)/a$ is the **secant slope** — the average productivity of a dollar along the true concave curve at the current operating point. For any concave $S$ with $S(0)=0$, it falls strictly as $a$ rises. So when spend climbs, the secant slope falls, and model B interprets this mechanical movement along a curve as _fading effectiveness over time_. The fabricated fatigue story runs in whatever direction the media budget runs.
 
 The reverse failure is symmetric and just as common: fit model A to a world with genuine creative fatigue (no saturation, truly declining coefficient), and the model invents a saturation curve steep enough to absorb the decline. It tells you marginal ROAS is 0.52 in a world where the true marginal is 1.00, and promises an efficiency gain from a budget cut that would deliver nothing.
 
