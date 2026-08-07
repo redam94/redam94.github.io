@@ -12,7 +12,7 @@ tags:
 description: Summing spend data before fitting a saturation curve makes the model fit better and report the marginal return wrong. Jensen's inequality explains it; the fix is upstream of the model.
 ---
 
-Every MMM I've built starts the same way: pull the spend data, sum it to weekly national totals, fit the saturation curve. That's the standard pipeline. It's also quietly bending the answer — because coarser aggregation makes the fit look *better* while making the marginal return *worse*.
+Every MMM I've built starts the same way: pull the spend data, sum it to weekly national totals, fit the saturation curve. That's the standard pipeline. It's also quietly bending the answer — because coarser aggregation makes the fit look _better_ while making the marginal return _worse_.
 
 The mechanism has a name: Jensen's inequality. It's been in the econometrics literature since the 1990s and shows up directly in marketing mix models. It's underappreciated.
 
@@ -38,11 +38,11 @@ Micro-level spend is never uniform. Weekdays outspend weekends. Promotional flig
 
 In a simulation using the `mmm-framework`'s own saturation function — one channel, true daily response, no adstock — aggregating from daily to 28-day grain produces this:
 
-| Grain | MAPE | R² | Marginal return bias |
-|-------|------|----|----------------------|
-| Daily | 1.37% | 0.946 | ~0% |
-| Weekly | ~1.1% | ~0.96 | ~10% |
-| Monthly | 0.48% | 0.974 | **−24.8%** |
+| Grain   | MAPE  | R²    | Marginal return bias |
+| ------- | ----- | ----- | -------------------- |
+| Daily   | 1.37% | 0.946 | ~0%                  |
+| Weekly  | ~1.1% | ~0.96 | ~10%                 |
+| Monthly | 0.48% | 0.974 | **−24.8%**           |
 
 In-sample MAPE drops by two-thirds. R² goes up. Every metric in a standard model review improves. The marginal return at current spend — the number a budget optimizer uses to decide whether the next dollar goes to this channel — drifts 25% below truth, monotonically, with no diagnostic flagging it.
 
@@ -52,7 +52,7 @@ That's the trap: a model review flags a high MAPE as a warning. It doesn't flag 
 
 The average return (total response divided by total spend) floats around its true value across aggregation levels, without a consistent trend. The marginal return (slope of the fitted curve at the current operating point) deteriorates almost in a straight line.
 
-Fitting the curve to reproduce the total response near the center of the data pins the *level* tightly at the observed spend level — that's what MAPE measures. The *slope* is a separate quantity, determined by how the curve bends to explain variation away from center. Aggregation degrades exactly that signal: folding heterogeneous micro-level draws into one number removes local curvature information before the model sees it.
+Fitting the curve to reproduce the total response near the center of the data pins the _level_ tightly at the observed spend level — that's what MAPE measures. The _slope_ is a separate quantity, determined by how the curve bends to explain variation away from center. Aggregation degrades exactly that signal: folding heterogeneous micro-level draws into one number removes local curvature information before the model sees it.
 
 Christen, Gupta, Porter, Staelin and Wittink (1997) established this for nonlinear scanner-data response curves. Same mechanism, same direction of bias. The MMM literature hasn't imported the result widely enough.
 
@@ -68,7 +68,7 @@ The uncomfortable implication: coarser aggregation looks better in every review 
 
 **Check within-cell heterogeneity before fitting.** Compute the coefficient of variation of spend across the micro-units summed into each reporting period. A channel with flat daily spend within weeks has little to worry about. A channel that alternates between flighted pushes and near-zero quiet periods has a real problem. One line of code, runs before the model.
 
-**Prefer spatial disaggregation over temporal.** The `mmm-framework`'s `vary_media_by_geo` option (off by default) estimates per-geography effects under partial pooling. Turning it on reduces the spatial half of the collapse without touching the adstock retention rate. Going finer in *time* is a genuine tradeoff: a channel with a two-week half-life has per-week retention of about 0.71, but loading daily data turns the same physical carryover into per-day retention of about 0.95. That high autocorrelation worsens the within-family identification problem covered in [Adstock and Saturation Are Not Separately Identified](/posts/adstock-saturation-identification/). Spatial disaggregation sidesteps that tradeoff.
+**Prefer spatial disaggregation over temporal.** The `mmm-framework`'s `vary_media_by_geo` option (off by default) estimates per-geography effects under partial pooling. Turning it on reduces the spatial half of the collapse without touching the adstock retention rate. Going finer in _time_ is a genuine tradeoff: a channel with a two-week half-life has per-week retention of about 0.71, but loading daily data turns the same physical carryover into per-day retention of about 0.95. That high autocorrelation worsens the within-family identification problem covered in [Adstock and Saturation Are Not Separately Identified](/posts/adstock-saturation-identification/). Spatial disaggregation sidesteps that tradeoff.
 
 **Fit multiple aggregation levels and compare decisions, not fit statistics.** If the marginal return at current spend moves materially between a weekly and monthly model that both report excellent MAPE, the grain is doing more work than the functional form. That deserves a sentence in the report: "The marginal return estimate varies between X and Y across aggregation levels; we treat the finest available grain as the reference." That's an honest finding, not a modeling failure.
 
