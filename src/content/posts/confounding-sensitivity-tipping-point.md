@@ -36,7 +36,7 @@ This is exact, not Monte Carlo. For each posterior draw $\hat\tau_s$, the bias-a
 
 The **tipping point** is the value of $\mu_\beta$ at which $P(\tau > r)$ crosses your decision threshold (say, 0.50 for a coin-flip on the conclusion, or 0.90 for a high-credibility standard). Bisecting the closed-form CDF finds it exactly:
 
-> *"TV's ROI would have to be overstated by more than 24% of its own size before it stops clearing break-even."*
+> _"TV's ROI would have to be overstated by more than 24% of its own size before it stops clearing break-even."_
 
 That sentence is something a CFO can interrogate. "Is 24% plausible?" is a question with an answer. "Did we account for all confounders?" is not.
 
@@ -50,9 +50,9 @@ In `mmm-framework`, `bias_sensitivity_report` produces this surface as an array 
 
 ## The Cinelli–Hazlett benchmark
 
-The tipping point is an argument, not a slider, only if you can say whether the required bias level is *plausible*. That's where the Cinelli–Hazlett omitted-variable-bias formula comes in.
+The tipping point is an argument, not a slider, only if you can say whether the required bias level is _plausible_. That's where the Cinelli–Hazlett omitted-variable-bias formula comes in.
 
-The idea: take a covariate you *did* measure — say, Price — and compute how strongly it correlates with both your spend and your outcome (its partial $R^2$ in each direction). Then use the formula to bound the bias a hypothetical unmeasured confounder would introduce if it were as strong as Price:
+The idea: take a covariate you _did_ measure — say, Price — and compute how strongly it correlates with both your spend and your outcome (its partial $R^2$ in each direction). Then use the formula to bound the bias a hypothetical unmeasured confounder would introduce if it were as strong as Price:
 
 $$|\text{bias}| = \text{SE} \cdot \sqrt{df} \cdot \sqrt{\frac{R^2_{Y \sim Z \mid X} \cdot R^2_{D \sim Z \mid X}}{1 - R^2_{D \sim Z \mid X}}}$$
 
@@ -60,7 +60,7 @@ where $Z$ is the confounder, $D$ is the spend variable, $Y$ is the outcome, and 
 
 The output is:
 
-> *"A confounder as strong as Price implies 9% — well inside the 24% it would take."*
+> _"A confounder as strong as Price implies 9% — well inside the 24% it would take."_
 
 This is the benchmark. It converts "how strong is too strong?" into "is the required confounder stronger than things we know exist?" When the answer is "you'd need something 3× as strong as Price, and Price is the most correlated control in the model," the conclusion is resilient. When the answer is "you'd need something weaker than Holiday Dummy," it's fragile.
 
