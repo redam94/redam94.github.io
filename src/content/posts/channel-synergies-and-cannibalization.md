@@ -18,9 +18,9 @@ That's a modeling choice, not a data finding. And for some channel pairs it's al
 
 ## Two real patterns of non-additivity
 
-**Cannibalization.** Performance Max and Branded Search compete for the same intent signal. When someone types your brand name after seeing a PMax ad, Google can serve either the PMax result or the organic/branded-search result. If you're buying both, you're bidding against yourself in some fraction of auctions. Mathematically, the marginal value of an extra dollar in PMax is lower when you're already spending heavily on Branded Search, because some of that PMax dollar is just capturing traffic that Branded Search would have caught anyway. The joint response is *less* than the sum of the individual responses.
+**Cannibalization.** Performance Max and Branded Search compete for the same intent signal. When someone types your brand name after seeing a PMax ad, Google can serve either the PMax result or the organic/branded-search result. If you're buying both, you're bidding against yourself in some fraction of auctions. Mathematically, the marginal value of an extra dollar in PMax is lower when you're already spending heavily on Branded Search, because some of that PMax dollar is just capturing traffic that Branded Search would have caught anyway. The joint response is _less_ than the sum of the individual responses.
 
-**Complementarity.** Reddit and Search can tell the opposite story. Reddit drives upper-funnel demand — people encounter your brand during content consumption and develop intent they didn't have before. That intent then converts through Search. So the marginal value of Search spend is *higher* when you're also running Reddit: more people are in the market because of it. The joint response exceeds the sum of the individual responses.
+**Complementarity.** Reddit and Search can tell the opposite story. Reddit drives upper-funnel demand — people encounter your brand during content consumption and develop intent they didn't have before. That intent then converts through Search. So the marginal value of Search spend is _higher_ when you're also running Reddit: more people are in the market because of it. The joint response exceeds the sum of the individual responses.
 
 Neither of these patterns violates any law of nature. They're just the normal mechanics of how advertising works across a funnel, and ignoring them in the model has consequences.
 
@@ -44,7 +44,7 @@ The saturation functions $f_c \in [0,1]$ keep the interaction term scaled sensib
 
 Here's the catch. Fitting $\gamma_{cc'}$ requires variation in the **joint allocation** of two channels — cases where spend on both channels moved together, moved in opposite directions, and moved independently. Time-series MMM data almost never provides this. In practice, budget decisions are correlated: when you increase PMax you often increase Search; when you cut one you cut both. The co-movement means the interaction term is nearly collinear with the main effects, and the posterior on $\gamma$ tracks the prior more than the data.
 
-The only way to cleanly identify the cross-partial is experimental: you need geo or audience holdouts where the joint allocation is *deliberately designed* to provide the required variation.
+The only way to cleanly identify the cross-partial is experimental: you need geo or audience holdouts where the joint allocation is _deliberately designed_ to provide the required variation.
 
 The design that works is a **central composite design (CCD)** adapted for the channel space. For each channel pair you want to identify:
 
