@@ -40,7 +40,7 @@ $$\beta_t\, a_t = \beta\, S(a_t) \quad\Longrightarrow\quad \beta_t = \beta\,\fra
 
 The quantity $S(a)/a$ is the **secant slope** of the response curve — average return per unit of spend at the current operating point. For any concave $S$ with $S(0) = 0$, this falls strictly as spend rises.
 
-Everything follows from that identity. A channel being scaled up walks rightward along the curve; its secant slope falls; the drift model reports that effectiveness is declining. A channel being wound down walks leftward; its secant slope rises; the drift model reports that the channel is *getting better*. The "trajectory" is the response curve, re-indexed by the calendar and read as if it were a trend.
+Everything follows from that identity. A channel being scaled up walks rightward along the curve; its secant slope falls; the drift model reports that effectiveness is declining. A channel being wound down walks leftward; its secant slope rises; the drift model reports that the channel is _getting better_. The "trajectory" is the response curve, re-indexed by the calendar and read as if it were a trend.
 
 The symmetric failure is just as common and gets less attention. In a world with no saturation whatsoever — a genuinely linear channel whose creative is actually fading — the static MMM has no way to represent the fade. So it spends its only flexibility on the curvature parameter and invents a saturation curve. At the numbers from `synth.dgp.make_time_varying_beta` in [`mmm-framework`](https://github.com/redam94/mmm-framework), that invented curve is steep enough to report a marginal-to-average ratio of 0.52 in a world where the true ratio is exactly 1.0, and to promise a 16% efficiency gain from a budget cut that would change nothing.
 
