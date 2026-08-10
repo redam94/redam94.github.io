@@ -1,78 +1,94 @@
 ---
-title: "Saturation or Creative Fatigue? Your MMM Can't Tell the Difference"
+title: "Saturation or Fatigue? Your MMM Can't Tell the Difference"
 author: Matthew Reda
-pubDatetime: 2026-08-06T13:29:16Z
+pubDatetime: 2026-08-10T13:34:15Z
 slug: saturation-or-fatigue
 draft: true
 tags:
   - marketing-mix-modeling
   - bayesian
   - statistics
-  - measurement
-description: A concave response curve and a fading linear coefficient fit the same media data to within measurement error and recommend opposite budgets — and the mechanism that makes them indistinguishable is adstock.
+  - identification
+description: A channel's ROAS has been sliding for years. Your MMM says it's saturated; cut the budget and efficiency rises. A different MMM says the creative is wearing out; fix the channel. Both models fit identically. Here's why, and what breaks the tie.
 ---
 
-There's a story that shows up in almost every annual marketing review: a channel's performance per dollar has been sliding. The room splits immediately into two camps.
+A channel's contribution per dollar has been falling for two years. There are exactly two stories you can tell about that.
 
-The first camp says **diminishing returns**. You've climbed the concave part of the response curve, you're on the flat part, and the fix is to redeploy dollars somewhere steeper. The model backs this up: a Hill or logistic saturation function, clear curvature, marginal ROAS well below average ROAS.
+The first is **diminishing returns**: the response curve is concave, spend has climbed onto the flat part, and the fix is to move dollars somewhere with a steeper slope. The second is **declining effectiveness**: the channel itself is getting worse — worn creative, a maturing platform, an auction that has turned against you — and the fix is to repair or wind down the channel.
 
-The second camp says **creative fatigue**. The response curve hasn't changed shape, but the creative is worn out, the platform dynamics have shifted, and the channel's coefficient has been quietly drifting down. The fix is to refresh the creative or wind the channel down. A different model backs this up too: no saturation at all, a linear response, but a smoothly declining effectiveness parameter across the window.
+Different diagnoses. Different levers. Potentially millions of dollars in different directions.
 
-Both camps have models. Both models fit the data. They can't both be right, and the weekly sales series cannot tell you which one is.
+Here's the problem: both stories fit your data. Not approximately — to within 0.001 of R², week by week, indistinguishable. And they disagree by more than 2× on the single number the budget optimizer runs on: marginal-to-average ROAS.
 
 ## Two models, one series
 
-Write them side by side:
+Write the models side by side. Both use the same baseline, the same adstocked media variable $a_t$, and explain the same KPI. They differ in one place:
 
-$$\text{A (static nonlinear):}\quad c_t = \beta\, S(a_t)$$
-$$\text{B (linear + drift):}\quad c_t = \beta_t\, a_t$$
+$$\text{Model A (saturation):}\quad c_t = \beta\, S(a_t)$$
 
-Model A is the standard MMM — a fixed coefficient multiplied by a concave saturation function $S$ applied to the adstocked spend $a_t$. Model B has no saturation at all, but the effectiveness $\beta_t$ drifts smoothly over time.
+$$\text{Model B (drift):}\quad c_t = \beta_t\, a_t$$
 
-In the `mmm-framework` simulation I built for the [saturation identification docs](https://redam94.github.io/mmm-framework/blog-saturation-or-fatigue.html): 156 weeks, one channel, geometric adstock with 0.70 retention, realistic noise (R² near 0.87). One story is true by construction. Both families fit the series. Their predictive means never separate by more than half a residual standard deviation in any week. R² differs by 0.001. But they disagree by a factor of 2.3 on the single quantity a budget optimizer consumes: the ratio of marginal to average ROAS.
+Model A is the standard MMM: a fixed coefficient in front of a concave saturation function. Model B has no curvature at all — the response is linear in spend, but effectiveness $\beta_t$ drifts smoothly across the window.
 
-Model A says your next dollar is worth 43 cents on the dollar (you're on a flat curve). Model B says it's worth exactly what your previous dollars earned (linear response, marginal equals average). One model says to cut; the other says to hold. Both are statistically indistinguishable from the data you have.
+These two models are **observationally equivalent** on a typical media time series. No amount of data of the same kind separates them, because they make different predictions only under spend schedules the data has never contained.
 
-## Why adstock is the culprit
+## The aliasing has an exact form
 
-This is not the ridge I wrote about in [Adstock and Saturation Are Not Separately Identified](/posts/adstock-saturation-identification/). That post covers weak identification _within_ a model family — the banana-shaped joint posterior of $(\alpha, \kappa, \beta)$ when all three trade off inside a single MMM. That failure announces itself: the posterior is wide, the pair-plot has a diagonal smear, the model tells you it doesn't know.
+Set the two contributions equal and solve for what the drift model is actually estimating:
 
-What happens between model families is the opposite. Inside model B, $\beta_t$ is well-identified given the specification. Inside model A, the saturation parameter is well-identified given the specification. Both posteriors are sharp. They're sharp about incompatible things, and nothing inside either fit is aware the other exists.
+$$\beta_t\, a_t = \beta\, S(a_t) \quad\Longrightarrow\quad \beta_t = \beta\,\frac{S(a_t)}{a_t}$$
 
-The mechanism is a single line of algebra. Set the two contributions equal and solve for the drifting coefficient:
+The quantity $S(a)/a$ is the **secant slope** of the response curve — average return per unit of spend at the current operating point. For any concave $S$ with $S(0) = 0$, this falls strictly as spend rises.
 
-$$\beta_t\, a_t = \beta\, S(a_t) \;\Rightarrow\; \beta_t = \beta\,\frac{S(a_t)}{a_t}$$
+Everything follows from that identity. A channel being scaled up walks rightward along the curve; its secant slope falls; the drift model reports that effectiveness is declining. A channel being wound down walks leftward; its secant slope rises; the drift model reports that the channel is *getting better*. The "trajectory" is the response curve, re-indexed by the calendar and read as if it were a trend.
 
-The quantity $S(a)/a$ is the **secant slope** — the average productivity of a dollar along the true concave curve at the current operating point. For any concave $S$ with $S(0)=0$, it falls strictly as $a$ rises. So when spend climbs, the secant slope falls, and model B interprets this mechanical movement along a curve as _fading effectiveness over time_. The fabricated fatigue story runs in whatever direction the media budget runs.
+The symmetric failure is just as common and gets less attention. In a world with no saturation whatsoever — a genuinely linear channel whose creative is actually fading — the static MMM has no way to represent the fade. So it spends its only flexibility on the curvature parameter and invents a saturation curve. At the numbers from `synth.dgp.make_time_varying_beta` in [`mmm-framework`](https://github.com/redam94/mmm-framework), that invented curve is steep enough to report a marginal-to-average ratio of 0.52 in a world where the true ratio is exactly 1.0, and to promise a 16% efficiency gain from a budget cut that would change nothing.
 
-The reverse failure is symmetric and just as common: fit model A to a world with genuine creative fatigue (no saturation, truly declining coefficient), and the model invents a saturation curve steep enough to absorb the decline. It tells you marginal ROAS is 0.52 in a world where the true marginal is 1.00, and promises an efficiency gain from a budget cut that would deliver nothing.
+## Adstock is the culprit
 
-The reason this conflation persists is adstock. Geometric adstock with retention $\alpha$ is:
+This aliasing requires autocorrelation in the media regressor, and that's the uncomfortable part: you install that autocorrelation yourself, deliberately, every time you apply geometric adstock.
 
-$$a_t = \alpha\, a_{t-1} + x_t$$
+Geometric adstock with retention $\alpha$ is:
 
-That is the definition of an AR(1) process. It installs autocorrelation into the media regressor — the exact condition under which a static nonlinear response and a smooth drifting linear one become observationally equivalent. The device you add to capture carryover manufactures the regressor property that dissolves the saturation curve you then optimize against. Higher retention, more autocorrelation, more confusion. At $\alpha = 0.7$, the lag-1 autocorrelation of the adstocked series is already around 0.71.
+$$a_t = x_t + \alpha\, a_{t-1}$$
 
-The result — that nonlinear and time-varying effects are not identifiable from standard marketing mix data when the media regressor is autocorrelated — was established formally by Dew, Padilla & Shchetkina (2024). The secant-slope framing above is my compact restatement of the mechanism.
+That's an AR(1) process driven by weekly spend. If spend were white noise, the adstocked series would have lag-1 autocorrelation of exactly $\alpha$ — not an approximation, the recursion itself. At $\alpha = 0.70$ (unremarkable for weekly TV), the adstocked regressor sits at $\rho \approx 0.70$. At $\alpha = 0.85$, it reaches $\rho \approx 0.79$. A 156-week window at $\rho = 0.80$ carries about 18 weeks' worth of independent information about the media variable — not three years' worth.
 
-## What to do about it
+This is worth sitting with. The device introduced to capture carryover manufactures the exact regressor property that dissolves the shape you were going to optimize against. [Adstock and saturation already trade off within a single model](/posts/adstock-saturation-identification/); this is a second, different failure that sits one level up. That post's ridge is inside Model A. This one is between Model A and Model B, and it's invisible inside either fit.
 
-Three things, in order of leverage:
+## The diagnostics that won't save you
 
-**1. Fit both model families and check if they agree.** The `mmm-framework` exposes a time-varying media coefficient via `mmm_extensions` components. If model A and model B agree on marginal ROAS, your conclusion is robust to the family choice. If they disagree by more than a factor of two, you have a structural ambiguity that no amount of sampling resolves — and you should report both, not the one that fits the brief.
+I know the instinct: reach for R-hat, posterior predictive checks, LOO-CV. None of them help here.
 
-**2. Vary the spend schedule.** The two families separate wherever the autocorrelation breaks down: rapid, discontinuous spend variation is something a smooth $\beta_t$ can't track but a fixed $S(\cdot)$ can absorb. A planned escalation/de-escalation test — cutting spend by 50% for four weeks and then restoring it — generates week-to-week jumps that break the aliasing. This is a cheaper version of a geo experiment designed specifically to distinguish shape from drift.
+**Convergence diagnostics** are silent by construction. Both models are well-specified and mix cleanly. A clean fit is evidence that the sampler worked, not that the family is right.
 
-**3. Anchor the coefficient.** A geo-lift test that pins $\beta$ with a calibration prior breaks the saturation-vs-fatigue symmetry from the other direction. Once the level is anchored by randomized evidence, the shape parameters are partially freed from absorbing the coefficient's drift. The `mmm_framework.calibration` module does exactly this: turn a geo result into a prior on $\beta$, which collapses the equifinality both within and across model families.
+**Posterior predictive checks** pass both. They must — the two families produce nearly identical predictive distributions on the observed spend path. That's what "observationally equivalent" means.
 
-## The uncomfortable conclusion
+**LOO-CV is nearly indifferent, and honestly so.** The two families' predictive performance diverges only where future spend departs from historical patterns. A predictive criterion cannot resolve a question the predictions don't encode.
 
-Most MMMs commit to a saturation family upfront — exponential, Hill, root, or logistic — and fit it. The resulting posterior is tight. The resulting marginal ROAS recommendation goes into a budget deck. The meeting's second camp, the one that suspected creative fatigue, gets told the data prefers the curve.
+**Priors regularize the wrong thing.** A tight prior on innovation scale does shrink toward a constant $\beta$, but that's a belief about drift, not evidence about it. Two teams with different priors get confidently different answers from identical data, and neither posterior is wide enough to reveal that this happened.
 
-It doesn't. The data is compatible with the curve and with the drift. The tight posterior is tight because you specified one family and excluded the other. The model can't tell you which story is true, and the diagnostics — R-hat, ESS, PPC — don't check for the story you didn't fit.
+The one diagnostic worth running is to **compare decisions, not fits**. If the marginal-to-average ROAS ratio, the recommended budget direction, and the "is this channel dying" verdict all move materially between two specifications with indistinguishable R², you haven't learned which is right. You've learned your data doesn't contain the answer — which is a finding, and one that should be reported.
 
-Reporting a marginal ROAS without stating which model family produced it, and whether the other family agrees, is reporting one of two equally-plausible numbers as if it were the answer. Sometimes the two families do agree. When they don't, that disagreement is the finding — and it's more honest than the single number was.
+## What breaks the tie
+
+The aliasing is an identification problem, not an estimation problem. More data of the same kind doesn't help; better samplers don't help. The fix has to come from the design of the data.
+
+The two families differ precisely in what they predict under spend schedules the historical window never visited. So the resolution is to go visit one. Dew, Padilla and Shchetkina (2024) reach the same conclusion: the conflation is avoided by designing experiments that manipulate spending in ways that pin down model form.
+
+Two requirements, and they're independent:
+
+1. **Distinct spend levels.** You learn the shape of $S$ by observing the response at several points along it. One on/off contrast identifies a coefficient at a point; it doesn't identify the curve.
+2. **Dwell time above the adstock washout.** A channel with retention $\alpha$ needs roughly $\ln(0.05)/\ln(\alpha)$ weeks to wash out to 5%: about 9 weeks at $\alpha = 0.7$, 14 at $\alpha = 0.8$. Block length shorter than that and adstock smooths away most of the designed contrast before it reaches the response curve — the same arithmetic that governs [spacing sequential geo tests](/posts/closing-the-loop-mmm-calibration/).
+
+In `mmm-framework`, `planning.design.flighting_design(levels=…, block_weeks=…)` generates a budget-neutral schedule, and `planning.identification.structural_identification` scores how much a candidate schedule would contract the saturation parameter posterior. It refuses to claim the saturation curve is identified unless the design offers at least three distinct in-support spend levels.
+
+A budget-neutral multi-level schedule is the cheapest instrument available: it doesn't change the annual budget, just the distribution across weeks. The cost is real — flighting through low weeks sacrifices some contribution during those weeks — but it's a short-term cost paid for a long-term identification gain. Price it honestly rather than waving it through as free.
+
+One more heuristic worth running: check the autocorrelation of your adstocked regressors before you trust any response curve. A channel whose adstocked series sits above $\rho \approx 0.8$ should be treated as having a prior-driven saturation estimate until an experiment says otherwise. And a falling $\beta_t$ trajectory plotted next to a rising spend plan should be labeled as a secant-slope trajectory — not creative wear-out — unless the fade is tied to something real like a creative change or a competitive entry.
+
+The model will give you a saturation curve either way. The question is whether it earned that shape or whether adstock handed it to you for free.
 
 ---
 
-_The identification result is from Dew, Padilla & Shchetkina (2024), "Identification of Marketing Mix Models," available on SSRN. The secant-slope derivation is my own restatement of the mechanism. Full simulation code and an interactive figure are in the [mmm-framework documentation](https://redam94.github.io/mmm-framework/blog-saturation-or-fatigue.html). Related posts: [Adstock and Saturation Are Not Separately Identified](/posts/adstock-saturation-identification/) covers the within-family ridge; [Wiring Your MMM to Your Experiments](/posts/closing-the-loop-mmm-calibration/) covers geo-lift calibration._
+_Source material: [`mmm-framework`](https://github.com/redam94/mmm-framework) docs (blog-saturation-or-fatigue.html), and Dew, Padilla & Shchetkina (2024), "Your MMM is Broken: Identification of Nonlinear and Time-varying Effects in Marketing Mix Models," arXiv:2408.07678. Related posts: [Adstock and Saturation Are Not Separately Identified](/posts/adstock-saturation-identification/) (the within-family ridge — a different problem), [Designing Experiments to Maximize Information](/posts/designing-experiments-to-maximize-information/), [Closing the Loop: MMM Calibration with Experiments](/posts/closing-the-loop-mmm-calibration/)._
