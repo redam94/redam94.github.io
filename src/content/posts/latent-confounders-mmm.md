@@ -22,7 +22,7 @@ I've been working through this in the causal inference series inside [`mmm-frame
 
 In the synthetic world, economic health simultaneously increases sales (people have more money) and pulls up performance spend (budgets track KPIs). A naive MMM with no economic controls attributed roughly nine times the true search effect to search. Display — a channel that was genuinely working — got crushed toward zero to compensate.
 
-The model isn't wrong about the aggregate fit. It allocates the sales variance correctly across the full history. It's wrong about the *cause*. Search is credited for the macro tailwind it happened to ride.
+The model isn't wrong about the aggregate fit. It allocates the sales variance correctly across the full history. It's wrong about the _cause_. Search is credited for the macro tailwind it happened to ride.
 
 One accidental partial fix: a linear trend term in the baseline absorbs the growth component of the economic cycle. If you include one, the search over-credit drops considerably. But you can't count on it. A trend is a slow-moving variable that happens to overlap with one feature of the confounder; it doesn't close the back-door.
 
@@ -30,7 +30,7 @@ One accidental partial fix: a linear trend term in the baseline absorbs the grow
 
 The standard response is to include macro indicators — GDP growth, consumer confidence, unemployment, retail sales — in the control set. This genuinely helps. In the same synthetic world, dropping four indicators into the model collapsed the search over-credit from ~9× to under 2×. That's a substantial improvement.
 
-But it doesn't fix the problem. Each indicator is a *noisy proxy* for the unobserved factor. As [measurement error in predictors](/posts/measurement-error-in-predictors/) covers, when you substitute a noisy proxy for the true underlying quantity, you get attenuation: the proxy absorbs only part of the confounder's variance, and the residual is still an open back-door. If four indicators together explain 80% of the economic factor's variance, the remaining 20% is still pushing your media coefficients in the wrong direction — and nothing in the model output tells you it's there.
+But it doesn't fix the problem. Each indicator is a _noisy proxy_ for the unobserved factor. As [measurement error in predictors](/posts/measurement-error-in-predictors/) covers, when you substitute a noisy proxy for the true underlying quantity, you get attenuation: the proxy absorbs only part of the confounder's variance, and the residual is still an open back-door. If four indicators together explain 80% of the economic factor's variance, the remaining 20% is still pushing your media coefficients in the wrong direction — and nothing in the model output tells you it's there.
 
 ## Rung C: modeling the measurement jointly
 
@@ -80,11 +80,11 @@ The media coefficients' posterior intervals now carry the factor's estimation un
 
 In the recovery simulation, the three approaches produced these mean absolute relative errors on the confounded (chaser) channels:
 
-| Rung | Approach | Error |
-|------|----------|-------|
-| A | Ignore economic health | ~490% |
-| B | Indicators as controls | ~110% |
-| C | LatentFactorMMM | ~115% |
+| Rung | Approach               | Error |
+| ---- | ---------------------- | ----- |
+| A    | Ignore economic health | ~490% |
+| B    | Indicators as controls | ~110% |
+| C    | LatentFactorMMM        | ~115% |
 
 Rung C doesn't win on point error. B and C essentially tie.
 
