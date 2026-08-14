@@ -62,11 +62,11 @@ A simulation study in my [common_regression_issues](https://github.com/redam94/c
 
 Three random-effects models, identical in everything except the DV transformation:
 
-| Model | $\hat\beta_1$ | $\hat\beta_2$ | Between $R^2$ |
-|---|---|---|---|
-| Standard (no DV normalization) | $-0.017$ | $0.076$ | $0.007$ |
-| Sub-normalized | $-0.014$ | $0.073$ | $-1.3\times 10^{28}$ |
-| **Div-normalized** | **$-0.0085$** | **$0.052$** | **$-8.2\times 10^{27}$** |
+| Model                          | $\hat\beta_1$ | $\hat\beta_2$ | Between $R^2$            |
+| ------------------------------ | ------------- | ------------- | ------------------------ |
+| Standard (no DV normalization) | $-0.017$      | $0.076$       | $0.007$                  |
+| Sub-normalized                 | $-0.014$      | $0.073$       | $-1.3\times 10^{28}$     |
+| **Div-normalized**             | **$-0.0085$** | **$0.052$**   | **$-8.2\times 10^{27}$** |
 
 The sub-normalized model produces coefficient estimates close to the truth (the negative between-$R^2$ is an artifact of a partially-transformed DV — the model is still estimating $\beta$ correctly from within-unit variation). The div-normalized model underestimates both coefficients by 25–30%.
 
