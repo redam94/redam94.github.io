@@ -16,7 +16,7 @@ There's a number everyone reports and a number everyone should act on, and they 
 
 The number everyone reports is **average ROAS**: total attributed revenue divided by total spend for a channel. It's easy to compute, easy to explain, and it goes in the deck. The number everyone should act on is **marginal ROAS**: the additional revenue from the next dollar spent on that channel. It's a derivative, not a ratio. In any model that includes saturation — which every respectable MMM does — these two numbers diverge, sometimes dramatically.
 
-The divergence matters because budget allocation lives in marginal territory. You're not deciding whether to spend anything on a channel; that ship has sailed. You're deciding whether to spend *more* or *less*. The right frame is always marginal: what does the next dollar buy? Average ROAS answers a different question — roughly, "was this channel worth running at all?" — which is useful retrospectively but wrong for forward-looking allocation.
+The divergence matters because budget allocation lives in marginal territory. You're not deciding whether to spend anything on a channel; that ship has sailed. You're deciding whether to spend _more_ or _less_. The right frame is always marginal: what does the next dollar buy? Average ROAS answers a different question — roughly, "was this channel worth running at all?" — which is useful retrospectively but wrong for forward-looking allocation.
 
 ## The math, from a Hill curve
 
