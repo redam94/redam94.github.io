@@ -50,11 +50,11 @@ In a simulation from my [common_regression_issues](https://github.com/redam94/co
 
 And that's almost exactly what the random-effects model reports when fed the divided outcome:
 
-| Model | $\hat\beta_2$ | True $\beta_2$ |
-|-------|:------------:|:--------------:|
-| Standard log(sales) | 0.076 | 0.074 |
-| Sub-normed: log(sales) $-$ $\bar{y}_i$ | 0.073 | 0.074 |
-| Div-normed: log(sales) $/$ $\bar{y}_i$ | **0.052** | 0.074 |
+| Model                                  | $\hat\beta_2$ | True $\beta_2$ |
+| -------------------------------------- | :-----------: | :------------: |
+| Standard log(sales)                    |     0.076     |     0.074      |
+| Sub-normed: log(sales) $-$ $\bar{y}_i$ |     0.073     |     0.074      |
+| Div-normed: log(sales) $/$ $\bar{y}_i$ |   **0.052**   |     0.074      |
 
 The div-normed estimate for $\beta_2$ is off by ~30%. No sign flip, no inflated standard error, no convergence warning. If you hadn't run the comparison, you wouldn't know.
 
