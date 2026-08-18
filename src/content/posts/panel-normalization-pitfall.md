@@ -44,12 +44,12 @@ The true coefficients are $\beta_1 = -0.0124$ and $\beta_2 = 0.0743$. Then three
 
 Results:
 
-| Model | $\hat\beta_1$ | $\hat\beta_2$ | Between $R^2$ |
-|---|---|---|---|
-| True | −0.0124 | 0.0743 | — |
-| Standard | −0.0165 | 0.0764 | 0.007 |
-| Div-normed | **−0.0085** | **0.0517** | **−8.2 × 10²⁷** |
-| Sub-normed | −0.0140 | 0.0729 | — |
+| Model      | $\hat\beta_1$ | $\hat\beta_2$ | Between $R^2$   |
+| ---------- | ------------- | ------------- | --------------- |
+| True       | −0.0124       | 0.0743        | —               |
+| Standard   | −0.0165       | 0.0764        | 0.007           |
+| Div-normed | **−0.0085**   | **0.0517**    | **−8.2 × 10²⁷** |
+| Sub-normed | −0.0140       | 0.0729        | —               |
 
 The standard and subtraction-demeaned models both recover the true coefficients well. The division-normed model misses by a factor of roughly the inverse of the group means — which makes sense, because dividing by $\bar{y}_i$ on the left-hand side effectively scales $\beta$ by $1/\bar{y}_i$, and when you pool across stores with different mean sales, those scalings don't cancel cleanly.
 
