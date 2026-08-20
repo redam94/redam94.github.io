@@ -24,7 +24,7 @@ The formal quantity is the **expected log predictive density (ELPD)**:
 
 $$\text{ELPD} = \sum_{t=1}^{T} \log p(y_t \mid y_{-t})$$
 
-where $p(y_t \mid y_{-t})$ is the posterior predictive density for observation $t$ under a model fit on everything *except* observation $t$. Higher ELPD is better: the model assigned higher probability to what actually happened, when it didn't already know the answer.
+where $p(y_t \mid y_{-t})$ is the posterior predictive density for observation $t$ under a model fit on everything _except_ observation $t$. Higher ELPD is better: the model assigned higher probability to what actually happened, when it didn't already know the answer.
 
 Actually leaving one observation out and refitting — 104 times for a two-year weekly dataset — is computationally brutal. PSIS-LOO approximates each $p(y_t \mid y_{-t})$ from a single full-data posterior using importance sampling.
 
@@ -60,13 +60,13 @@ print(comparison)
 # Key columns: elpd_loo, p_loo, elpd_diff, dse, warning
 ```
 
-The column that matters most is `dse` — the standard error on the ELPD *difference*. A difference of 4 ELPD points with a `dse` of 8 is not a meaningful win. If the two models' ELPD estimates overlap within about two standard errors, the data can't distinguish them.
+The column that matters most is `dse` — the standard error on the ELPD _difference_. A difference of 4 ELPD points with a `dse` of 8 is not a meaningful win. If the two models' ELPD estimates overlap within about two standard errors, the data can't distinguish them.
 
 A cluster of observations with $k > 0.7$ is worth investigating independently: those are weeks the model finds unusually surprising given everything else. In an MMM this often means an event (a large promotion, a competitor launch, a data quality issue) that the model has no covariate to explain. That's a data problem, and fixing it usually helps both models.
 
 ## The time series problem
 
-Standard LOO assumes the observations are approximately exchangeable — that predicting $y_t$ from $y_{-t}$ is a meaningful question. In a time series with adstock carryover, it isn't. Leaving out week 50 and predicting it from weeks 1–49 *and* weeks 51–104 lets the model interpolate across the gap using future data, which is a much easier task than actual out-of-sample prediction.
+Standard LOO assumes the observations are approximately exchangeable — that predicting $y_t$ from $y_{-t}$ is a meaningful question. In a time series with adstock carryover, it isn't. Leaving out week 50 and predicting it from weeks 1–49 _and_ weeks 51–104 lets the model interpolate across the gap using future data, which is a much easier task than actual out-of-sample prediction.
 
 Two approaches that are more honest for sequential MMM data:
 
@@ -84,7 +84,7 @@ If you fit 12 adstock variants and keep the one with the highest ELPD, you've do
 
 LOO belongs at a specific step: after SBC (check that the inference is calibrated) and before experimental calibration (check the external lift tests). Its job is to answer one question: is this pre-specified model meaningfully better at predicting held-out observations than the baseline (trend + seasonality + controls, no media terms)? If yes, the media transforms are adding predictive signal. If not, the media effects are either too small to detect observationally, or the transforms are misspecified in a way that hurts prediction.
 
-Comparing two pre-specified specifications is also legitimate — *if* you committed to reporting whichever wins before looking at the comparison. The commitment is what keeps it honest.
+Comparing two pre-specified specifications is also legitimate — _if_ you committed to reporting whichever wins before looking at the comparison. The commitment is what keeps it honest.
 
 ## What LOO doesn't resolve
 
