@@ -79,11 +79,11 @@ for name, y in [('standard', y_standard), ('subtract', y_sub), ('divide', y_div)
 
 Fitted coefficients for the two covariates:
 
-| Model | $\hat\beta_1$ (true: −0.012) | $\hat\beta_2$ (true: 0.074) |
-|---|---|---|
-| Standard (log-sales) | −0.017 | 0.076 |
-| Subtract (correct) | −0.014 | 0.073 |
-| Divide (wrong) | **−0.009** | **0.052** |
+| Model                | $\hat\beta_1$ (true: −0.012) | $\hat\beta_2$ (true: 0.074) |
+| -------------------- | ---------------------------- | --------------------------- |
+| Standard (log-sales) | −0.017                       | 0.076                       |
+| Subtract (correct)   | −0.014                       | 0.073                       |
+| Divide (wrong)       | **−0.009**                   | **0.052**                   |
 
 The subtract model recovers both coefficients within noise of the truth. The divide model systematically understates both — the attenuated $\hat\beta_2$ is about 30% below the true value. If you were using this model to estimate media ROI, you would conclude the channel is roughly a third less effective than it actually is.
 
