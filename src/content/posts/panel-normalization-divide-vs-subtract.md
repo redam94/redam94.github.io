@@ -46,11 +46,11 @@ Concretely: suppose the true coefficient on a covariate is $+0.074$. A store wit
 
 I ran this on simulated panel data from the [`common_regression_issues`](https://github.com/redam94/common_regression_issues) project — 20 stores, 156 weekly periods, known ground-truth coefficients. Three model variants:
 
-| Model | Covariate coefficient | Truth |
-|---|---|---|
-| Standard random-effects (log DV) | 0.076 | 0.074 |
-| Subtraction-normalized DV | 0.073 | 0.074 |
-| Division-normalized DV | 0.052 | 0.074 |
+| Model                            | Covariate coefficient | Truth |
+| -------------------------------- | --------------------- | ----- |
+| Standard random-effects (log DV) | 0.076                 | 0.074 |
+| Subtraction-normalized DV        | 0.073                 | 0.074 |
+| Division-normalized DV           | 0.052                 | 0.074 |
 
 The standard and subtraction models recover the truth closely. The division model reports 0.052 when the answer is 0.074 — a ~30% attenuation. That's not sampling noise; it's structural. The $R^2$ and $F$-statistic in the division model look healthy (0.63 vs. 0.77 for the correct model), the standard errors are reasonable, and the coefficient is correctly signed. Nothing in the diagnostics would make you stop and ask questions.
 
