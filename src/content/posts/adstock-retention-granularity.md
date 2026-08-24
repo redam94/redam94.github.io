@@ -12,9 +12,9 @@ tags:
 description: A weekly retention rate of 0.7 does not mean 0.7 at monthly grain — it means 0.22. Industry calibrations are grain-specific, and plugging them into the wrong time scale silently mis-specifies your priors.
 ---
 
-Every industry table of "calibrated retention rates" comes with an implicit asterisk: *at weekly grain*. A TV retention rate of 0.7 means 70% of the accumulated adstock from week $w$ carries into week $w+1$. It does not mean 70% carries into the next day, and it does not mean 70% survives to the next month. If your model runs at monthly granularity and you use 0.7 as the monthly retention rate, you've made an assumption that is mathematically inconsistent with the weekly calibration — roughly 3× too high, in the direction of overstating persistence.
+Every industry table of "calibrated retention rates" comes with an implicit asterisk: _at weekly grain_. A TV retention rate of 0.7 means 70% of the accumulated adstock from week $w$ carries into week $w+1$. It does not mean 70% carries into the next day, and it does not mean 70% survives to the next month. If your model runs at monthly granularity and you use 0.7 as the monthly retention rate, you've made an assumption that is mathematically inconsistent with the weekly calibration — roughly 3× too high, in the direction of overstating persistence.
 
-This is one of the quieter errors in applied MMM. The retention rate gets treated as a property of the channel ("TV has high carryover") when it's actually a property of the channel *at a specific time granularity*. Move the granularity and you need a different number.
+This is one of the quieter errors in applied MMM. The retention rate gets treated as a property of the channel ("TV has high carryover") when it's actually a property of the channel _at a specific time granularity_. Move the granularity and you need a different number.
 
 ## The math
 
@@ -40,11 +40,11 @@ Or equivalently, $\alpha_d = \alpha_w^{1/7}$. Generalizing: the monthly retentio
 
 Some numbers:
 
-| Channel | Industry $\alpha_w$ | Implied $\alpha_d$ | Implied $\alpha_m$ |
-|---|---|---|---|
-| TV | 0.70 | $0.70^{1/7} \approx 0.957$ | $0.70^{30/7} \approx 0.22$ |
-| Paid search | 0.05 | $0.05^{1/7} \approx 0.65$ | $0.05^{30/7} \approx 0.001$ |
-| Display | 0.30 | $0.30^{1/7} \approx 0.84$ | $0.30^{30/7} \approx 0.01$ |
+| Channel     | Industry $\alpha_w$ | Implied $\alpha_d$         | Implied $\alpha_m$          |
+| ----------- | ------------------- | -------------------------- | --------------------------- |
+| TV          | 0.70                | $0.70^{1/7} \approx 0.957$ | $0.70^{30/7} \approx 0.22$  |
+| Paid search | 0.05                | $0.05^{1/7} \approx 0.65$  | $0.05^{30/7} \approx 0.001$ |
+| Display     | 0.30                | $0.30^{1/7} \approx 0.84$  | $0.30^{30/7} \approx 0.01$  |
 
 Two things jump out. First, the daily retention rates for all these channels are high — TV at 95.7% per day sounds wrong for a channel we think of as "moderately persistent" at weekly grain, but it's consistent: 95.7% compounded over seven days gives you 70%. Second, at monthly grain, TV retains only 22% from one month to the next. If you were fitting a monthly model and applied the industry-calibrated "TV retention 0.7" as the prior, you'd be centered at 0.7 on a parameter whose true value is around 0.22. That's a 3× overestimate of monthly persistence.
 
@@ -111,7 +111,7 @@ If you run [Simulation-Based Calibration](/posts/simulation-based-calibration/) 
 
 ---
 
-The adstock retention rate is not a fact about a channel. It's a fact about a channel *at a time scale*. That asterisk should be in every industry calibration table — and, until it is, the conversion formula is $\alpha_w = \alpha_d^7$, $\alpha_m = \alpha_d^{30}$, and the right response to any prior you've borrowed from a different grain is to propagate it through the nonlinear transform before fitting.
+The adstock retention rate is not a fact about a channel. It's a fact about a channel _at a time scale_. That asterisk should be in every industry calibration table — and, until it is, the conversion formula is $\alpha_w = \alpha_d^7$, $\alpha_m = \alpha_d^{30}$, and the right response to any prior you've borrowed from a different grain is to propagate it through the nonlinear transform before fitting.
 
 ---
 
