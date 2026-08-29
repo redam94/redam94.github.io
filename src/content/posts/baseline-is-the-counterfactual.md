@@ -18,7 +18,7 @@ The baseline of an MMM is not a nuisance term to be controlled away. It's the mo
 
 ## Why it's a counterfactual, not a control
 
-In [Coincidence Is Not Contribution](/posts/coincidence-is-not-contribution/) I wrote about how seasonality is a confounder — it drives both media spend and sales, so a model that ignores it credits media for the seasonal lift. The fix is to adjust for seasonality. But *how* you adjust determines what you're actually claiming.
+In [Coincidence Is Not Contribution](/posts/coincidence-is-not-contribution/) I wrote about how seasonality is a confounder — it drives both media spend and sales, so a model that ignores it credits media for the seasonal lift. The fix is to adjust for seasonality. But _how_ you adjust determines what you're actually claiming.
 
 A Bayesian MMM has a structure something like:
 
@@ -49,7 +49,7 @@ with pm.Model() as tvs_model:
     sigma_a = pm.HalfNormal("sigma_a", 0.1)
     a_innov = pm.Normal("a_innov", 0, sigma_a, shape=T)
     a = pm.Deterministic("a", pt.cumsum(a_innov))
-    
+
     # Similarly for b
     sigma_b = pm.HalfNormal("sigma_b", 0.1)
     b_innov = pm.Normal("b_innov", 0, sigma_b, shape=T)
