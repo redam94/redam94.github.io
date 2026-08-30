@@ -12,13 +12,13 @@ tags:
 description: When centering variables in panel regression, dividing by the group mean instead of subtracting it silently biases every coefficient — and the model still fits fine.
 ---
 
-Panel data gives you two orthogonal sources of variance: the differences *between* units and the changes *within* them over time. Separating those cleanly requires subtracting each unit's mean from its observations — "demeaning." But there's a tempting wrong move sitting right next to the right one: dividing by the group mean instead of subtracting it. The two operations feel similar. They produce different models, and the divided version silently biases all your coefficients while the fit statistics look normal.
+Panel data gives you two orthogonal sources of variance: the differences _between_ units and the changes _within_ them over time. Separating those cleanly requires subtracting each unit's mean from its observations — "demeaning." But there's a tempting wrong move sitting right next to the right one: dividing by the group mean instead of subtracting it. The two operations feel similar. They produce different models, and the divided version silently biases all your coefficients while the fit statistics look normal.
 
 This is something I encountered while building the [common regression issues](https://github.com/redam94/common_regression_issues) tutorial series, and it's worth documenting precisely because it fails quietly.
 
 ## What the right transformation does
 
-Suppose you're modeling log-sales $y_{it}$ across stores $i = 1, \ldots, N$ and time periods $t = 1, \ldots, T$. Each store has a stable level — bigger stores sell more — which you want to partial out so the coefficients reflect how *changes* in media spend or promotions drive *changes* in sales within a store. The correct within-transformation is:
+Suppose you're modeling log-sales $y_{it}$ across stores $i = 1, \ldots, N$ and time periods $t = 1, \ldots, T$. Each store has a stable level — bigger stores sell more — which you want to partial out so the coefficients reflect how _changes_ in media spend or promotions drive _changes_ in sales within a store. The correct within-transformation is:
 
 $$\tilde{y}_{it} = y_{it} - \bar{y}_i$$
 
@@ -30,7 +30,7 @@ The wrong move is:
 
 $$\tilde{y}_{it}^{\text{div}} = \frac{y_{it}}{\bar{y}_i}$$
 
-This looks like "expressing sales as a fraction of the store's typical level," which sounds reasonable. It isn't. Dividing rescales each row by a store-specific constant, but it doesn't center the outcome. A big store's observations still sit at values near 1.0, and a small store's also sit near 1.0, but the *variance* structure is different for every store, and the coefficients now pick up residual between-unit confounding that the subtraction would have removed.
+This looks like "expressing sales as a fraction of the store's typical level," which sounds reasonable. It isn't. Dividing rescales each row by a store-specific constant, but it doesn't center the outcome. A big store's observations still sit at values near 1.0, and a small store's also sit near 1.0, but the _variance_ structure is different for every store, and the coefficients now pick up residual between-unit confounding that the subtraction would have removed.
 
 More concretely: if the true generating model in log-space is
 
@@ -52,12 +52,12 @@ In the simulated data from `common_regression_issues/nbs/04_normalization_in_pan
 
 Three variants of a random-effects model:
 
-| Model | $\hat\beta_1$ | $\hat\beta_2$ |
-|---|---|---|
-| True values | −0.0124 | +0.0743 |
-| Standard (no normalization) | −0.0165 | +0.0764 |
-| Subtract-normalized outcome | −0.0140 | +0.0729 |
-| **Divide-normalized outcome** | **−0.0085** | **+0.0517** |
+| Model                         | $\hat\beta_1$ | $\hat\beta_2$ |
+| ----------------------------- | ------------- | ------------- |
+| True values                   | −0.0124       | +0.0743       |
+| Standard (no normalization)   | −0.0165       | +0.0764       |
+| Subtract-normalized outcome   | −0.0140       | +0.0729       |
+| **Divide-normalized outcome** | **−0.0085**   | **+0.0517**   |
 
 The divide-normalized model recovers the wrong coefficients. The magnitude of both effects is compressed by roughly 30%. If you were making budget decisions based on the second covariate, you'd systematically underestimate its return. And the model doesn't tell you something is wrong: R-squared is in the same ballpark, significance patterns look similar, residuals appear normal.
 
@@ -92,4 +92,4 @@ The right thing to do with unit-level structure is to model it or remove it corr
 
 ---
 
-*Source: the `04_normalization_in_panel_models` notebook from [`common_regression_issues`](https://github.com/redam94/common_regression_issues). Related post: [The Effect You're Looking For Isn't in Your Panel Data](/posts/within-between-persons/).*
+_Source: the `04_normalization_in_panel_models` notebook from [`common_regression_issues`](https://github.com/redam94/common_regression_issues). Related post: [The Effect You're Looking For Isn't in Your Panel Data](/posts/within-between-persons/)._
