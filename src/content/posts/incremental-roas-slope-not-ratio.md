@@ -62,7 +62,7 @@ The ratio falls as you move above the inflection point. Here's a concrete calcul
 
 ## A concrete example
 
-Take a channel with the `mmm-framework` defaults: $K = 0.85$ (half-saturation at 85% of mean spend), $n = 2$, $\beta = 10$, $\bar{x} = \$1\text{M/week}$. 
+Take a channel with the `mmm-framework` defaults: $K = 0.85$ (half-saturation at 85% of mean spend), $n = 2$, $\beta = 10$, $\bar{x} = \$1\text{M/week}$.
 
 ```python
 import numpy as np
