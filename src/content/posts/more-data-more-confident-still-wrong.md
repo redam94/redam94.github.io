@@ -86,7 +86,7 @@ def fit_coverage(n, delta_u=1.0, n_reps=200, ci=0.90):
             bL = pm.Normal("bL", 0, 2.5)
             bJ = pm.Normal("bJ", 0, 2.5)
             sig = pm.HalfNormal("sig", 1)
-            mu = a + bX*d["X"] + bZ*d["Z"] + bW*d["W"] + bL*d["L"] + bJ*d["J"]
+            mu = a + bX * d["X"] + bZ * d["Z"] + bW * d["W"] + bL * d["L"] + bJ * d["J"]
             pm.Normal("Y", mu=mu, sigma=sig, observed=d["Y"])
             tr = pm.sample(500, tune=500, progressbar=False, chains=4)
         for v, bv in [("X", "bX"), ("Z", "bZ")]:
