@@ -56,7 +56,7 @@ comparison = az.compare({"hill": trace_hill, "logistic": trace_logistic})
 print(comparison)
 ```
 
-The output DataFrame from `az.compare()` includes `elpd_loo`, `se`, and — the one most people ignore — `dse`, the standard error of the *difference* between each model's ELPD and the best model's ELPD. It looks like:
+The output DataFrame from `az.compare()` includes `elpd_loo`, `se`, and — the one most people ignore — `dse`, the standard error of the _difference_ between each model's ELPD and the best model's ELPD. It looks like:
 
 ```
               rank  elpd_loo    se   delpd    dse  warning
@@ -68,7 +68,7 @@ The ELPD difference is 2.8. The SE on that difference is 3.6. These two models a
 
 ## Why the SE on the difference matters
 
-The ELPD values themselves have standard errors because they're sums over $n$ independent leave-one-out scores, each with its own variance. The SE on the *difference* is computed from the pointwise differences — $\text{ELPD}_i^{(1)} - \text{ELPD}_i^{(2)}$ — which properly accounts for the fact that the two models are evaluated on the same data points and are therefore correlated. The formula is:
+The ELPD values themselves have standard errors because they're sums over $n$ independent leave-one-out scores, each with its own variance. The SE on the _difference_ is computed from the pointwise differences — $\text{ELPD}_i^{(1)} - \text{ELPD}_i^{(2)}$ — which properly accounts for the fact that the two models are evaluated on the same data points and are therefore correlated. The formula is:
 
 $$\text{SE}(\Delta\text{ELPD}) = \sqrt{n \cdot \text{Var}\!\left(\text{elpd}_i^{(1)} - \text{elpd}_i^{(2)}\right)}$$
 
@@ -100,4 +100,4 @@ The comparison tool is genuinely useful. It catches obvious failures — a model
 
 ---
 
-_LOO-CV and the PSIS approximation are described in Vehtari, Gelman & Gabry (2017), "Practical Bayesian model evaluation using leave-one-out cross-validation and WAIC," _Statistics and Computing_ 27(5). ArviZ's `az.compare()` and `az.loo()` implement this; see [the ArviZ docs](https://python.arviz.org/en/stable/api/generated/arviz.compare.html) for the full API. Related posts: [Simulation-Based Calibration](/posts/simulation-based-calibration/) on checking inference correctness, [Building a Pre-Specified Bayesian MMM](/posts/building-a-pre-specified-bayesian-mmm/) on pre-specifying structure before fitting, and [Wiring Your MMM to Experiments](/posts/closing-the-loop-mmm-calibration/) on validating coefficients against holdout data._
+_LOO-CV and the PSIS approximation are described in Vehtari, Gelman & Gabry (2017), "Practical Bayesian model evaluation using leave-one-out cross-validation and WAIC," \_Statistics and Computing_ 27(5). ArviZ's `az.compare()` and `az.loo()` implement this; see [the ArviZ docs](https://python.arviz.org/en/stable/api/generated/arviz.compare.html) for the full API. Related posts: [Simulation-Based Calibration](/posts/simulation-based-calibration/) on checking inference correctness, [Building a Pre-Specified Bayesian MMM](/posts/building-a-pre-specified-bayesian-mmm/) on pre-specifying structure before fitting, and [Wiring Your MMM to Experiments](/posts/closing-the-loop-mmm-calibration/) on validating coefficients against holdout data.\_
