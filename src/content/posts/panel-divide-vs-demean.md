@@ -39,17 +39,18 @@ The slope is now $\beta / \mu_i$ — it depends on the store's own baseline log-
 ## What it looks like in practice
 
 My [common regression issues](https://github.com/redam94/common_regression_issues) repo (notebook 04) has a synthetic example with exactly this structure:
+
 - 20 stores, 156 weeks
 - A trend and annual seasonality in log-sales
 - Two covariates with known true log-scale effects: $\beta_1 = -0.012$, $\beta_2 = 0.074$
 
 Three random-effects models on the same data, differing only in how the dependent variable is prepared:
 
-| Model | True $\beta_1$ | $\hat\beta_1$ | True $\beta_2$ | $\hat\beta_2$ | R² (Between) |
-|---|---|---|---|---|---|
-| Standard (log-sales) | −0.012 | −0.017 | 0.074 | 0.076 | 0.007 |
-| Subtract-normalized | −0.012 | −0.014 | 0.074 | 0.073 | −1.3 × 10²⁸ |
-| Divide-normalized | −0.012 | −0.009 | 0.074 | 0.052 | −8.2 × 10²⁷ |
+| Model                | True $\beta_1$ | $\hat\beta_1$ | True $\beta_2$ | $\hat\beta_2$ | R² (Between) |
+| -------------------- | -------------- | ------------- | -------------- | ------------- | ------------ |
+| Standard (log-sales) | −0.012         | −0.017        | 0.074          | 0.076         | 0.007        |
+| Subtract-normalized  | −0.012         | −0.014        | 0.074          | 0.073         | −1.3 × 10²⁸  |
+| Divide-normalized    | −0.012         | −0.009        | 0.074          | 0.052         | −8.2 × 10²⁷  |
 
 Two things stand out immediately.
 
@@ -61,7 +62,7 @@ Two things stand out immediately.
 
 The intuition behind dividing is usually "I want to put all my stores on the same scale." Store A does 1,000 units a week; store B does 100,000. If I divide by the mean, both series oscillate around 1.0 and they feel comparable.
 
-The problem is that this indexing changes *what the model is estimating*. Dividing by $\mu_i$ rescales the slope too — and rescales it differently for each store. You're not adding a neutral preprocessing step; you're changing the model's functional form. The pooled slope is no longer a single $\beta$; it's an average of $\beta / \mu_i$ across stores, which equals $\beta$ only if all $\mu_i$ are identical (which they're not — that's why you wanted to normalize).
+The problem is that this indexing changes _what the model is estimating_. Dividing by $\mu_i$ rescales the slope too — and rescales it differently for each store. You're not adding a neutral preprocessing step; you're changing the model's functional form. The pooled slope is no longer a single $\beta$; it's an average of $\beta / \mu_i$ across stores, which equals $\beta$ only if all $\mu_i$ are identical (which they're not — that's why you wanted to normalize).
 
 Subtraction doesn't have this problem. Shifting the dependent variable by a constant shifts the intercept and leaves the slope untouched:
 
