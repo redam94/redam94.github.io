@@ -24,9 +24,9 @@ The quantity LOO-CV estimates is the **expected log pointwise predictive density
 
 $$\text{ELPD}_{\text{LOO}} = \sum_{i=1}^{n} \log p(y_i \mid y_{-i})$$
 
-For each observation $y_i$, you compute the log probability of that observation under the posterior fitted to all the *other* data $y_{-i}$. Sum over all observations. A higher ELPD means better predictive accuracy — the model assigns higher probability to each held-out point, on average.
+For each observation $y_i$, you compute the log probability of that observation under the posterior fitted to all the _other_ data $y_{-i}$. Sum over all observations. A higher ELPD means better predictive accuracy — the model assigns higher probability to each held-out point, on average.
 
-This is the right quantity because it measures *generalization*. It penalizes overfitting automatically: a model that memorized observation $i$ will have a very tight posterior over $y_i$ when it's included in the fit, but that overfit posterior will be overconfident in the wrong direction when $y_i$ is held out.
+This is the right quantity because it measures _generalization_. It penalizes overfitting automatically: a model that memorized observation $i$ will have a very tight posterior over $y_i$ when it's included in the fit, but that overfit posterior will be overconfident in the wrong direction when $y_i$ is held out.
 
 The naive implementation is also the expensive one: fit the model $n$ times, each time leaving one observation out. For a weekly MMM with two years of data — 104 observations — that's 104 full MCMC runs. Not practical.
 
@@ -48,12 +48,12 @@ The problem with raw importance sampling is that the weights can have infinite v
 
 The Pareto shape parameter $\hat{k}$ for observation $i$ is the key reliability indicator. The rule of thumb from Vehtari et al.:
 
-| $\hat{k}$ | Reliability |
-|---|---|
-| $< 0.5$ | LOO estimate for this point is reliable |
+| $\hat{k}$   | Reliability                                |
+| ----------- | ------------------------------------------ |
+| $< 0.5$     | LOO estimate for this point is reliable    |
 | $0.5 – 0.7$ | Moderately reliable; use with some caution |
 | $0.7 – 1.0$ | Unreliable; the observation is influential |
-| $> 1.0$ | Very unreliable; refit without that point |
+| $> 1.0$     | Very unreliable; refit without that point  |
 
 High $\hat{k}$ values flag **influential observations** — data points that individually have a large effect on the posterior. In a weekly MMM this usually means either (1) a seasonal spike the model didn't anticipate, (2) a promotional period with unusual spend levels, or (3) a media flight during a week with a major external shock. All three are worth investigating on their own terms, independently of which model wins.
 
@@ -113,7 +113,7 @@ LOO-CV in its standard form assumes observations are exchangeable — leaving ou
 
 What you actually want for a time series is **block holdout**: leave out a contiguous block of recent weeks — say, the last 8 or 12 weeks — fit the model on the remainder, and evaluate predictive accuracy on the held-out block. This is a true out-of-sample test that respects the temporal structure.
 
-PSIS-LOO is still useful in the time series setting as a *relative* comparison across model specifications, even if the absolute ELPD values aren't externally interpretable. Two models evaluated on the same data with the same LOO approximation will have the same bias, so the difference in ELPD is still informative about which specification is better at that margin. But for the absolute question — "is this model good enough to use?" — block holdout on the most recent period is the more honest test.
+PSIS-LOO is still useful in the time series setting as a _relative_ comparison across model specifications, even if the absolute ELPD values aren't externally interpretable. Two models evaluated on the same data with the same LOO approximation will have the same bias, so the difference in ELPD is still informative about which specification is better at that margin. But for the absolute question — "is this model good enough to use?" — block holdout on the most recent period is the more honest test.
 
 In the `mmm-framework` workflow, I use both: PSIS-LOO for fast comparison across specifications during iteration, and a block holdout of the last quarter as a final sanity check before committing to a specification. The last quarter is especially useful because it's the most like the future you're actually forecasting into.
 
@@ -124,6 +124,7 @@ LOO measures predictive accuracy for the outcome variable you modeled. It does n
 A model that fits weekly revenue beautifully can still have wrong channel coefficients — because collinearity, measurement error, and the adstock-saturation ridge ([covered here](/posts/adstock-saturation-identification/)) all affect attribution without necessarily degrading aggregate prediction. LOO will not catch that. That's what [SBC](/posts/simulation-based-calibration/) is for: checking whether the inference procedure recovers parameters correctly, independent of how the model fits observed data.
 
 The two tools answer different questions:
+
 - **SBC**: Does this model architecture recover the right parameters when data are generated from it?
 - **LOO**: Does this model specification predict the data better than that one?
 
@@ -131,7 +132,7 @@ You need both. A model can pass LOO but fail SBC (good in-sample prediction, wro
 
 ## The comparison is only valid if both models were pre-specified
 
-One last thing that doesn't get said enough: LOO comparison is only meaningful if you committed to both candidate models *before* looking at the LOO scores. If you search over a large space of model variations and report the highest LOO, you've found a predictively good model on this dataset — and you've implicitly overfit to the data in the comparison itself. The effective degrees of freedom include all the specifications you tried, not just the one you reported.
+One last thing that doesn't get said enough: LOO comparison is only meaningful if you committed to both candidate models _before_ looking at the LOO scores. If you search over a large space of model variations and report the highest LOO, you've found a predictively good model on this dataset — and you've implicitly overfit to the data in the comparison itself. The effective degrees of freedom include all the specifications you tried, not just the one you reported.
 
 The fix is the same as everywhere else in Bayesian analysis: pre-specify. Define the candidate specifications before you fit anything. Run LOO. Report the comparison. If you iterate based on LOO scores — tweaking a prior here, adding a control there — acknowledge in the report that the final specification was selected from an adaptive search, and treat the final LOO score as optimistic.
 
@@ -139,4 +140,4 @@ This is the same discipline behind the whole [`mmm-framework` pre-specification 
 
 ---
 
-*PSIS-LOO is due to Vehtari, Gelman & Gabry (2017), "Practical Bayesian model evaluation using leave-one-out cross-validation and WAIC," Statistics and Computing 27(5). The ArviZ implementation is at [python.arviz.org](https://python.arviz.org/en/stable/api/generated/arviz.loo.html). Related posts: [Simulation-Based Calibration](/posts/simulation-based-calibration/), [The Assumptions Are the Model](/posts/the-assumptions-are-the-model/), [Adstock and Saturation Are Not Separately Identified](/posts/adstock-saturation-identification/), [Building a Pre-Specified Bayesian MMM](/posts/building-a-pre-specified-bayesian-mmm/).*
+_PSIS-LOO is due to Vehtari, Gelman & Gabry (2017), "Practical Bayesian model evaluation using leave-one-out cross-validation and WAIC," Statistics and Computing 27(5). The ArviZ implementation is at [python.arviz.org](https://python.arviz.org/en/stable/api/generated/arviz.loo.html). Related posts: [Simulation-Based Calibration](/posts/simulation-based-calibration/), [The Assumptions Are the Model](/posts/the-assumptions-are-the-model/), [Adstock and Saturation Are Not Separately Identified](/posts/adstock-saturation-identification/), [Building a Pre-Specified Bayesian MMM](/posts/building-a-pre-specified-bayesian-mmm/)._
