@@ -37,7 +37,7 @@ az.plot_ppc(idata, observed=True, num_pp_samples=200)
 
 The resulting plot overlays the distribution of simulated datasets (thin lines or a shaded band) against the observed data (a thick line). If the generative model is good, they look roughly the same. If the likelihood is misspecified, you'll see systematic differences — and they'll be informative ones.
 
-The key point is what this *doesn't* check. SBC tests whether $p(\theta \mid y)$ correctly recovers $\theta^*$ when $y$ was generated at $\theta^*$. PPCs test whether $p(\tilde{y} \mid \theta)$ — the posterior predictive distribution — matches the actual $y$. The first is about inference correctness. The second is about likelihood correctness. A model can pass SBC and fail PPCs: well-calibrated inference from a misspecified generative process.
+The key point is what this _doesn't_ check. SBC tests whether $p(\theta \mid y)$ correctly recovers $\theta^*$ when $y$ was generated at $\theta^*$. PPCs test whether $p(\tilde{y} \mid \theta)$ — the posterior predictive distribution — matches the actual $y$. The first is about inference correctness. The second is about likelihood correctness. A model can pass SBC and fail PPCs: well-calibrated inference from a misspecified generative process.
 
 ## The three failure modes I see most often in MMMs
 
@@ -97,7 +97,7 @@ In the standard Bayesian workflow I run for MMM projects:
 5. Run **posterior predictive checks**.
 6. Calibrate against experimental lift tests.
 
-PPCs live at step 5, after the sampler checks but before calibration. The reason is that MCMC diagnostics can only tell you "the sampler converged to *some* distribution." PPCs tell you whether that distribution is generating data that resembles reality. If they fail, you go back and fix the likelihood before spending time on experiment calibration — because calibrating an experiment against a misspecified model is just compounding errors.
+PPCs live at step 5, after the sampler checks but before calibration. The reason is that MCMC diagnostics can only tell you "the sampler converged to _some_ distribution." PPCs tell you whether that distribution is generating data that resembles reality. If they fail, you go back and fix the likelihood before spending time on experiment calibration — because calibrating an experiment against a misspecified model is just compounding errors.
 
 ## What to do when PPCs fail
 
@@ -119,4 +119,4 @@ The sampler converging is table stakes. Inference being calibrated is necessary 
 
 ---
 
-*Posterior predictive checks are step 6 of the Bayesian workflow in Gelman et al. (2020), "Bayesian Workflow," arXiv:2011.01808. The ArviZ functions used here are documented at [arviz-devs.github.io](https://python.arviz.org). Related posts: [Simulation-Based Calibration](/posts/simulation-based-calibration/) on rank-based calibration checks, [Read the Diagnostics First](/posts/read-the-diagnostics-first/) on MCMC convergence, [Closing the Loop: MMM Calibration](/posts/closing-the-loop-mmm-calibration/) on experimental validation after fitting.*
+_Posterior predictive checks are step 6 of the Bayesian workflow in Gelman et al. (2020), "Bayesian Workflow," arXiv:2011.01808. The ArviZ functions used here are documented at [arviz-devs.github.io](https://python.arviz.org). Related posts: [Simulation-Based Calibration](/posts/simulation-based-calibration/) on rank-based calibration checks, [Read the Diagnostics First](/posts/read-the-diagnostics-first/) on MCMC convergence, [Closing the Loop: MMM Calibration](/posts/closing-the-loop-mmm-calibration/) on experimental validation after fitting._
