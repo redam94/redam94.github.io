@@ -141,6 +141,7 @@ Here's the specific failure mode I've seen in practice. A team runs R-hat, ESS, 
 Walking back from that failure: the in-sample PPC passed because the model had good marginal fit. The holdout PPC — which wasn't run — would have shown that the model's prediction interval on a period with different spend was much too wide, or systematically off in a direction that correlated with that channel's weight.
 
 The order I now run these:
+
 1. Standard in-sample PPC — is the model in the right universe?
 2. Holdout period PPC — does it predict rather than just fit?
 3. Residual structure check — is there left-over variation correlated with channels?
