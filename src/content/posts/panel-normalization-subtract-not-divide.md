@@ -58,12 +58,12 @@ $$\beta_1 = -0.0124, \qquad \beta_2 = +0.0743$$
 
 Three versions of the same random-effects model:
 
-| Approach | $\hat\beta_1$ | $\hat\beta_2$ |
-|---|---|---|
-| True | −0.0124 | +0.0743 |
-| Standard (no normalization) | −0.0165 | +0.0764 |
-| Subtract group mean | −0.0140 | +0.0729 |
-| **Divide by group mean** | **−0.0085** | **+0.0517** |
+| Approach                    | $\hat\beta_1$ | $\hat\beta_2$ |
+| --------------------------- | ------------- | ------------- |
+| True                        | −0.0124       | +0.0743       |
+| Standard (no normalization) | −0.0165       | +0.0764       |
+| Subtract group mean         | −0.0140       | +0.0729       |
+| **Divide by group mean**    | **−0.0085**   | **+0.0517**   |
 
 The standard random-effects model and the subtraction normalization both recover the true betas to within noise. The division normalization is off by about 30% on both — and the attenuation is systematic, not random. Every time you run this on data with heterogeneous unit baselines, the div-normalized coefficients will be smaller than the truth.
 
