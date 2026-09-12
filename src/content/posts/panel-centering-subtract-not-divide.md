@@ -60,11 +60,11 @@ The "coefficient" in your divided model is now unit-specific. It's $\beta$ divid
 
 The [centering analysis](https://github.com/redam94/common_regression_issues) uses 20 stores across 156 weeks, with two covariates (true betas: $-0.012$ and $+0.074$) on top of store-level random effects, trend, and seasonality. Three models are fit: one on the raw log outcome, one on the subtraction-demeaned outcome, and one on the division-demeaned outcome.
 
-| Model | Covariate 1 (true: −0.012) | Covariate 2 (true: +0.074) |
-|---|---|---|
-| Standard (no centering) | −0.017 | +0.076 |
-| Subtraction-demeaned | −0.014 | +0.073 |
-| Division-demeaned | −0.009 | +0.052 |
+| Model                   | Covariate 1 (true: −0.012) | Covariate 2 (true: +0.074) |
+| ----------------------- | -------------------------- | -------------------------- |
+| Standard (no centering) | −0.017                     | +0.076                     |
+| Subtraction-demeaned    | −0.014                     | +0.073                     |
+| Division-demeaned       | −0.009                     | +0.052                     |
 
 The division model recovers neither the true parameter nor a useful approximation to it. Its covariate 2 estimate (+0.052) is 30% below the true value — and more tellingly, the "correct" answer for the divided-space model isn't +0.074 either. It's the true beta divided by the mean log sales, averaged across stores, which comes out to about +0.060. The division model can't even recover the right answer for the question it's actually asking.
 
@@ -108,4 +108,4 @@ The fix is one line of code. The mistake is hard to notice once it's in.
 
 ---
 
-_Grounded in [common\_regression\_issues](https://github.com/redam94/common_regression_issues), notebook `04_normalization_in_panel_models.ipynb` (Matthew Reda, 2025). Related posts: [The Effect You're Looking For Isn't in Your Panel Data](/posts/within-between-persons/), [Collinearity Doesn't Break Your Model](/posts/collinearity-cant-separate/), [Measurement Error in Predictors](/posts/measurement-error-in-predictors/)._
+_Grounded in [common_regression_issues](https://github.com/redam94/common_regression_issues), notebook `04_normalization_in_panel_models.ipynb` (Matthew Reda, 2025). Related posts: [The Effect You're Looking For Isn't in Your Panel Data](/posts/within-between-persons/), [Collinearity Doesn't Break Your Model](/posts/collinearity-cant-separate/), [Measurement Error in Predictors](/posts/measurement-error-in-predictors/)._
