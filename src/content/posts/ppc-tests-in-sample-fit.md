@@ -45,7 +45,7 @@ The right complement to PPCs in a time series is **forward-chaining CV** (also c
 
 The result is a held-out predictive accuracy score that reflects how well the model generalizes to future data, not how well it recapitulates the past.
 
-This is also distinct from leave-one-out CV as ArviZ computes it via PSIS-LOO. PSIS-LOO approximates the predictive accuracy of leaving out *one observation at a time* from the full dataset. In i.i.d. settings that's a useful proxy for out-of-sample performance. In a time series it isn't — adjacent observations are correlated, and a model trained on everything except $y_t$ can interpolate from $y_{t-1}$ and $y_{t+1}$ in a way that a genuine forecasting exercise can't.
+This is also distinct from leave-one-out CV as ArviZ computes it via PSIS-LOO. PSIS-LOO approximates the predictive accuracy of leaving out _one observation at a time_ from the full dataset. In i.i.d. settings that's a useful proxy for out-of-sample performance. In a time series it isn't — adjacent observations are correlated, and a model trained on everything except $y_t$ can interpolate from $y_{t-1}$ and $y_{t+1}$ in a way that a genuine forecasting exercise can't.
 
 ```python
 import arviz as az
@@ -62,7 +62,7 @@ A Pareto $\hat{k} > 0.7$ is worth fixing, but fixing it doesn't give you a time-
 
 ## How this connects to the MMM workflow
 
-The [gap-by-gap post](/posts/gap-by-gap-bayesian-updating/) describes the continuous-learning loop: fit the model through week $T-1$, predict week $T$, update with the observation. That prediction step *is* forward-chaining CV, operationalized. Each gap produces a one-step-ahead forecast before the observation is incorporated, and the error on that forecast is the thing to monitor.
+The [gap-by-gap post](/posts/gap-by-gap-bayesian-updating/) describes the continuous-learning loop: fit the model through week $T-1$, predict week $T$, update with the observation. That prediction step _is_ forward-chaining CV, operationalized. Each gap produces a one-step-ahead forecast before the observation is incorporated, and the error on that forecast is the thing to monitor.
 
 The post flags a specific diagnostic: if "recent periods are consistently off," parameters have drifted and the drift covariance $Q$ is too small. That's exactly forward-CV catching something that PPCs can't. The PPC uses the full posterior, including two years of historical data, to generate replicas — of course they look plausible. The gap-update prediction uses only the information available before week $T$, and its error is a clean signal of model health going forward.
 
@@ -84,4 +84,4 @@ PPCs catch real problems and you should run them. But they are the beginning of 
 
 ---
 
-*Related: [Simulation-Based Calibration](/posts/simulation-based-calibration/) on testing whether the posterior recovers the truth under simulation. [Read the Diagnostics First](/posts/read-the-diagnostics-first/) on MCMC convergence checks. [The Gap-by-Gap Update](/posts/gap-by-gap-bayesian-updating/) on forward-CV in the continuous-learning loop. The `mmm-framework` gap update implements forward-CV prediction scoring natively.*
+_Related: [Simulation-Based Calibration](/posts/simulation-based-calibration/) on testing whether the posterior recovers the truth under simulation. [Read the Diagnostics First](/posts/read-the-diagnostics-first/) on MCMC convergence checks. [The Gap-by-Gap Update](/posts/gap-by-gap-bayesian-updating/) on forward-CV in the continuous-learning loop. The `mmm-framework` gap update implements forward-CV prediction scoring natively._
