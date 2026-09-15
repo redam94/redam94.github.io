@@ -18,7 +18,7 @@ This is seasonality confounding. It's one of the most common sources of inflated
 
 ## The mechanism
 
-Say you're running a brand campaign that ramps up in November and December. Sales also ramp up then. A naive MMM with a linear media term estimates a large positive coefficient — the model is explaining the right direction at roughly the right magnitude. The problem is that the coefficient is doing double duty: it's estimating media incrementality *and* absorbing the seasonal component of sales that you didn't separately control for.
+Say you're running a brand campaign that ramps up in November and December. Sales also ramp up then. A naive MMM with a linear media term estimates a large positive coefficient — the model is explaining the right direction at roughly the right magnitude. The problem is that the coefficient is doing double duty: it's estimating media incrementality _and_ absorbing the seasonal component of sales that you didn't separately control for.
 
 If you were to cut all media spend in November, your model predicts sales would fall by the full seasonal amount. In practice, they'd fall much less — most of the Q4 lift is demand, not media. But the model has no way to know that, because you never gave it a Q4 without media.
 
@@ -84,8 +84,8 @@ The right level of seasonal complexity is informed by prior knowledge ("our cate
 
 This is also where [pre-specification](/posts/building-a-pre-specified-bayesian-mmm/) matters. If you decide on the number of Fourier pairs after seeing the residuals, you're doing seasonality model selection in a way that can either overfit (pick $K$ large enough to fit the residuals) or underfit (stop as soon as the residuals look "good enough" with a low $K$ that leaves more variance for the media coefficient). Pre-specifying the seasonality structure — including the number of Fourier pairs — before seeing the fit eliminates this degree of freedom.
 
-The diagnostic — plot residuals by calendar week — is best run as a *post*-fit check on a pre-specified model, not as a search criterion for choosing model structure. The evidence from the data should update your next model; it shouldn't be optimized against in the current one.
+The diagnostic — plot residuals by calendar week — is best run as a _post_-fit check on a pre-specified model, not as a search criterion for choosing model structure. The evidence from the data should update your next model; it shouldn't be optimized against in the current one.
 
 ---
 
-*Seasonality confounding is among the time-series pitfalls addressed in [`common_regression_issues`](https://github.com/redam94/common_regression_issues) `nbs/03_trends_and_seasons.ipynb`. Related: [Coincidence Is Not Contribution](/posts/coincidence-is-not-contribution/), [Building a Pre-Specified Bayesian MMM](/posts/building-a-pre-specified-bayesian-mmm/), [Simulation-Based Calibration](/posts/simulation-based-calibration/).*
+_Seasonality confounding is among the time-series pitfalls addressed in [`common_regression_issues`](https://github.com/redam94/common_regression_issues) `nbs/03_trends_and_seasons.ipynb`. Related: [Coincidence Is Not Contribution](/posts/coincidence-is-not-contribution/), [Building a Pre-Specified Bayesian MMM](/posts/building-a-pre-specified-bayesian-mmm/), [Simulation-Based Calibration](/posts/simulation-based-calibration/)._
