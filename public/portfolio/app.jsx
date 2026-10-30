@@ -3,7 +3,7 @@ const { useState, useEffect, useMemo } = React;
 
 const FEATURED_PROJECTS = [
   {
-    tag: "Flagship · Open source",
+    tag: "Flagship",
     slug: "redam94/mmm-framework",
     title: "MMM Framework",
     blurb:
@@ -11,10 +11,44 @@ const FEATURED_PROJECTS = [
     stack: ["PyMC", "FastAPI", "React", "Pydantic", "uv"],
     status: "active",
     href: "https://redam94.github.io/mmm-framework/",
-    repo: "https://github.com/redam94/mmm-framework",
     site: true,
     featured: true,
     figure: "posterior",
+  },
+  {
+    tag: "Standard · In progress",
+    slug: "redam94.github.io/ump",
+    title: "Universal Model Protocol",
+    blurb:
+      "A published standard for passing models, test results, budget scenarios and decisions between tools without losing what the numbers mean. Every exchanged number carries its estimand; gates degrade before they block; records land in an append-only log.",
+    stack: ["JSON Schema", "Pydantic", "FastAPI", "TypeScript"],
+    status: "draft",
+    href: "https://redam94.github.io/ump/",
+    site: true,
+  },
+  {
+    tag: "Platform · Open source",
+    slug: "redam94/modeling-api",
+    title: "modeling-api",
+    blurb:
+      "Fit, score and share labelled multi-dimensional models safely. Declarative YAML specs validated against an xarray schema, exact preprocessing replayed at score time, sandboxed jobs, versioned workflows and a governance policy that checks a model before anyone uses it.",
+    stack: ["Python", "xarray", "PyMC", "statsmodels", "Vega-Lite"],
+    status: "active",
+    href: "https://redam94.github.io/modeling-api/",
+    repo: "https://github.com/redam94/modeling-api",
+    site: true,
+  },
+  {
+    tag: "Research · Open source",
+    slug: "redam94/axiom",
+    title: "axiom",
+    blurb:
+      "Bayesian causal decision science: declare what you want to know, check whether the data can tell you, design the experiment that would, and pool evidence across studies. Checked against 21 published results from four real datasets.",
+    stack: ["Python", "NumPyro", "JAX", "Pydantic"],
+    status: "active",
+    href: "https://redam94.github.io/axiom/",
+    repo: "https://github.com/redam94/axiom",
+    site: true,
   },
   {
     tag: "In progress · Personal site",
@@ -52,6 +86,28 @@ const FEATURED_PROJECTS = [
     site: true,
   },
   {
+    tag: "Writing · Pedagogy",
+    slug: "redam94/pymc-challenges",
+    title: "PyMC Challenges",
+    blurb:
+      "Hard, real-data Bayesian modeling challenges on PyMC 6 and ArviZ 1. Every challenge ends in a decision somebody has to make, and in every one the obvious first model breaks in a way you have to diagnose. Tiered, opt-in hints.",
+    stack: ["PyMC", "ArviZ", "nutpie", "Jupyter"],
+    status: "active",
+    href: "https://redam94.github.io/pymc-challenges/",
+    repo: "https://github.com/redam94/pymc-challenges",
+    site: true,
+  },
+  {
+    tag: "Brand health",
+    slug: "redam94/latent_var",
+    title: "Brand Tracker Latent Variables",
+    blurb:
+      "State-space models for brand-tracker survey proportions with sampling error, linking media spend to latent brand to sales. The app runs the naive analyses on the same simulated data and shows exactly what they get wrong.",
+    stack: ["PyMC", "NumPyro", "statsmodels", "Streamlit"],
+    status: "active",
+    href: "https://github.com/redam94/latent_var",
+  },
+  {
     tag: "Research",
     slug: "redam94/haruspex",
     title: "Haruspex",
@@ -66,18 +122,20 @@ const FEATURED_PROJECTS = [
     slug: "redam94/atlas",
     title: "Atlas",
     blurb:
-      "Schema-validated Master Flat File ingest for marketing data — the unsexy plumbing that decides whether your model is recoverable at all.",
-    stack: ["Python", "Pandera", "DuckDB"],
+      "Budget optimization over any predictive model. One interface for ML, statistical and third-party models, multi-KPI objectives, business-rule constraints and model chaining across time, geography, product and channel.",
+    stack: ["Python", "SciPy", "Optuna", "CVXPY"],
     status: "active",
-    href: "https://github.com/redam94/atlas",
+    href: "https://atlas.mattreda.pro/",
+    repo: "https://github.com/redam94/atlas",
+    site: true,
   },
   {
     tag: "Research",
     slug: "redam94/BayesInsight",
     title: "BayesInsight",
     blurb:
-      "Decision-theoretic reporting layer: turns posterior draws into expected-value, regret, and budget-shift recommendations leadership can actually act on.",
-    stack: ["Python", "PyMC", "Streamlit"],
+      "Hierarchical Bayesian models as configuration. Define the data, metadata and variables in JSON and get varying intercepts, seasonal components and MFF validation without writing model code.",
+    stack: ["Python", "PyMC", "JSON"],
     status: "draft",
     href: "https://github.com/redam94/BayesInsight",
   },
@@ -93,13 +151,13 @@ const FEATURED_PROJECTS = [
   },
   {
     tag: "Agentic systems",
-    slug: "redam94/posterior-agent",
-    title: "Posterior Agent",
+    slug: "redam94/mmm-agent",
+    title: "MMM Workflows",
     blurb:
-      "An LLM-driven interrogator that sits on top of a fitted MMM. Ask 'what happens if we cut TV by 30% in Q3?' and it queries the posterior, runs the counterfactual, and returns a calibrated answer with HDIs — not a hallucination.",
-    stack: ["Python", "PyMC", "LangGraph", "FastAPI"],
+      "Agentic marketing mix modeling: four agents for research, EDA into MFF format, Bayesian fitting on PyMC-Marketing, and what-if scenarios with budget optimization, served through a FastAPI and WebSocket API.",
+    stack: ["Python", "PyMC-Marketing", "LangGraph", "FastAPI"],
     status: "draft",
-    href: "https://github.com/redam94",
+    href: "https://github.com/redam94/mmm-agent",
   },
 ];
 
@@ -455,7 +513,7 @@ function Projects() {
         </h2>
         <p className="section-lede">
           Most of these started as a Sunday notebook and graduated. A few are
-          still cooking. All open source — clone them, break them, file an
+          still cooking. Most are open source — clone them, break them, file an
           issue.
         </p>
         <div className="projects-grid">
@@ -567,11 +625,11 @@ function Repos() {
 
   const fallback = [
     {
-      name: "mmm-framework",
-      description: "Bayesian Marketing Mix Modeling toolkit on PyMC-Marketing.",
+      name: "modeling-api",
+      description: "Fit, score and share labelled multi-dimensional models.",
       language: "Python",
       stargazers_count: "—",
-      html_url: "https://github.com/redam94/mmm-framework",
+      html_url: "https://github.com/redam94/modeling-api",
     },
     {
       name: "haruspex",
@@ -582,14 +640,14 @@ function Repos() {
     },
     {
       name: "atlas",
-      description: "Master Flat File ingest with schema validation.",
+      description: "Budget optimization over any predictive model.",
       language: "Python",
       stargazers_count: "—",
       html_url: "https://github.com/redam94/atlas",
     },
     {
       name: "BayesInsight",
-      description: "Decision-theoretic reporting over posterior draws.",
+      description: "Hierarchical Bayesian models as configuration.",
       language: "Python",
       stargazers_count: "—",
       html_url: "https://github.com/redam94/BayesInsight",
