@@ -513,8 +513,8 @@ function Projects() {
         </h2>
         <p className="section-lede">
           Most of these started as a Sunday notebook and graduated. A few are
-          still cooking. Most are open source — clone them, break them, file
-          an issue.
+          still cooking. Most are open source — clone them, break them, file an
+          issue.
         </p>
         <div className="projects-grid">
           {FEATURED_PROJECTS.map(p => (
