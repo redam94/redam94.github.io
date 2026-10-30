@@ -52,7 +52,7 @@ A few things I keep coming back to, and write about here:
 
 Most of my work is open source. A few of the projects I write about:
 
-- **[mmm-framework](https://github.com/redam94/mmm-framework)** — a pre-specified
+- **[mmm-framework](https://redam94.github.io/mmm-framework/)** — a pre-specified
   Bayesian marketing mix modeling toolkit on PyMC. See
   [Building a Pre-Specified Bayesian MMM](/posts/building-a-pre-specified-bayesian-mmm/).
 - **[atlas](https://github.com/redam94/atlas)** — budget optimization over any
