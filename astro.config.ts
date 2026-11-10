@@ -20,6 +20,7 @@ import {
 } from "@shikijs/transformers";
 import { transformerFileName } from "./src/utils/transformers/fileName";
 import config from "./astro-paper.config";
+import { githubPages, githubPageUrl } from "./src/data/githubPages";
 
 export default defineConfig({
   site: config.site.url,
@@ -28,6 +29,11 @@ export default defineConfig({
     sitemap({
       filter: page =>
         config.features?.showArchives !== false || !page.endsWith("/archives/"),
+      // Project sites served from the same host (see src/data/githubPages.ts).
+      customPages: githubPages.map(githubPageUrl),
+      customSitemaps: githubPages
+        .filter(page => page.hasSitemap)
+        .map(page => `${githubPageUrl(page)}sitemap.xml`),
     }),
   ],
   i18n: {
