@@ -1,0 +1,270 @@
+---
+/**
+ * Schematic of the forward recursion on a two-state chain over five years.
+ *
+ * The rates, the stay probability and the first-state distribution are the
+ * posterior means printed in the worked example. The five counts are made
+ * up, so the numbers in the nodes illustrate the mechanism and are not a
+ * result. The last frame checks the recursion against a brute-force sum over
+ * all 32 paths, computed in model.ts.
+ */
+import Figure from "../Figure.astro";
+import { arrowGeom, range, type Point } from "../lib";
+import {
+  toyBruteLogLik,
+  toyCounts,
+  toyLogAlpha,
+  toyLogLik,
+  toyPath,
+  toyPathCount,
+  toyRates,
+} from "./model";
+
+if (Math.abs(toyLogLik - toyBruteLogLik) > 1e-9) {
+  throw new Error("Forward recursion and brute-force sum disagree");
+}
+
+const steps = toyCounts.length;
+const r = 25;
+const colX = (t: number) => 176 + 106 * t;
+/** State 0 (quiet) is the lower row, state 1 (busy) the upper row. */
+const rowY = [200, 104];
+const stateNames = ["quiet", "busy"];
+const at = (t: number, k: number): Point => [colX(t), rowY[k]];
+const fmt = (value: number) => value.toFixed(2).replace("-", "−");
+
+const firstStep = 2;
+const lastFrame = firstStep + steps;
+const stepFrame = (t: number) => firstStep + t;
+
+const nodes = range(steps).flatMap(t =>
+  [0, 1].map(k => ({
+    t,
+    x: colX(t),
+    y: rowY[k],
+    value: fmt(toyLogAlpha[t][k]),
+    onPath: toyPath[t] === k,
+    frame: stepFrame(t),
+  }))
+);
+
+const edges = range(steps - 1).flatMap(t =>
+  [0, 1].flatMap(j =>
+    [0, 1].map(k => ({
+      frame: stepFrame(t + 1),
+      plain: arrowGeom(at(t, j), at(t + 1, k), r + 4, r + 4, 0).shaft,
+      arrow: arrowGeom(at(t, j), at(t + 1, k), r + 4, r + 6, 8),
+      onPath: toyPath[t] === j && toyPath[t + 1] === k,
+    }))
+  )
+);
+
+const columns = range(steps).map(t => ({
+  t,
+  x: colX(t),
+  count: toyCounts[t],
+  frame: stepFrame(t),
+  line:
+    t === 0
+      ? `Year 1: log α(k) = log δ(k) + log p(${toyCounts[0]} | k)`
+      : `Year ${t + 1}: log α(k) = log p(${toyCounts[t]} | k) + logsumexp over j of [ last log α(j) + log Γ(j, k) ]`,
+  note:
+    t === 0
+      ? "δ is the distribution of the first state, and p(count | k) is Poisson with rate λ(k)."
+      : "Each node adds its two incoming arrows. The paths behind them are already summed.",
+}));
+
+const pathText = toyPath.map(k => stateNames[k]).join(", ");
+
+const frameLabels = [
+  "A hidden path sets each year's rate",
+  `${toyPathCount} possible paths in five years`,
+  "Year 1: start from δ",
+  "Year 2: carry the sum forward",
+  ...range(steps - 2).map(i => `Year ${i + 3}: the same step again`),
+  "Sum the last column",
+];
+
+const line1 = 302;
+const line2 = 322;
+---
+
+<Figure
+  frames={lastFrame + 1}
+  interval={2600}
+  frameLabels={frameLabels}
+  caption={`Schematic with made-up counts. The rates, the stay probability of 0.89 and the first-state probabilities are the posterior means from the worked example, and the five counts are invented to show the arithmetic. Each column is computed from the one before it, so the work grows with the number of years and the result equals the sum over all ${toyPathCount} paths.`}
+>
+  <svg
+    viewBox="0 0 640 340"
+    role="img"
+    aria-label={`Trellis of two hidden states, quiet and busy, over five years with illustrative counts ${toyCounts.join(", ")}. The forward recursion fills one column of log forward variables per year from the previous column, and the log-sum-exp of the last column, ${fmt(toyLogLik)}, equals the brute-force sum over all ${toyPathCount} state paths.`}
+  >
+    <text x="16" y="22" class="f-title">Two hidden states over five years</text>
+    <text x="624" y="22" text-anchor="end" class="f-small f-text-muted">
+      schematic
+    </text>
+
+    {
+      columns.map(column => (
+        <text
+          x={column.x}
+          y="58"
+          text-anchor="middle"
+          class="f-small f-text-muted f-num"
+        >
+          year {column.t + 1}
+        </text>
+      ))
+    }
+
+    <text x="16" y={rowY[1] - 4} class="f-label">busy</text>
+    <text x="16" y={rowY[1] + 13} class="f-small f-text-muted f-num">
+      λ = {toyRates[1]}
+    </text>
+    <text x="16" y={rowY[0] - 4} class="f-label">quiet</text>
+    <text x="16" y={rowY[0] + 13} class="f-small f-text-muted f-num">
+      λ = {toyRates[0]}
+    </text>
+    <g data-from={firstStep}>
+      <text x="16" y="148" class="f-small f-text-accent">node value:</text>
+      <text x="16" y="164" class="f-small f-text-accent">log α(k)</text>
+    </g>
+
+    <text x="16" y="256" class="f-label">count</text>
+    <text x="16" y="272" class="f-small f-text-muted">(made up)</text>
+
+    {/* All sixteen transitions, from the second frame on. */}
+    <g data-from="1">
+      {edges.map(edge => <path d={edge.plain} class="f-muted" />)}
+    </g>
+
+    {/* Frame 0: one path through the chain. */}
+    <g data-show="0">
+      {
+        edges
+          .filter(edge => edge.onPath)
+          .map(edge => <path d={edge.plain} class="f-accent f-thick" />)
+      }
+    </g>
+
+    {/* The transitions used by each step of the recursion. */}
+    {
+      edges.map(edge => (
+        <g data-show={edge.frame}>
+          <path d={edge.arrow.shaft} class="f-accent" />
+          <polygon points={edge.arrow.head} class="f-fill-accent" />
+        </g>
+      ))
+    }
+
+    {
+      nodes.map(node => (
+        <g>
+          <circle cx={node.x} cy={node.y} r={r} class="f-line f-fill-bg" />
+          {node.onPath && (
+            <circle
+              cx={node.x}
+              cy={node.y}
+              r={r}
+              class="f-accent f-thick f-fill-soft"
+              data-show="0"
+            />
+          )}
+          <circle
+            cx={node.x}
+            cy={node.y}
+            r={r + 4}
+            class="f-accent f-thick"
+            data-show={node.frame}
+          />
+          <g data-from={node.frame}>
+            <circle
+              cx={node.x}
+              cy={node.y}
+              r={r}
+              class="f-accent f-fill-soft"
+            />
+            <text
+              x={node.x}
+              y={node.y}
+              text-anchor="middle"
+              dominant-baseline="central"
+              class="f-small f-label f-num"
+            >
+              {node.value}
+            </text>
+          </g>
+        </g>
+      ))
+    }
+
+    {
+      columns.map(column => (
+        <g>
+          <rect
+            x={column.x - 20}
+            y="242"
+            width="40"
+            height="28"
+            rx="8"
+            class="f-accent f-fill-soft"
+            data-show={column.frame}
+          />
+          <text
+            x={column.x}
+            y="256"
+            text-anchor="middle"
+            dominant-baseline="central"
+            class="f-label f-num"
+          >
+            {column.count}
+          </text>
+        </g>
+      ))
+    }
+
+    <g data-show="0">
+      <text x="16" y={line1} class="f-small f-label">
+        One possible path: {pathText}.
+      </text>
+      <text x="16" y={line2} class="f-small f-text-muted">
+        Each count is a Poisson draw at its year's rate. The states are never
+        observed.
+      </text>
+    </g>
+
+    <g data-show="1">
+      <text x="16" y={line1} class="f-small f-label f-num">
+        Two states over five years allow {toyPathCount} paths. Over 125 years: 2¹²⁵.
+      </text>
+      <text x="16" y={line2} class="f-small f-text-muted">
+        The likelihood of the parameters is a sum over every one of them.
+      </text>
+    </g>
+
+    {
+      columns.map(column => (
+        <g data-show={column.frame}>
+          <text x="16" y={line1} class="f-small f-label f-num">
+            {column.line}
+          </text>
+          <text x="16" y={line2} class="f-small f-text-muted">
+            {column.note}
+          </text>
+        </g>
+      ))
+    }
+
+    <g data-show={lastFrame} data-final>
+      <text x="16" y={line1} class="f-small f-label f-num">
+        log p(counts) = logsumexp of the last column = {fmt(toyLogLik)}
+      </text>
+      <text x="16" y={line2} class="f-small f-text-muted f-num">
+        Adding up all {toyPathCount} paths one at a time gives {
+          fmt(toyBruteLogLik)
+        } as well.
+      </text>
+    </g>
+  </svg>
+</Figure>

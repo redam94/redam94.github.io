@@ -1,0 +1,177 @@
+---
+/**
+ * Label switching in the two-state earthquake model. The upper block plots
+ * the per-chain means of lam[0] and lam[1] from the unordered fit, the lower
+ * block the posterior means and 94% HDIs from the ordered fit. All numbers
+ * are printed in the worked example.
+ */
+import Figure from "../Figure.astro";
+import { f1, range, scale } from "../lib";
+import { diagnostics, twoStateRates, unorderedChainMeans } from "./model";
+
+const left = 150;
+const right = 610;
+const xAt = scale(9, 17, left, right);
+const ticks = range(9).map(i => i + 9);
+const axisY = 262;
+
+const chainRows = unorderedChainMeans.map(([lam0, lam1], chain) => {
+  const swapped = Math.abs(lam0 - lam1) < 1;
+  return {
+    chain,
+    y: 78 + chain * 26,
+    x0: f1(xAt(lam0)),
+    x1: f1(xAt(lam1)),
+    note: swapped ? "labels swap mid-run" : "here λ[0] is busy",
+  };
+});
+
+/** Notes sit right of the busy rate, clear of both guide lines. */
+const noteX = 500;
+
+const orderedY = 228;
+const [quiet, busy] = twoStateRates.map(rate => ({
+  mean: rate.mean,
+  x: f1(xAt(rate.mean)),
+  bar: `M${f1(xAt(rate.lo))} ${orderedY} H${f1(xAt(rate.hi))}`,
+}));
+const half = 5;
+---
+
+<Figure
+  replay
+  caption={`Numbers from the worked example. Top: the mean of each rate label in each chain of the unordered fit (R-hat ${diagnostics.unordered.rhat}, smallest bulk ESS ${diagnostics.unordered.ess}). Bottom: posterior means and 94% HDIs after requiring λ[0] < λ[1] (R-hat ${diagnostics.ordered.rhat}, smallest bulk ESS ${diagnostics.ordered.ess}). The chains agree on the two rates and disagree only on which label each one carries.`}
+>
+  <svg
+    viewBox="0 0 640 310"
+    role="img"
+    aria-label={`Dot plot of earthquake rate estimates. In the unordered fit, chains 0 and 1 average about 13 for both labels because the labels swap mid-run, and chains 2 and 3 put label 0 at 14.8 and label 1 at 10.9. In the ordered fit every chain agrees: the quiet rate is ${quiet.mean} and the busy rate is ${busy.mean} earthquakes per year.`}
+  >
+    <text x="16" y="22" class="f-title"
+      >The same two rates, different labels</text
+    >
+
+    <g class="f-small">
+      <circle cx="500" cy="18" r={half} class="f-fill-line"></circle>
+      <text x="511" y="22">λ[0]</text>
+      <rect
+        x={562 - half}
+        y={18 - half}
+        width={half * 2}
+        height={half * 2}
+        class="f-line f-fill-bg"></rect>
+      <text x="573" y="22">λ[1]</text>
+    </g>
+
+    {
+      [quiet, busy].map(rate => (
+        <g>
+          <line
+            x1={rate.x}
+            x2={rate.x}
+            y1="64"
+            y2="198"
+            class="f-grid f-dash"
+          />
+          <line
+            x1={rate.x}
+            x2={rate.x}
+            y1={orderedY + 10}
+            y2={axisY}
+            class="f-grid f-dash"
+          />
+        </g>
+      ))
+    }
+
+    <text x="16" y="52" class="f-label f-text-warn">
+      Unordered rates: chain means
+    </text>
+    {
+      chainRows.map((row, i) => (
+        <g class="fx-rise" style={`--d: ${i * 180}ms`}>
+          <text x="16" y={row.y + 4} class="f-small f-text-muted f-num">
+            chain {row.chain}
+          </text>
+          <circle cx={row.x0} cy={row.y} r={half} class="f-fill-warn" />
+          <rect
+            x={row.x1 - half}
+            y={row.y - half}
+            width={half * 2}
+            height={half * 2}
+            class="f-warn f-fill-bg"
+          />
+          <text x={noteX} y={row.y + 4} class="f-small f-text-warn">
+            {row.note}
+          </text>
+        </g>
+      ))
+    }
+
+    <text x="16" y="190" class="f-label f-text-accent">
+      Ordered rates: all four chains
+    </text>
+    <g class="fx-rise" style="--d: 900ms">
+      <text x="16" y={orderedY + 4} class="f-small f-text-muted">
+        mean, 94% HDI
+      </text>
+      <path d={quiet.bar} class="f-accent f-thick"></path>
+      <path d={busy.bar} class="f-accent f-thick"></path>
+      <circle cx={quiet.x} cy={orderedY} r={half} class="f-fill-accent"
+      ></circle>
+      <rect
+        x={busy.x - half}
+        y={orderedY - half}
+        width={half * 2}
+        height={half * 2}
+        class="f-accent f-fill-bg"></rect>
+      <text
+        x={quiet.x}
+        y={orderedY - 13}
+        text-anchor="middle"
+        class="f-small f-label f-text-accent f-num"
+      >
+        quiet: {quiet.mean}
+      </text>
+      <text
+        x={busy.x}
+        y={orderedY - 13}
+        text-anchor="middle"
+        class="f-small f-label f-text-accent f-num"
+      >
+        busy: {busy.mean}
+      </text>
+    </g>
+
+    <line x1={left} x2={right} y1={axisY} y2={axisY} class="f-axis"></line>
+    {
+      ticks.map(tick => (
+        <g>
+          <line
+            x1={xAt(tick)}
+            x2={xAt(tick)}
+            y1={axisY}
+            y2={axisY + 5}
+            class="f-axis"
+          />
+          <text
+            x={xAt(tick)}
+            y={axisY + 20}
+            text-anchor="middle"
+            class="f-small f-text-muted f-num"
+          >
+            {tick}
+          </text>
+        </g>
+      ))
+    }
+    <text
+      x={(left + right) / 2}
+      y={axisY + 42}
+      text-anchor="middle"
+      class="f-small f-text-muted"
+    >
+      Rate λ (magnitude 7+ earthquakes per year)
+    </text>
+  </svg>
+</Figure>

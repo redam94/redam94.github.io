@@ -1,0 +1,207 @@
+---
+/**
+ * The seven-day forecast table of the worked example as an interval plot on
+ * a log axis: median and 90% interval of the M3+ count for the three models,
+ * the count that was observed, and the two exceedance probabilities. Every
+ * number is copied from the example's forecast table.
+ */
+import Figure from "../Figure.astro";
+import { f1, scale } from "../lib";
+import { forecasts, observedWeek } from "./model";
+
+const plotLeft = 178;
+const plotRight = 452;
+const top = 52;
+const axisY = 270;
+const colM5 = 510;
+const colM71 = 590;
+const xAt = (count: number) =>
+  scale(0, 5, plotLeft, plotRight)(Math.log10(count));
+
+const styles = {
+  etas: { stroke: "f-accent", fill: "f-fill-accent", text: "f-text-accent" },
+  naive: { stroke: "f-warn", fill: "f-fill-warn", text: "f-text-warn" },
+  exp: { stroke: "f-alt", fill: "f-fill-alt", text: "f-text-alt" },
+};
+const notes = {
+  etas: "time-varying completeness",
+  naive: "constant completeness",
+  exp: "one time scale of decay",
+};
+
+const observedX = f1(xAt(observedWeek.m3));
+const number = (value: number) => value.toLocaleString("en-US");
+
+const rows = forecasts.map((row, i) => {
+  const y = 84 + i * 54;
+  const x0 = f1(xAt(row.lo));
+  const x1 = f1(xAt(row.hi));
+  // Count labels sit clear of the dashed line at the observed count.
+  const labelX = x1 < observedX ? x0 : observedX + 12;
+  return {
+    ...row,
+    ...styles[row.key],
+    note: notes[row.key],
+    y,
+    x0,
+    x1,
+    xm: f1(xAt(row.median)),
+    labelX,
+    countText: `${number(row.median)} (${number(row.lo)} to ${number(row.hi)})`,
+    delay: 200 + i * 350,
+  };
+});
+
+const observedY = 84 + rows.length * 54;
+const xTicks = [1, 10, 100, 1000, 10000, 100000];
+---
+
+<Figure
+  replay
+  caption="Numbers from the forecast table of the worked example: 1,000 simulated weeks per model, issued 24 hours after the M7.1, with the following week held out of every fit. The count axis is logarithmic. The naive interval runs past 29,000 events, and 31 of its 1,000 simulations hit the cap of 200,000 events."
+>
+  <svg
+    viewBox="0 0 640 322"
+    role="img"
+    aria-label={`Interval plot of the forecast number of magnitude 3 or larger earthquakes in seven days. ETAS with time-varying completeness: median 230, 90% interval 151 to 566. Naive ETAS: median 284, interval 123 to 29,547. Exponential Hawkes: median 5, interval 1 to 33. The observed count was ${observedWeek.m3}. Probabilities of a magnitude 5 or larger were 0.76, 0.92 and 0.08; the largest observed event was ${observedWeek.largest}.`}
+  >
+    <text x={plotLeft} y="20" class="f-label">M3+ earthquakes in 7 days</text>
+    <text x={plotLeft} y="37" class="f-small f-text-muted">
+      median and 90% interval
+    </text>
+    <text x={colM5} y="20" text-anchor="middle" class="f-small f-label">
+      P(M ≥ 5)
+    </text>
+    <text x={colM71} y="20" text-anchor="middle" class="f-small f-label">
+      P(M ≥ 7.1)
+    </text>
+    <text
+      x={(colM5 + colM71) / 2}
+      y="37"
+      text-anchor="middle"
+      class="f-small f-text-muted"
+    >
+      at least one in 7 days
+    </text>
+
+    {
+      xTicks.map(tick => (
+        <g>
+          <line
+            x1={xAt(tick)}
+            x2={xAt(tick)}
+            y1={top}
+            y2={axisY}
+            class="f-grid"
+          />
+          <text
+            x={xAt(tick)}
+            y={axisY + 18}
+            text-anchor="middle"
+            class="f-small f-text-muted f-num"
+          >
+            {number(tick)}
+          </text>
+        </g>
+      ))
+    }
+    <line x1={plotLeft} x2={plotRight} y1={axisY} y2={axisY} class="f-axis"
+    ></line>
+    <text
+      x={(plotLeft + plotRight) / 2}
+      y={axisY + 40}
+      text-anchor="middle"
+      class="f-small f-text-muted"
+    >
+      Number of M3+ events (log scale)
+    </text>
+
+    <line
+      x1={observedX}
+      x2={observedX}
+      y1={top}
+      y2={observedY}
+      class="f-line f-dash fx-fade"
+      style="--d: 1400ms"></line>
+
+    {
+      rows.map(row => (
+        <g>
+          <text x="16" y={row.y - 3} class={`f-small f-label ${row.text}`}>
+            {row.label}
+          </text>
+          <text x="16" y={row.y + 13} class="f-small f-text-muted">
+            {row.note}
+          </text>
+          <path
+            d={`M${row.x0} ${row.y} L${row.x1} ${row.y}`}
+            pathLength="1"
+            class={`${row.stroke} f-thick fx-draw`}
+            style={`--d: ${row.delay}ms`}
+          />
+          <g class="fx-fade" style={`--d: ${row.delay + 500}ms`}>
+            <line
+              x1={row.x0}
+              x2={row.x0}
+              y1={row.y - 6}
+              y2={row.y + 6}
+              class={`${row.stroke} f-thick`}
+            />
+            <line
+              x1={row.x1}
+              x2={row.x1}
+              y1={row.y - 6}
+              y2={row.y + 6}
+              class={`${row.stroke} f-thick`}
+            />
+            <circle cx={row.xm} cy={row.y} r="5.5" class={row.fill} />
+            <text
+              x={row.labelX}
+              y={row.y - 13}
+              class={`f-small f-num ${row.text}`}
+            >
+              {row.countText}
+            </text>
+            <text
+              x={colM5}
+              y={row.y + 4}
+              text-anchor="middle"
+              class="f-small f-num"
+            >
+              {row.pM5}
+            </text>
+            <text
+              x={colM71}
+              y={row.y + 4}
+              text-anchor="middle"
+              class="f-small f-num"
+            >
+              {row.pM71}
+            </text>
+          </g>
+        </g>
+      ))
+    }
+
+    <g class="fx-fade" style="--d: 1400ms">
+      <text x="16" y={observedY - 3} class="f-small f-label">What happened</text
+      >
+      <text x="16" y={observedY + 13} class="f-small f-text-muted">
+        the held-out week
+      </text>
+      <circle cx={observedX} cy={observedY} r="5.5" class="f-fill-line"
+      ></circle>
+      <text x={observedX + 12} y={observedY + 4} class="f-small f-label f-num">
+        {observedWeek.m3}
+      </text>
+      <text
+        x={(colM5 + colM71) / 2}
+        y={observedY + 4}
+        text-anchor="middle"
+        class="f-small f-label f-num"
+      >
+        largest: {observedWeek.largest}
+      </text>
+    </g>
+  </svg>
+</Figure>

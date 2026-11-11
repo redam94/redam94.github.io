@@ -1,0 +1,160 @@
+---
+/**
+ * How many terms each way of computing the likelihood needs for a two-state
+ * chain of length T: K^T state paths against T * K^2 products in the forward
+ * recursion. Both curves are the formulas themselves, evaluated here.
+ */
+import Figure from "../Figure.astro";
+import { f1, linePath, range, scale, type Point } from "../lib";
+import { seriesYears } from "./model";
+
+const K = 2;
+const logPaths = (t: number) => t * Math.log10(K);
+const logSteps = (t: number) => Math.log10(t * K * K);
+
+const left = 70;
+const right = 584;
+const top = 44;
+const bottom = 262;
+const xAt = scale(0, seriesYears, left, right);
+const yAt = scale(0, 40, bottom, top);
+
+const lengths = range(seriesYears).map(i => i + 1);
+const pathsCurve = linePath(
+  lengths.map(t => [xAt(t), yAt(logPaths(t))] as Point)
+);
+const stepsCurve = linePath(
+  lengths.map(t => [xAt(t), yAt(logSteps(t))] as Point)
+);
+
+const xTicks = [0, 25, 50, 75, 100, 125];
+const yTicks = [
+  { value: 0, label: "1" },
+  { value: 10, label: "10¹⁰" },
+  { value: 20, label: "10²⁰" },
+  { value: 30, label: "10³⁰" },
+  { value: 40, label: "10⁴⁰" },
+];
+
+const endX = f1(xAt(seriesYears));
+const pathsEndY = f1(yAt(logPaths(seriesYears)));
+const stepsEndY = f1(yAt(logSteps(seriesYears)));
+const forwardSteps = seriesYears * K * K;
+const pathsMantissa = (K ** seriesYears / 1e37).toFixed(1);
+const midY = (top + bottom) / 2;
+---
+
+<Figure
+  replay
+  caption={`Both curves are formulas, not fitted results: the number of state paths, 2 to the power T, and the number of products in the forward recursion, T times 2 squared, for a two-state chain. At the 125 years of the earthquake series the first is about ${pathsMantissa} × 10³⁷ and the second is ${forwardSteps}.`}
+>
+  <svg
+    viewBox="0 0 640 316"
+    role="img"
+    aria-label={`Line chart on a logarithmic vertical axis against series length in years. The number of state paths for two states grows as a straight line to about ${pathsMantissa} times ten to the 37 at 125 years, while the number of products in the forward recursion stays near the bottom and reaches ${forwardSteps}.`}
+  >
+    <text x={left} y="22" class="f-title">
+      Terms to add up, for two hidden states
+    </text>
+
+    {
+      yTicks.map(tick => (
+        <g>
+          <line
+            x1={left}
+            x2={right}
+            y1={yAt(tick.value)}
+            y2={yAt(tick.value)}
+            class="f-grid"
+          />
+          <text
+            x={left - 8}
+            y={yAt(tick.value) + 4}
+            text-anchor="end"
+            class="f-small f-text-muted f-num"
+          >
+            {tick.label}
+          </text>
+        </g>
+      ))
+    }
+    <line x1={left} x2={right} y1={bottom} y2={bottom} class="f-axis"></line>
+    <line x1={left} x2={left} y1={top} y2={bottom} class="f-axis"></line>
+    {
+      xTicks.map(tick => (
+        <text
+          x={xAt(tick)}
+          y={bottom + 20}
+          text-anchor="middle"
+          class="f-small f-text-muted f-num"
+        >
+          {tick}
+        </text>
+      ))
+    }
+    <text
+      x={(left + right) / 2}
+      y={bottom + 44}
+      text-anchor="middle"
+      class="f-small f-text-muted"
+    >
+      Series length T (years)
+    </text>
+    <text
+      x="16"
+      y={midY}
+      text-anchor="middle"
+      transform={`rotate(-90 16 ${midY})`}
+      class="f-small f-text-muted"
+    >
+      Number of terms (log scale)
+    </text>
+
+    <path d={pathsCurve} pathLength="1" class="f-warn f-thick fx-draw"></path>
+    <path
+      d={stepsCurve}
+      pathLength="1"
+      class="f-accent f-thick fx-draw"
+      style="--d: 900ms"></path>
+
+    <g class="fx-fade" style="--d: 1100ms">
+      <circle cx={endX} cy={pathsEndY} r="5.5" class="f-fill-warn"></circle>
+      <text
+        x={endX - 84}
+        y={pathsEndY - 4}
+        text-anchor="end"
+        class="f-label f-text-warn f-num"
+      >
+        every state path: 2¹²⁵ ≈ {pathsMantissa} × 10³⁷
+      </text>
+      <text
+        x={endX - 84}
+        y={pathsEndY + 14}
+        text-anchor="end"
+        class="f-small f-text-muted"
+      >
+        doubles with each extra year
+      </text>
+    </g>
+
+    <g class="fx-fade" style="--d: 2000ms">
+      <circle cx={endX} cy={stepsEndY} r="5.5" class="f-fill-accent"></circle>
+      <text
+        x={endX - 14}
+        y={stepsEndY - 30}
+        text-anchor="end"
+        class="f-label f-text-accent f-num"
+      >
+        forward recursion: 125 × 2² = {forwardSteps}
+      </text>
+      <text
+        x={endX - 14}
+        y={stepsEndY - 13}
+        text-anchor="end"
+        class="f-small f-text-muted"
+      >
+        grows by four products with each extra year
+      </text>
+    </g>
+  </svg>
+</Figure>

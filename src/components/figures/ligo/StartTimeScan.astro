@@ -1,0 +1,194 @@
+---
+/**
+ * The ringdown posterior against the start time of the fitting window:
+ * median and 90% interval for the frequency, damping time and fitted SNR.
+ * Every number is from the start-time table in section 2.6 of the worked
+ * example, and the dashed reference is the Kerr mode computed there.
+ */
+import Figure from "../Figure.astro";
+import { f1, linePath, scale, type Point } from "../lib";
+import { chosenOffset, kerrReference, startTimeScan } from "./data";
+
+type Quantity = "f" | "tau" | "snr";
+
+const columns: {
+  key: Quantity;
+  title: string;
+  x: number;
+  domain: [number, number];
+  ticks: number[];
+  reference?: number;
+}[] = [
+  {
+    key: "f",
+    title: "Frequency f (Hz)",
+    x: 50,
+    domain: [150, 400],
+    ticks: [150, 200, 250, 300, 350, 400],
+    reference: kerrReference.f,
+  },
+  {
+    key: "tau",
+    title: "Damping time τ (ms)",
+    x: 256,
+    domain: [0, 8],
+    ticks: [0, 2, 4, 6, 8],
+    reference: kerrReference.tau,
+  },
+  {
+    key: "snr",
+    title: "SNR of the fitted ringdown",
+    x: 462,
+    domain: [0, 15],
+    ticks: [0, 5, 10, 15],
+  },
+];
+
+const width = 158;
+const top = 62;
+const bottom = 232;
+
+const panels = columns.map(column => {
+  const xAt = scale(-0.8, 7.8, column.x, column.x + width);
+  const yAt = scale(column.domain[0], column.domain[1], bottom, top);
+  return {
+    ...column,
+    referenceY:
+      column.reference === undefined ? null : f1(yAt(column.reference)),
+    yTicks: column.ticks.map(tick => ({ tick, y: f1(yAt(tick)) })),
+    xTicks: startTimeScan.map(row => ({
+      tick: row.offset,
+      x: f1(xAt(row.offset)),
+      chosen: row.offset === chosenOffset,
+    })),
+    marks: startTimeScan.map((row, i) => {
+      const [median, low, high] = row[column.key];
+      const x = xAt(row.offset);
+      return {
+        x: f1(x),
+        y: f1(yAt(median)),
+        interval: linePath([
+          [x, yAt(low)],
+          [x, yAt(high)],
+        ] as Point[]),
+        chosen: row.offset === chosenOffset,
+        delay: i * 220,
+      };
+    }),
+  };
+});
+---
+
+<Figure
+  replay
+  caption="Numbers from the worked example's start-time table (section 2.6). Starting at the peak gives a narrow posterior that sits below the reference frequency and above the reference damping time. Three milliseconds later the interval contains both. By 5 to 7 ms the frequency interval covers most of its Uniform(150, 400) prior, and the fitted SNR has fallen from about 12 at the peak to about 4 at 7 ms."
+>
+  <svg
+    viewBox="0 0 640 318"
+    role="img"
+    aria-label="Three panels of medians with 90% intervals against the start time of the ringdown fit, at 0, 1, 3, 5 and 7 milliseconds after the peak. The frequency median runs 234, 233, 247, 278, 218 hertz with intervals that widen from about 19 hertz to about 207 hertz. The damping time median falls from 5.5 to 1.1 milliseconds. The fitted signal-to-noise ratio falls from 12.3 to 3.8."
+  >
+    <text x="16" y="22" class="f-label">
+      Ringdown posterior against the start time: median and 90% interval
+    </text>
+
+    {
+      panels.map(panel => (
+        <g>
+          <text x={panel.x} y="50" class="f-small f-text-muted">
+            {panel.title}
+          </text>
+          {panel.yTicks.map(({ tick, y }) => (
+            <g>
+              <line
+                x1={panel.x}
+                x2={panel.x + width}
+                y1={y}
+                y2={y}
+                class="f-grid"
+              />
+              <text
+                x={panel.x - 7}
+                y={y + 4}
+                text-anchor="end"
+                class="f-small f-text-muted f-num"
+              >
+                {tick}
+              </text>
+            </g>
+          ))}
+          <line
+            x1={panel.x}
+            x2={panel.x + width}
+            y1={bottom}
+            y2={bottom}
+            class="f-axis"
+          />
+          {panel.xTicks.map(({ tick, x, chosen }) => (
+            <text
+              x={x}
+              y={bottom + 18}
+              text-anchor="middle"
+              class:list={[
+                "f-small f-num",
+                chosen ? "f-label f-text-accent" : "f-text-muted",
+              ]}
+            >
+              {tick}
+            </text>
+          ))}
+          <text
+            x={panel.x + width / 2}
+            y={bottom + 36}
+            text-anchor="middle"
+            class="f-small f-text-muted"
+          >
+            Start, ms after the peak
+          </text>
+          {panel.referenceY !== null && (
+            <line
+              x1={panel.x}
+              x2={panel.x + width}
+              y1={panel.referenceY}
+              y2={panel.referenceY}
+              class="f-line f-dash"
+            />
+          )}
+          {panel.marks.map(mark => (
+            <g>
+              <path
+                d={mark.interval}
+                pathLength="1"
+                class:list={[
+                  "f-thick fx-draw",
+                  mark.chosen ? "f-accent" : "f-line",
+                ]}
+                style={`--d: ${mark.delay}ms`}
+              />
+              <circle
+                cx={mark.x}
+                cy={mark.y}
+                r="4.5"
+                class:list={[
+                  "fx-fade",
+                  mark.chosen ? "f-fill-accent" : "f-fill-line",
+                ]}
+                style={`--d: ${mark.delay + 500}ms`}
+              />
+            </g>
+          ))}
+        </g>
+      ))
+    }
+
+    <circle cx="27" cy="290" r="4.5" class="f-fill-accent"></circle>
+    <text x="46" y="294" class="f-small f-text-accent">
+      3 ms: the start used in the fit
+    </text>
+    <line x1="16" x2="38" y1="308" y2="308" class="f-line f-dash"></line>
+    <text x="46" y="312" class="f-small f-text-muted">
+      Kerr mode the example computes for a 68 solar-mass remnant with spin 0.69:
+      252 Hz, 4.10 ms
+    </text>
+  </svg>
+</Figure>

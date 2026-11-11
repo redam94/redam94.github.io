@@ -1,0 +1,213 @@
+---
+/**
+ * The Omori-Utsu power law written as a weighted sum of exponentials on the
+ * fixed log-spaced nodes of the worked example (79 nodes, step 0.5 in log s).
+ * Everything is computed at build time from the formula in the post, at the
+ * posterior means of c and p. The single exponential in the first frame is a
+ * schematic comparison, scaled to touch the power law at its own time scale.
+ */
+import Figure from "../Figure.astro";
+import { linePath, linspace, scale, type Point } from "../lib";
+import { kernel, logNodes, mixtureTerms, omori } from "./model";
+
+const left = 64;
+const right = 600;
+const top = 44;
+const bottom = 294;
+const xLog = [-4, 2];
+const yLog = [-3, 4];
+const xAt = scale(xLog[0], xLog[1], left, right);
+const yAt = scale(yLog[0], yLog[1], bottom, top);
+const floor = Math.pow(10, yLog[0]);
+
+const delays = linspace(xLog[0], xLog[1], 220).map(exponent =>
+  Math.pow(10, exponent)
+);
+
+/** Path on log-log axes that stops where the curve leaves the bottom edge. */
+function logPath(value: (delay: number) => number): string {
+  const points: Point[] = [];
+  let previous: [number, number] | undefined;
+  for (const delay of delays) {
+    const current: [number, number] = [
+      Math.log10(delay),
+      Math.log10(Math.max(value(delay), 1e-300)),
+    ];
+    if (current[1] < yLog[0]) {
+      if (previous) {
+        const share = (previous[1] - yLog[0]) / (previous[1] - current[1]);
+        const crossing = previous[0] + share * (current[0] - previous[0]);
+        points.push([xAt(crossing), bottom]);
+      }
+      break;
+    }
+    points.push([xAt(current[0]), yAt(current[1])]);
+    previous = current;
+  }
+  return linePath(points);
+}
+
+const terms = mixtureTerms(kernel.c, kernel.p);
+const target = logPath(delay => omori(delay, kernel.c, kernel.p));
+const mixture = logPath(delay =>
+  terms.reduce(
+    (sum, term) => sum + term.weight * Math.exp(-term.rate * delay),
+    0
+  )
+);
+
+/** Every second node whose flat part is inside the plotted window. */
+const shown = terms.filter(
+  term => Number.isInteger(term.u) && term.weight > floor * 1.2 && term.u <= 8
+);
+const components = shown.map(term =>
+  logPath(delay => term.weight * Math.exp(-term.rate * delay))
+);
+
+/** One time scale of an hour and a half, in days. */
+const memory = 1.5 / 24;
+const amplitude = Math.E * omori(memory, kernel.c, kernel.p);
+const single = logPath(delay => amplitude * Math.exp(-delay / memory));
+
+const xTicks = [
+  { at: -4, label: "9 s" },
+  { at: -3, label: "1.4 min" },
+  { at: -2, label: "14 min" },
+  { at: -1, label: "2.4 h" },
+  { at: 0, label: "1 day" },
+  { at: 1, label: "10 days" },
+  { at: 2, label: "100 days" },
+];
+const yTicks = [
+  { at: -2, label: "0.01" },
+  { at: 0, label: "1" },
+  { at: 2, label: "100" },
+  { at: 4, label: "10,000" },
+];
+const yGrid = [-3, -2, -1, 0, 1, 2, 3, 4];
+
+const legendX = 352;
+const nodeCount = logNodes.length;
+---
+
+<Figure
+  frames={3}
+  interval={2800}
+  frameLabels={[
+    "A power law has no single time scale",
+    `Exponentials at ${nodeCount} fixed rates, weights set by c and p`,
+    "Their sum lies on the power law, seconds to months",
+  ]}
+  caption={`Computed from the formula above at the posterior means of the Ridgecrest fit (c = ${kernel.c} days, p = ${kernel.p.toFixed(3)}), on log-log axes. Each flat-then-falling grey curve is one exponential term. The single exponential in the first step is a schematic with a 1.5-hour time scale, scaled to touch the power law there.`}
+>
+  <svg
+    viewBox="0 0 640 352"
+    role="img"
+    aria-label={`Log-log plot of the Omori-Utsu kernel against the delay since the parent event, from 9 seconds to 100 days. A single exponential with a 1.5-hour time scale is flat and then drops away from it. ${shown.length} of the ${nodeCount} exponential terms are shown as a staircase under the power law, and the sum of all ${nodeCount} lies on top of it.`}
+  >
+    <text x={left} y="20" class="f-label">
+      Extra rate from one parent event
+    </text>
+    <text x={left} y="37" class="f-small f-text-muted">
+      relative units, log scale
+    </text>
+
+    {
+      yGrid.map(tick => (
+        <line
+          x1={left}
+          x2={right}
+          y1={yAt(tick)}
+          y2={yAt(tick)}
+          class="f-grid"
+        />
+      ))
+    }
+    {
+      yTicks.map(tick => (
+        <text
+          x={left - 8}
+          y={yAt(tick.at) + 4}
+          text-anchor="end"
+          class="f-small f-text-muted f-num"
+        >
+          {tick.label}
+        </text>
+      ))
+    }
+    <line x1={left} x2={right} y1={bottom} y2={bottom} class="f-axis"></line>
+    <line x1={left} x2={left} y1={top} y2={bottom} class="f-axis"></line>
+    {
+      xTicks.map(tick => (
+        <g>
+          <line
+            x1={xAt(tick.at)}
+            x2={xAt(tick.at)}
+            y1={bottom}
+            y2={bottom + 5}
+            class="f-axis"
+          />
+          <text
+            x={xAt(tick.at)}
+            y={bottom + 20}
+            text-anchor="middle"
+            class="f-small f-text-muted f-num"
+          >
+            {tick.label}
+          </text>
+        </g>
+      ))
+    }
+    <text
+      x={(left + right) / 2}
+      y={bottom + 44}
+      text-anchor="middle"
+      class="f-small f-text-muted"
+    >
+      Delay since the parent event (log scale)
+    </text>
+
+    <g data-from="1">
+      {components.map(d => <path d={d} class="f-muted" />)}
+    </g>
+    <path d={single} class="f-alt f-thick f-dash" data-show="0"></path>
+    <path d={target} class="f-line f-thick"></path>
+    <path d={mixture} class="f-accent f-thick f-dash" data-from="2"></path>
+
+    <line x1={legendX} x2={legendX + 26} y1="58" y2="58" class="f-line f-thick"
+    ></line>
+    <text x={legendX + 34} y="62" class="f-small f-label">
+      power law (t + c)<tspan dy="-5" font-size="10">−p</tspan>
+    </text>
+
+    <g data-show="0">
+      <line
+        x1={legendX}
+        x2={legendX + 26}
+        y1="78"
+        y2="78"
+        class="f-alt f-thick f-dash"></line>
+      <text x={legendX + 34} y="82" class="f-small f-text-alt">
+        one exponential, 1.5 h time scale
+      </text>
+    </g>
+    <g data-from="1">
+      <line x1={legendX} x2={legendX + 26} y1="78" y2="78" class="f-muted"
+      ></line>
+      <text x={legendX + 34} y="82" class="f-small f-text-muted">
+        {shown.length} of the {nodeCount} exponential terms
+      </text>
+    </g>
+    <g data-from="2">
+      <line
+        x1={legendX}
+        x2={legendX + 26}
+        y1="98"
+        y2="98"
+        class="f-accent f-thick f-dash"></line>
+      <text x={legendX + 34} y="102" class="f-small f-label f-text-accent">
+        sum of all {nodeCount} (green dashes)
+      </text>
+    </g>
+  </svg>
+</Figure>

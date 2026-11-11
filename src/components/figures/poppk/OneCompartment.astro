@@ -1,0 +1,220 @@
+---
+/**
+ * The one-compartment model as a diagram, and the concentration curve it
+ * implies. The curve is the closed-form solution evaluated at the worked
+ * example's posterior medians for the typical subject and its 4.5 mg/kg
+ * dose. It is a model curve, not a plot of the measurements.
+ */
+import Figure from "../Figure.astro";
+import { arrowGeom, f1, linePath, linspace, scale, type Point } from "../lib";
+import { concentration, typical } from "./model";
+
+const { cl, v, ka, dose } = typical;
+const ke = cl / v;
+const amplitude = (dose * ka) / (v * (ka - ke));
+
+const left = 56;
+const right = 600;
+const top = 152;
+const bottom = 342;
+const xAt = scale(0, 25, left, right);
+const yAt = scale(0, 12, bottom, top);
+
+const times = linspace(0, 25, 201);
+const curve = linePath(
+  times.map(t => [xAt(t), yAt(concentration(cl, v, ka, t, dose))] as Point)
+);
+const envelope = linePath(
+  times.map(t => [xAt(t), yAt(amplitude * Math.exp(-ke * t))] as Point)
+);
+
+const xTicks = [0, 5, 10, 15, 20, 25];
+const yTicks = [0, 4, 8, 12];
+
+// Compartment diagram.
+const boxTop = 42;
+const boxH = 56;
+const boxMid = boxTop + boxH / 2;
+const gut = { x: 56, w: 128 };
+const body = { x: 274, w: 176 };
+const outX = 546;
+const absorb = arrowGeom([gut.x + gut.w, boxMid], [body.x, boxMid], 6, 6);
+const eliminate = arrowGeom([body.x + body.w, boxMid], [outX, boxMid], 6, 6);
+
+// Points on the rising and the falling limb that the two notes refer to.
+const riseT = 0.5;
+const rise = {
+  x: f1(xAt(riseT)),
+  y: f1(yAt(concentration(cl, v, ka, riseT, dose))),
+};
+const fallT = 10;
+const fall = {
+  x: f1(xAt(fallT)),
+  y: f1(yAt(concentration(cl, v, ka, fallT, dose))),
+};
+const riseNote = { x: 150, y: 322 };
+---
+
+<Figure
+  replay
+  caption="The model as a diagram and as a curve. The curve is the closed-form solution evaluated at the worked example's posterior medians for the typical subject (clearance 0.040 L/h/kg, volume 0.464 L/kg, absorption rate 1.504 per hour) and a 4.5 mg/kg dose. It is a model curve, not a plot of the measurements."
+>
+  <svg
+    viewBox="0 0 640 392"
+    role="img"
+    aria-label="Diagram of a one-compartment model: a dose in the gut is absorbed at rate k a into one mixed body volume V, and eliminated from it at rate k e, which equals clearance divided by volume. Below it, the implied concentration curve over 25 hours rises within about two hours and then falls slowly. A dashed line shows the elimination term alone, which the curve joins after the first few hours."
+  >
+    <text x={left} y="22" class="f-title">
+      One compartment with first-order absorption
+    </text>
+
+    <rect
+      x={gut.x}
+      y={boxTop}
+      width={gut.w}
+      height={boxH}
+      rx="12"
+      class="f-fill-alt-soft"></rect>
+    <text
+      x={gut.x + gut.w / 2}
+      y={boxMid - 3}
+      text-anchor="middle"
+      class="f-label">Gut</text
+    >
+    <text
+      x={gut.x + gut.w / 2}
+      y={boxMid + 15}
+      text-anchor="middle"
+      class="f-small f-text-muted">dose D</text
+    >
+
+    <rect
+      x={body.x}
+      y={boxTop}
+      width={body.w}
+      height={boxH}
+      rx="12"
+      class="f-fill-soft"></rect>
+    <text
+      x={body.x + body.w / 2}
+      y={boxMid - 3}
+      text-anchor="middle"
+      class="f-label">Body</text
+    >
+    <text
+      x={body.x + body.w / 2}
+      y={boxMid + 15}
+      text-anchor="middle"
+      class="f-small f-text-muted">volume V, concentration C</text
+    >
+
+    <g class="fx-fade" style="--d: 200ms">
+      <path d={absorb.shaft} class="f-alt f-thick"></path>
+      <polygon points={absorb.head} class="f-fill-alt"></polygon>
+      <text
+        x={(gut.x + gut.w + body.x) / 2}
+        y={boxMid - 12}
+        text-anchor="middle"
+        class="f-label f-text-alt"
+        >k<tspan dy="4" class="f-small">a</tspan></text
+      >
+    </g>
+    <g class="fx-fade" style="--d: 500ms">
+      <path d={eliminate.shaft} class="f-accent f-thick"></path>
+      <polygon points={eliminate.head} class="f-fill-accent"></polygon>
+      <text
+        x={(body.x + body.w + outX) / 2}
+        y={boxMid - 12}
+        text-anchor="middle"
+        class="f-label f-text-accent"
+        >k<tspan dy="4" class="f-small">e</tspan><tspan dy="-4">
+          = CL / V</tspan
+        ></text
+      >
+      <text x={outX + 6} y={boxMid + 4} class="f-small f-text-muted">
+        eliminated
+      </text>
+    </g>
+
+    <text x={left} y={top - 14} class="f-label">Concentration (mg/L)</text>
+    {
+      yTicks.map(tick => (
+        <g>
+          <line
+            x1={left}
+            x2={right}
+            y1={yAt(tick)}
+            y2={yAt(tick)}
+            class="f-grid"
+          />
+          <text
+            x={left - 8}
+            y={yAt(tick) + 4}
+            text-anchor="end"
+            class="f-small f-text-muted f-num"
+          >
+            {tick}
+          </text>
+        </g>
+      ))
+    }
+    <line x1={left} x2={right} y1={bottom} y2={bottom} class="f-axis"></line>
+    <line x1={left} x2={left} y1={top} y2={bottom} class="f-axis"></line>
+    {
+      xTicks.map(tick => (
+        <text
+          x={xAt(tick)}
+          y={bottom + 20}
+          text-anchor="middle"
+          class="f-small f-text-muted f-num"
+        >
+          {tick}
+        </text>
+      ))
+    }
+    <text
+      x={(left + right) / 2}
+      y={bottom + 42}
+      text-anchor="middle"
+      class="f-small f-text-muted"
+    >
+      Hours after the dose
+    </text>
+
+    <g class="fx-fade" style="--d: 1500ms">
+      <path d={envelope} class="f-muted f-dash"></path>
+      <text x={left + 34} y={top + 12} class="f-small f-text-muted">
+        dashed: the elimination term alone
+      </text>
+    </g>
+
+    <path
+      d={curve}
+      pathLength="1"
+      class="f-accent f-thick fx-draw"
+      style="--d: 700ms"></path>
+
+    <g class="fx-fade" style="--d: 1900ms">
+      <line
+        x1={rise.x + 5}
+        y1={rise.y + 4}
+        x2={riseNote.x - 6}
+        y2={riseNote.y - 6}
+        class="f-axis"></line>
+      <circle cx={rise.x} cy={rise.y} r="4.5" class="f-fill-alt"></circle>
+      <text x={riseNote.x} y={riseNote.y} class="f-small f-label f-text-alt">
+        rise: absorption from the gut
+      </text>
+    </g>
+    <g class="fx-fade" style="--d: 2200ms">
+      <circle cx={fall.x} cy={fall.y} r="4.5" class="f-fill-accent"></circle>
+      <text
+        x={fall.x + 12}
+        y={fall.y - 12}
+        class="f-small f-label f-text-accent"
+      >
+        fall: elimination
+      </text>
+    </g>
+  </svg>
+</Figure>

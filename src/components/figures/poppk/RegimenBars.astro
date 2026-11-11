@@ -1,0 +1,176 @@
+---
+/**
+ * The decision table as bars: for subject 1, the best dose found at each
+ * dosing interval under three states of knowledge, and the probability that
+ * the whole steady-state interval stays inside 10 to 20 mg/L. Every value is
+ * printed in the worked example's regimen table.
+ */
+import Figure from "../Figure.astro";
+import { f1, scale } from "../lib";
+import { regimens, type Knowledge } from "./model";
+
+const left = 56;
+const right = 624;
+const top = 76;
+const bottom = 290;
+const yAt = scale(0, 1, bottom, top);
+const yTicks = [0, 0.25, 0.5, 0.75, 1];
+
+const series: { key: Knowledge; label: string; bar: string; text: string }[] = [
+  {
+    key: "population",
+    label: "population only",
+    bar: "f-fill-alt",
+    text: "f-text-alt",
+  },
+  {
+    key: "twoSamples",
+    label: "after two samples",
+    bar: "f-fill-accent",
+    text: "f-text-accent",
+  },
+  {
+    key: "fullProfile",
+    label: "full profile (reference)",
+    bar: "f-line",
+    text: "",
+  },
+];
+
+const barW = 44;
+const slot = 56;
+const groupW = (right - left) / regimens.length;
+
+const groups = regimens.map((regimen, g) => {
+  const centre = left + (g + 0.5) * groupW;
+  const start = centre - (series.length * slot) / 2;
+  return {
+    centre: f1(centre),
+    label: `every ${regimen.every} h`,
+    bars: series.map((item, s) => {
+      const { dose, pta } = regimen.best[item.key];
+      const x = start + s * slot + (slot - barW) / 2;
+      return {
+        ...item,
+        x: f1(x),
+        mid: f1(x + barW / 2),
+        y: f1(yAt(pta)),
+        height: f1(bottom - yAt(pta)),
+        value: pta.toFixed(2),
+        dose: `${dose} mg`,
+        delay: 150 + g * 350 + s * 120,
+      };
+    }),
+  };
+});
+
+const legendX = [left, 206, 372];
+---
+
+<Figure
+  replay
+  caption="Values from the worked example's regimen table for subject 1. Each bar is the best dose the example found for that dosing interval and state of knowledge, with the posterior probability that the whole steady-state interval stays between 10 and 20 mg/L. In each group the bars run population only, after two samples, full profile. A modelling exercise, not dosing guidance."
+>
+  <svg
+    viewBox="0 0 640 366"
+    role="img"
+    aria-label="Grouped bars of the probability of target attainment for the best dose at each dosing interval. Every 6 hours: population only 275 milligrams, 0.50; after two samples 175 milligrams, 0.84; full profile 175 milligrams, 0.93. Every 8 hours: 350 milligrams, 0.32; 225 milligrams, 0.71; 225 milligrams, 0.88. Every 12 hours: 500 milligrams, 0.06; 350 milligrams, 0.35; 325 milligrams, 0.46."
+  >
+    <text x={left} y="22" class="f-title">
+      Probability of staying in 10 to 20 mg/L
+    </text>
+    {
+      series.map((item, i) => (
+        <g>
+          <rect
+            x={legendX[i]}
+            y="37"
+            width="12"
+            height="12"
+            rx="3"
+            class={item.bar}
+          />
+          <text x={legendX[i] + 18} y="48" class="f-small">
+            {item.label}
+          </text>
+        </g>
+      ))
+    }
+
+    {
+      yTicks.map(tick => (
+        <g>
+          <line
+            x1={left}
+            x2={right}
+            y1={yAt(tick)}
+            y2={yAt(tick)}
+            class="f-grid"
+          />
+          <text
+            x={left - 8}
+            y={yAt(tick) + 4}
+            text-anchor="end"
+            class="f-small f-text-muted f-num"
+          >
+            {tick}
+          </text>
+        </g>
+      ))
+    }
+    <line x1={left} x2={right} y1={bottom} y2={bottom} class="f-axis"></line>
+
+    {
+      groups.map(group => (
+        <g>
+          {group.bars.map(bar => (
+            <g>
+              <g class="fx-rise" style={`--d: ${bar.delay}ms`}>
+                <rect
+                  x={bar.x}
+                  y={bar.y}
+                  width={barW}
+                  height={bar.height}
+                  rx="3"
+                  class={bar.bar}
+                />
+                <text
+                  x={bar.mid}
+                  y={bar.y - 7}
+                  text-anchor="middle"
+                  class:list={["f-small f-label f-num", bar.text]}
+                >
+                  {bar.value}
+                </text>
+              </g>
+              <text
+                x={bar.mid}
+                y={bottom + 18}
+                text-anchor="middle"
+                class="f-small f-text-muted f-num"
+              >
+                {bar.dose}
+              </text>
+            </g>
+          ))}
+          <text
+            x={group.centre}
+            y={bottom + 42}
+            text-anchor="middle"
+            class="f-label"
+          >
+            {group.label}
+          </text>
+        </g>
+      ))
+    }
+    <text
+      x={(left + right) / 2}
+      y={bottom + 64}
+      text-anchor="middle"
+      class="f-small f-text-muted"
+    >
+      Dosing interval, with the best dose found under each bar
+    </text>
+  </svg>
+</Figure>

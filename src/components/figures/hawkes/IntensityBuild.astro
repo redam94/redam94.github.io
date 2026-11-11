@@ -1,0 +1,231 @@
+---
+/**
+ * A Hawkes process built generation by generation, next to a Poisson process
+ * with the same long-run rate. Simulated at build time with a fixed seed from
+ * the branching representation, using the demo parameters of the worked
+ * example (background 0.2, branching ratio 0.8, exponential kernel with mean
+ * delay 0.3). It is a schematic, not the notebook's own draw.
+ */
+import Figure from "../Figure.astro";
+import { f1, linePath, rng, scale, type Point } from "../lib";
+import {
+  demo,
+  intensityPoints,
+  simulateHawkes,
+  simulatePoisson,
+} from "./model";
+
+const horizon = 30;
+const seed = 30;
+const lastFrame = 3;
+
+const events = simulateHawkes(rng(seed), demo, horizon);
+const poisson = simulatePoisson(rng(seed + 1000), 1, horizon);
+
+const left = 56;
+const right = 616;
+const top = 160;
+const bottom = 330;
+const poissonBase = 46;
+const hawkesBase = 100;
+const yMax = 10;
+const xAt = scale(0, horizon, left, right);
+const yAt = scale(0, yMax, bottom, top);
+
+/** A tick shows from the frame that introduces its generation. */
+const ticks = events.map(event => ({
+  x: f1(xAt(event.t)),
+  background: event.generation === 0,
+  from: Math.min(event.generation, lastFrame),
+}));
+
+/** Frame f draws the bumps of every generation that is already on screen. */
+const curves = [1, 2, 3].map(frame => {
+  const parents = events.filter(
+    event => frame === lastFrame || event.generation < frame
+  );
+  const points = intensityPoints(
+    parents.map(event => event.t),
+    demo,
+    horizon,
+    420
+  ).map(([t, lambda]) => [xAt(t), yAt(Math.min(lambda, yMax))] as Point);
+  return { frame, d: linePath(points), isLast: frame === lastFrame };
+});
+
+const counts = [0, 1, 2, 3].map(frame => ({
+  frame,
+  isLast: frame === lastFrame,
+  text: `${ticks.filter(tick => tick.from <= frame).length} events`,
+}));
+
+const xTicks = [0, 5, 10, 15, 20, 25, 30];
+const yTicks = [2, 4, 6, 8, 10];
+const muY = f1(yAt(demo.background));
+const backgroundCount = ticks.filter(tick => tick.background).length;
+---
+
+<Figure
+  frames={lastFrame + 1}
+  interval={2600}
+  frameLabels={[
+    "Background events arrive at a constant rate",
+    "Each adds a decaying bump, which triggers children",
+    "Children add bumps and trigger grandchildren",
+    "Every generation: bursts, then quiet spells",
+  ]}
+  caption={`A simulation with a fixed seed, not data. Both processes have a long-run rate of one event per unit time. The Hawkes process uses the demo settings of the worked example: background rate 0.2, branching ratio 0.8, exponential kernel with mean delay 0.3. Only ${backgroundCount} of its ${events.length} events came from the background.`}
+>
+  <svg
+    viewBox="0 0 640 384"
+    role="img"
+    aria-label={`Two rows of event times and one intensity curve. The Poisson row has ${poisson.length} evenly scattered events. The Hawkes row has ${events.length} events in bursts: ${backgroundCount} background events, the rest triggered by earlier events. The intensity curve jumps at every event and decays back to the background rate of 0.2.`}
+  >
+    <text x={left} y="20" class="f-label f-text-alt"
+      >Poisson process, rate 1</text
+    >
+    <text x={right} y="20" text-anchor="end" class="f-small f-text-muted f-num">
+      {poisson.length} events
+    </text>
+    <line x1={left} x2={right} y1={poissonBase} y2={poissonBase} class="f-axis"
+    ></line>
+    {
+      poisson.map(t => (
+        <line
+          x1={f1(xAt(t))}
+          x2={f1(xAt(t))}
+          y1={poissonBase - 16}
+          y2={poissonBase}
+          class="f-alt"
+        />
+      ))
+    }
+
+    <text x={left} y="74" class="f-label">
+      Hawkes process, background 0.2, branching ratio 0.8
+    </text>
+    {
+      counts.map(count => (
+        <text
+          x={right}
+          y="74"
+          text-anchor="end"
+          class="f-small f-text-muted f-num"
+          data-show={count.frame}
+          data-final={count.isLast || undefined}
+        >
+          {count.text}
+        </text>
+      ))
+    }
+    <line x1={left} x2={right} y1={hawkesBase} y2={hawkesBase} class="f-axis"
+    ></line>
+    {
+      ticks.map(tick => (
+        <line
+          x1={tick.x}
+          x2={tick.x}
+          y1={hawkesBase - (tick.background ? 20 : 12)}
+          y2={hawkesBase}
+          class={tick.background ? "f-line f-thick" : "f-accent"}
+          data-from={tick.from}
+        />
+      ))
+    }
+
+    <line x1={left + 4} x2={left + 4} y1="110" y2="128" class="f-line f-thick"
+    ></line>
+    <text x={left + 12} y="124" class="f-small f-text-muted">
+      tall dark tick: background event
+    </text>
+    <line x1="300" x2="300" y1="116" y2="128" class="f-accent"></line>
+    <text x="308" y="124" class="f-small f-text-accent">
+      short green tick: triggered by an earlier event
+    </text>
+
+    <text x={left} y="150" class="f-small f-label">
+      Hawkes intensity λ(t), events per unit time
+    </text>
+    {
+      yTicks.map(tick => (
+        <g>
+          <line
+            x1={left}
+            x2={right}
+            y1={yAt(tick)}
+            y2={yAt(tick)}
+            class="f-grid"
+          />
+          <text
+            x={left - 8}
+            y={yAt(tick) + 4}
+            text-anchor="end"
+            class="f-small f-text-muted f-num"
+          >
+            {tick}
+          </text>
+        </g>
+      ))
+    }
+    <line x1={left} x2={right} y1={bottom} y2={bottom} class="f-axis"></line>
+    <line x1={left} x2={left} y1={top} y2={bottom} class="f-axis"></line>
+    <text
+      x={left - 8}
+      y={muY + 3}
+      text-anchor="end"
+      class="f-small f-label f-num">μ = 0.2</text
+    >
+    {
+      xTicks.map(tick => (
+        <g>
+          <line
+            x1={xAt(tick)}
+            x2={xAt(tick)}
+            y1={bottom}
+            y2={bottom + 5}
+            class="f-axis"
+          />
+          <text
+            x={xAt(tick)}
+            y={bottom + 20}
+            text-anchor="middle"
+            class="f-small f-text-muted f-num"
+          >
+            {tick}
+          </text>
+        </g>
+      ))
+    }
+    <text
+      x={(left + right) / 2}
+      y={bottom + 44}
+      text-anchor="middle"
+      class="f-small f-text-muted"
+    >
+      Time (arbitrary units)
+    </text>
+
+    <g data-show="0">
+      <line x1={left} x2={right} y1={muY} y2={muY} class="f-line f-thick"
+      ></line>
+      <text
+        x={(left + right) / 2}
+        y={yAt(5)}
+        text-anchor="middle"
+        class="f-small f-text-muted"
+      >
+        No bumps yet: the rate is flat at μ, a Poisson process
+      </text>
+    </g>
+    {
+      curves.map(curve => (
+        <path
+          d={curve.d}
+          class="f-line"
+          data-show={curve.frame}
+          data-final={curve.isLast || undefined}
+        />
+      ))
+    }
+  </svg>
+</Figure>

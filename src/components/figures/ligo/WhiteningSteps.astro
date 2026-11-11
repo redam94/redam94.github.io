@@ -1,0 +1,208 @@
+---
+/**
+ * Whitening, step by step, on a simulated series (fixed seed, not LIGO
+ * data). Top panel: a short burst buried in noise whose low frequencies are
+ * far louder than its quiet band. Bottom panel: the same series after every
+ * frequency is divided by its noise amplitude, then the burst alone after
+ * the same division.
+ */
+import Figure from "../Figure.astro";
+import { f1, linePath, scale, type Point } from "../lib";
+import { whiteningDemo } from "./sim";
+
+const demo = whiteningDemo(150914);
+
+const left = 60;
+const right = 620;
+const xAt = scale(0, demo.samples - 1, left, right);
+
+const rawPanel = { top: 36, bottom: 166, limit: 120, ticks: [-100, 0, 100] };
+const whitePanel = { top: 226, bottom: 356, limit: 7, ticks: [-5, 0, 5] };
+
+const rawY = scale(
+  -rawPanel.limit,
+  rawPanel.limit,
+  rawPanel.bottom,
+  rawPanel.top
+);
+const whiteY = scale(
+  -whitePanel.limit,
+  whitePanel.limit,
+  whitePanel.bottom,
+  whitePanel.top
+);
+
+const trace = (series: number[], yAt: (value: number) => number) =>
+  linePath(series.map((value, t) => [xAt(t), yAt(value)] as Point));
+
+const [windowStart, windowEnd] = demo.window;
+const inWindow = (series: number[]) =>
+  series
+    .map((value, t) => ({ value, t }))
+    .filter(({ t }) => t >= windowStart && t <= windowEnd);
+const windowTrace = (series: number[], yAt: (value: number) => number) =>
+  linePath(
+    inWindow(series).map(({ value, t }) => [xAt(t), yAt(value)] as Point)
+  );
+
+const paths = {
+  raw: trace(demo.raw, rawY),
+  signal: windowTrace(demo.signal, rawY),
+  whitened: trace(demo.whitened, whiteY),
+  whitenedSignal: windowTrace(demo.whitenedSignal, whiteY),
+};
+
+const windowX = f1(xAt(windowStart));
+const windowWidth = f1(xAt(windowEnd) - xAt(windowStart));
+const windowMid = f1((xAt(windowStart) + xAt(windowEnd)) / 2);
+
+const xTicks = [0, 50, 100, 150, 200, 250];
+const panels = [
+  { ...rawPanel, yAt: rawY },
+  { ...whitePanel, yAt: whiteY },
+];
+---
+
+<Figure
+  frames={4}
+  interval={2600}
+  frameLabels={[
+    "The record: slow noise dominates",
+    "The burst alone, on the same scale",
+    "Divide each frequency by its noise level",
+    "Whiten the template the same way",
+  ]}
+  caption="A simulation with a fixed seed and a made-up noise spectrum, not LIGO data. Top: a short burst added to noise whose low frequencies are far louder than its quiet band. Bottom: the same series after every frequency is divided by its noise amplitude, and the burst alone after the same division. The filter reshapes the burst, which is why a template has to be whitened with the data."
+>
+  <svg
+    viewBox="0 0 640 404"
+    role="img"
+    aria-label="Two stacked time series from a simulation. In the raw series a slow wander of about plus or minus 100 units hides a burst that peaks near 5 units. After whitening, the noise has unit standard deviation and the burst stands out at about 5 standard deviations, with a changed shape that the whitened template follows."
+  >
+    <text x={left} y="22" class="f-label">
+      Raw series
+      <tspan class="f-small f-text-muted" dx="6">arbitrary units</tspan>
+    </text>
+    <line x1="402" x2="424" y1="18" y2="18" class="f-line"></line>
+    <text x="430" y="22" class="f-small f-text-muted">data</text>
+    <g data-from="1">
+      <line x1="470" x2="492" y1="18" y2="18" class="f-accent f-thick"></line>
+      <text x="498" y="22" class="f-small f-text-accent">burst, same scale</text
+      >
+    </g>
+
+    <text x={left} y="212" class="f-label">
+      Whitened series
+      <tspan class="f-small f-text-muted" dx="6">noise sd</tspan>
+    </text>
+    <g data-from="2">
+      <line x1="342" x2="364" y1="208" y2="208" class="f-line"></line>
+      <text x="370" y="212" class="f-small f-text-muted">whitened data</text>
+    </g>
+    <g data-from="3">
+      <line x1="476" x2="498" y1="208" y2="208" class="f-accent f-thick"></line>
+      <text x="504" y="212" class="f-small f-text-accent"
+        >whitened template</text
+      >
+    </g>
+
+    <g data-from="1">
+      <rect
+        x={windowX}
+        y={rawPanel.top}
+        width={windowWidth}
+        height={rawPanel.bottom - rawPanel.top}
+        class="f-fill-soft"></rect>
+      <text
+        x={windowMid}
+        y="186"
+        text-anchor="middle"
+        class="f-small f-text-accent"
+      >
+        the burst is inside this span
+      </text>
+    </g>
+    <rect
+      x={windowX}
+      y={whitePanel.top}
+      width={windowWidth}
+      height={whitePanel.bottom - whitePanel.top}
+      class="f-fill-soft"
+      data-from="2"></rect>
+
+    {
+      panels.map(panel => (
+        <g>
+          {panel.ticks.map(tick => (
+            <g>
+              <line
+                x1={left}
+                x2={right}
+                y1={f1(panel.yAt(tick))}
+                y2={f1(panel.yAt(tick))}
+                class="f-grid"
+              />
+              <text
+                x={left - 8}
+                y={f1(panel.yAt(tick) + 4)}
+                text-anchor="end"
+                class="f-small f-text-muted f-num"
+              >
+                {tick}
+              </text>
+            </g>
+          ))}
+          <line
+            x1={left}
+            x2={left}
+            y1={panel.top}
+            y2={panel.bottom}
+            class="f-axis"
+          />
+          <line
+            x1={left}
+            x2={right}
+            y1={panel.bottom}
+            y2={panel.bottom}
+            class="f-axis"
+          />
+        </g>
+      ))
+    }
+    {
+      xTicks.map(tick => (
+        <g>
+          <line
+            x1={f1(xAt(tick))}
+            x2={f1(xAt(tick))}
+            y1={whitePanel.bottom}
+            y2={whitePanel.bottom + 5}
+            class="f-axis"
+          />
+          <text
+            x={f1(xAt(tick))}
+            y={whitePanel.bottom + 20}
+            text-anchor="middle"
+            class="f-small f-text-muted f-num"
+          >
+            {tick}
+          </text>
+        </g>
+      ))
+    }
+    <text
+      x={(left + right) / 2}
+      y={whitePanel.bottom + 40}
+      text-anchor="middle"
+      class="f-small f-text-muted"
+    >
+      Time (samples)
+    </text>
+
+    <path d={paths.raw} class="f-line"></path>
+    <path d={paths.signal} class="f-accent f-thick" data-from="1"></path>
+    <path d={paths.whitened} class="f-line" data-from="2"></path>
+    <path d={paths.whitenedSignal} class="f-accent f-thick" data-from="3"
+    ></path>
+  </svg>
+</Figure>

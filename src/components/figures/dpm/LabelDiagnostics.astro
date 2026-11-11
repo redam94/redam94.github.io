@@ -1,0 +1,160 @@
+---
+/**
+ * R-hat and bulk ESS of the main fit, asked two ways: of quantities that
+ * carry a component label and of quantities that do not. Every value is
+ * from the worked example's section 3 tables (data.ts).
+ */
+import Figure from "../Figure.astro";
+import { f1, scale } from "../lib";
+import { labelFree, labelled, type Diagnostic } from "./data";
+
+const plotLeft = 170;
+const plotRight = 470;
+const essRight = 606;
+const xAt = scale(1, 1.4, plotLeft, plotRight);
+const rowStep = 20;
+const firstTop = 74;
+const secondTop = firstTop + labelled.length * rowStep + 56;
+
+function place(rows: Diagnostic[], startY: number, offset: number) {
+  return rows.map((row, i) => ({
+    ...row,
+    y: startY + i * rowStep,
+    x: f1(xAt(row.rhat)),
+    rhatText: row.rhat.toFixed(2),
+    essText: Math.round(row.ess).toLocaleString("en-US"),
+    delay: (offset + i) * 70,
+  }));
+}
+
+const groups = [
+  {
+    title: "With a label: the first seven of the 20 component means",
+    tone: "warn",
+    headY: firstTop - 22,
+    rows: place(labelled, firstTop, 0),
+  },
+  {
+    title: "Without a label: α, the log density, the density at five points",
+    tone: "accent",
+    headY: secondTop - 22,
+    rows: place(labelFree, secondTop, labelled.length),
+  },
+];
+
+const plotTop = firstTop - 12;
+const axisY = secondTop + (labelFree.length - 1) * rowStep + 18;
+const ticks = [1, 1.1, 1.2, 1.3, 1.4].map(value => ({
+  value,
+  x: f1(xAt(value)),
+}));
+---
+
+<Figure
+  replay
+  caption="R-hat and bulk effective sample size from the worked example's main fit (α learned, T = 20, four chains). Both groups come from the same draws. The component means fail because their labels are not identified, not because the sampler failed."
+>
+  <svg
+    viewBox="0 0 640 432"
+    role="img"
+    aria-label="Dot plot of R-hat for two groups of quantities from one fit. Component means have R-hat between 1.01 and 1.36 and bulk effective sample sizes as low as 9. Alpha, the log density and the fitted density at five points have R-hat between 1.00 and 1.03 and effective sample sizes from 105 to 1,864."
+  >
+    <text x="16" y="22" class="f-label">
+      One fit, two sets of convergence diagnostics
+    </text>
+    <text x={essRight} y="22" text-anchor="end" class="f-small f-label">
+      Bulk ESS
+    </text>
+
+    {
+      ticks.map(tick => (
+        <g>
+          <line
+            x1={tick.x}
+            x2={tick.x}
+            y1={plotTop}
+            y2={axisY}
+            class="f-grid"
+          />
+          <line
+            x1={tick.x}
+            x2={tick.x}
+            y1={axisY}
+            y2={axisY + 5}
+            class="f-axis"
+          />
+          <text
+            x={tick.x}
+            y={axisY + 19}
+            text-anchor="middle"
+            class="f-small f-text-muted f-num"
+          >
+            {tick.value.toFixed(1)}
+          </text>
+        </g>
+      ))
+    }
+    <line x1={plotLeft} x2={plotRight} y1={axisY} y2={axisY} class="f-axis"
+    ></line>
+    <text
+      x={(plotLeft + plotRight) / 2}
+      y={axisY + 38}
+      text-anchor="middle"
+      class="f-small f-text-muted"
+    >
+      R-hat (1.0 means the four chains agree)
+    </text>
+
+    {
+      groups.map(group => (
+        <g>
+          <rect
+            x="16"
+            y={group.headY - 14}
+            width={essRight - 16}
+            height="20"
+            class="f-fill-bg"
+          />
+          <text
+            x="16"
+            y={group.headY}
+            class:list={["f-small f-label", `f-text-${group.tone}`]}
+          >
+            {group.title}
+          </text>
+          {group.rows.map(row => (
+            <g class="fx-rise" style={`--d: ${row.delay}ms`}>
+              <text x="28" y={row.y + 4} class="f-small f-num">
+                {row.label}
+              </text>
+              <line
+                x1={plotLeft}
+                x2={row.x}
+                y1={row.y}
+                y2={row.y}
+                class:list={[`f-${group.tone}`, "f-thick"]}
+              />
+              <circle
+                cx={row.x}
+                cy={row.y}
+                r="4.5"
+                class={`f-fill-${group.tone}`}
+              />
+              <text x={row.x + 10} y={row.y + 4} class="f-small f-num">
+                {row.rhatText}
+              </text>
+              <text
+                x={essRight}
+                y={row.y + 4}
+                text-anchor="end"
+                class="f-small f-num"
+              >
+                {row.essText}
+              </text>
+            </g>
+          ))}
+        </g>
+      ))
+    }
+  </svg>
+</Figure>

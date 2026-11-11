@@ -1,0 +1,284 @@
+---
+/**
+ * What two blood samples do for subject 1: the half-life forecast before
+ * (population only) and after, then the held-out validation averaged over
+ * all twelve subjects.
+ *
+ * The interval ends, medians and validation numbers are printed in the
+ * worked example. The bell shapes are log-normal curves matched to the three
+ * printed quantiles, drawn to make the intervals easier to read.
+ */
+import Figure from "../Figure.astro";
+import { areaPath, f1, linePath, linspace, scale, type Point } from "../lib";
+import { halfLife, validation } from "./model";
+
+const left = 40;
+const right = 420;
+const xAt = (hours: number) =>
+  scale(Math.log(4), Math.log(20), left, right)(Math.log(hours));
+const xTicks = [4, 6, 8, 12, 16, 20];
+const axisY = 330;
+
+const z90 = 1.645;
+const lanes = [
+  {
+    key: "population",
+    quantiles: halfLife.population,
+    base: 136,
+    labelY: 52,
+    label: "Population only: a new subject with no data",
+    tone: "alt",
+    soft: "f-fill-alt-soft",
+    from: 0,
+  },
+  {
+    key: "twoSamples",
+    quantiles: halfLife.twoSamples,
+    base: 284,
+    labelY: 200,
+    label: "After two samples, near 7 h and 24 h",
+    tone: "accent",
+    soft: "f-fill-soft",
+    from: 1,
+  },
+].map(lane => {
+  const [low, median, high] = lane.quantiles;
+  const sd = (Math.log(high) - Math.log(low)) / (2 * z90);
+  return { ...lane, low, median, high, sd };
+});
+
+const narrowest = Math.min(...lanes.map(lane => lane.sd));
+const peakHeight = 62;
+const grid = linspace(Math.log(4), Math.log(20), 161);
+
+const drawn = lanes.map(lane => {
+  const upper = grid.map(u => {
+    const z = (u - Math.log(lane.median)) / lane.sd;
+    const height = peakHeight * (narrowest / lane.sd) * Math.exp(-0.5 * z * z);
+    return [xAt(Math.exp(u)), lane.base - height] as Point;
+  });
+  const lower = grid.map(u => [xAt(Math.exp(u)), lane.base] as Point);
+  return {
+    ...lane,
+    area: areaPath(upper, lower),
+    outline: linePath(upper),
+    barY: lane.base + 12,
+    xLow: f1(xAt(lane.low)),
+    xMedian: f1(xAt(lane.median)),
+    xHigh: f1(xAt(lane.high)),
+  };
+});
+
+const populationMedianX = drawn[0].xMedian;
+
+// Paired bars for the validation panel. The two error metrics share a scale.
+const panelX = 448;
+const barMax = 104;
+const errorMax = Math.max(
+  ...validation.filter(row => row.unit === "mg/L").map(row => row.population)
+);
+const metrics = validation.map((row, i) => {
+  const max = row.unit === "mg/L" ? errorMax : row.population;
+  return {
+    ...row,
+    y: 84 + i * 74,
+    populationW: f1((row.population / max) * barMax),
+    twoSamplesW: f1((row.twoSamples / max) * barMax),
+    twoSamplesText: `${row.twoSamplesText} ${row.unit}`,
+  };
+});
+---
+
+<Figure
+  frames={3}
+  interval={3000}
+  frameLabels={[
+    "Before any sample, the population is the forecast",
+    "Two samples move the estimate towards the subject",
+    "Averaged over all twelve subjects, held out",
+  ]}
+  caption="Subject 1's half-life under two states of knowledge, and the held-out validation over all twelve subjects. Interval ends (5% and 95%), medians and validation numbers are printed in the worked example. The bell shapes are log-normal curves matched to those three quantiles, drawn for readability and not taken from the posterior draws."
+>
+  <svg
+    viewBox="0 0 640 378"
+    role="img"
+    aria-label="Two intervals for subject 1's half-life on a log scale. With the population only, the median is 8.0 hours and the 90% interval runs from 5.3 to 12.0 hours. After two blood samples the median is 11.4 hours and the interval runs from 8.4 to 15.7 hours. A side panel shows held-out results averaged over twelve subjects: the 90% width of clearance falls from 0.041 to 0.021 litres per hour per kilogram, the mean absolute error after four hours falls from 0.85 to 0.42 milligrams per litre, and the error over all times falls from 1.34 to 1.11."
+  >
+    <text x={left} y="22" class="f-title">
+      Subject 1: half-life before and after two samples
+    </text>
+
+    {
+      drawn.map(lane => (
+        <g data-from={lane.from}>
+          <text
+            x={left}
+            y={lane.labelY}
+            class:list={["f-label", `f-text-${lane.tone}`]}
+          >
+            {lane.label}
+          </text>
+          <path d={lane.area} class={lane.soft} />
+          <path d={lane.outline} class={`f-${lane.tone}`} />
+          <line
+            x1={lane.xLow}
+            x2={lane.xHigh}
+            y1={lane.barY}
+            y2={lane.barY}
+            class={`f-${lane.tone} f-thick`}
+          />
+          <line
+            x1={lane.xLow}
+            x2={lane.xLow}
+            y1={lane.barY - 5}
+            y2={lane.barY + 5}
+            class={`f-${lane.tone} f-thick`}
+          />
+          <line
+            x1={lane.xHigh}
+            x2={lane.xHigh}
+            y1={lane.barY - 5}
+            y2={lane.barY + 5}
+            class={`f-${lane.tone} f-thick`}
+          />
+          <circle
+            cx={lane.xMedian}
+            cy={lane.barY}
+            r="5.5"
+            class={`f-fill-${lane.tone}`}
+          />
+          <text
+            x={lane.xLow}
+            y={lane.barY + 20}
+            text-anchor="middle"
+            class="f-small f-num"
+          >
+            {lane.low.toFixed(1)}
+          </text>
+          <text
+            x={lane.xMedian}
+            y={lane.barY + 20}
+            text-anchor="middle"
+            class="f-small f-label f-num"
+          >
+            {lane.median.toFixed(1)}
+          </text>
+          <text
+            x={lane.xHigh}
+            y={lane.barY + 20}
+            text-anchor="middle"
+            class="f-small f-num"
+          >
+            {lane.high.toFixed(1)} h
+          </text>
+        </g>
+      ))
+    }
+
+    <g data-from="1">
+      <line
+        x1={populationMedianX}
+        x2={populationMedianX}
+        y1="214"
+        y2={drawn[1].barY - 8}
+        class="f-alt f-dash"></line>
+      <text
+        x={populationMedianX - 8}
+        y="246"
+        text-anchor="end"
+        class="f-small f-text-alt"
+      >
+        population median
+      </text>
+    </g>
+
+    <line x1={left} x2={right} y1={axisY} y2={axisY} class="f-axis"></line>
+    {
+      xTicks.map(tick => (
+        <g>
+          <line
+            x1={xAt(tick)}
+            x2={xAt(tick)}
+            y1={axisY}
+            y2={axisY + 5}
+            class="f-axis"
+          />
+          <text
+            x={xAt(tick)}
+            y={axisY + 20}
+            text-anchor="middle"
+            class="f-small f-text-muted f-num"
+          >
+            {tick}
+          </text>
+        </g>
+      ))
+    }
+    <text
+      x={(left + right) / 2}
+      y={axisY + 40}
+      text-anchor="middle"
+      class="f-small f-text-muted"
+    >
+      Half-life (hours, log scale)
+    </text>
+
+    <g data-from="2">
+      <text x={panelX} y="52" class="f-label">Across all 12 subjects</text>
+      {
+        metrics.map(metric => (
+          <g>
+            <text x={panelX} y={metric.y} class="f-small f-text-muted">
+              {metric.label}
+            </text>
+            <rect
+              x={panelX}
+              y={metric.y + 9}
+              width={metric.populationW}
+              height="12"
+              rx="3"
+              class="f-fill-alt"
+            />
+            <text
+              x={panelX + metric.populationW + 6}
+              y={metric.y + 20}
+              class="f-small f-num"
+            >
+              {metric.populationText}
+            </text>
+            <rect
+              x={panelX}
+              y={metric.y + 27}
+              width={metric.twoSamplesW}
+              height="12"
+              rx="3"
+              class="f-fill-accent"
+            />
+            <text
+              x={panelX + metric.twoSamplesW + 6}
+              y={metric.y + 38}
+              class="f-small f-label f-num"
+            >
+              {metric.twoSamplesText}
+            </text>
+          </g>
+        ))
+      }
+      <rect x={panelX} y="306" width="12" height="12" rx="3" class="f-fill-alt"
+      ></rect>
+      <text x={panelX + 18} y="317" class="f-small f-text-muted">
+        population only
+      </text>
+      <rect
+        x={panelX}
+        y="326"
+        width="12"
+        height="12"
+        rx="3"
+        class="f-fill-accent"></rect>
+      <text x={panelX + 18} y="337" class="f-small f-text-muted">
+        after two samples
+      </text>
+    </g>
+  </svg>
+</Figure>
