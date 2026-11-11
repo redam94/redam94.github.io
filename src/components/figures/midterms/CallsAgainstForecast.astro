@@ -1,0 +1,160 @@
+---
+/**
+ * Every race called by the notebook's latest snapshot (69 of them), placed at
+ * the chance the frozen forecast gave the Democrat and split by who the call
+ * went to. The chances are the ones the notebook prints in its section 3.2
+ * table; the count of calls on the wrong side of one half is computed here
+ * from those printed values.
+ */
+import Figure from "../Figure.astro";
+import { f1, scale } from "../lib";
+import { calls } from "./data";
+
+const xAt = scale(0, 1, 60, 600);
+const RADIUS = 4.2;
+const PITCH = 9.6;
+const upBase = 172;
+const downBase = 224;
+
+type Dot = {
+  race: string;
+  x: number;
+  y: number;
+  miss: boolean;
+  delay: string;
+};
+
+/** Stack dots that would overlap, away from the axis. */
+function swarm(winner: "D" | "R", base: number, direction: 1 | -1): Dot[] {
+  const levels: number[][] = [];
+  return calls
+    .filter(call => call.winner === winner)
+    .sort((a, b) => a.pD - b.pD)
+    .map((call, order) => {
+      const x = xAt(call.pD);
+      let level = levels.findIndex(taken =>
+        taken.every(other => Math.abs(other - x) >= PITCH)
+      );
+      if (level === -1) {
+        level = levels.length;
+        levels.push([]);
+      }
+      levels[level].push(x);
+      return {
+        race: call.race,
+        x: f1(x),
+        y: f1(base + direction * level * PITCH),
+        miss: winner === "D" ? call.pD < 0.5 : call.pD > 0.5,
+        delay: `--d: ${order * 18}ms`,
+      };
+    });
+}
+
+const forDemocrat = swarm("D", upBase, -1);
+const forRepublican = swarm("R", downBase, 1);
+const misses = forDemocrat.filter(dot => dot.miss);
+const republicanMisses = forRepublican.filter(dot => dot.miss).length;
+
+// The three calls the notebook's bulletin names as the most surprising.
+const named = ["IN-05", "OH-15", "TX-23"];
+const leaders = forDemocrat.filter(dot => named.includes(dot.race));
+const leaderMid = f1(
+  leaders.reduce((sum, dot) => sum + dot.x, 0) / leaders.length
+);
+
+const ticks = [0, 0.25, 0.5, 0.75, 1];
+const evenX = f1(xAt(0.5));
+---
+
+<Figure
+  replay
+  caption="Each dot is one race called by 17:22 ET on 4 November, placed at the chance the frozen forecast gave the Democrat. The log tracks Senate races and, in the House, only the districts the forecast put between 0.05 and 0.95, so this is the contested part of the map. Calls are projections, not certified results."
+>
+  <svg
+    viewBox="0 0 640 352"
+    role="img"
+    aria-label={`Dot plot of 69 called races by the frozen chance of a Democratic win. ${forDemocrat.length} were called for the Democrat, ${misses.length} of them with a frozen chance below one half, the lowest being IN-05 at 0.18, OH-15 at 0.20 and TX-23 at 0.26. ${forRepublican.length} were called for the Republican, none with a frozen Democratic chance above one half.`}
+  >
+    <text x="60" y="22" class="f-label">
+      Called for the Democrat: {forDemocrat.length} races
+    </text>
+    <text x="60" y="40" class="f-small f-text-warn f-label">
+      {misses.length} of them where the forecast leaned Republican
+    </text>
+
+    <line x1={evenX} x2={evenX} y1="52" y2="184" class="f-line f-dash"></line>
+    <line x1={evenX} x2={evenX} y1="212" y2="318" class="f-line f-dash"></line>
+    <text x={evenX + 8} y="64" class="f-small f-text-muted">even odds</text>
+
+    {
+      leaders.map(dot => (
+        <line
+          x1={dot.x}
+          x2={dot.x}
+          y1={dot.y - 8}
+          y2="136"
+          class="f-warn fx-fade"
+          style="--d: 1300ms"
+        />
+      ))
+    }
+    <text
+      x={leaderMid}
+      y="128"
+      text-anchor="middle"
+      class="f-small f-text-warn fx-fade"
+      style="--d: 1300ms"
+    >
+      IN-05, OH-15, TX-23
+    </text>
+
+    {
+      forDemocrat.map(dot => (
+        <circle
+          cx={dot.x}
+          cy={dot.y}
+          r={RADIUS}
+          class:list={[dot.miss ? "f-fill-warn" : "f-fill-line", "fx-rise"]}
+          style={dot.delay}
+        />
+      ))
+    }
+
+    <line x1="60" x2="600" y1="184" y2="184" class="f-axis"></line>
+    <line x1="60" x2="600" y1="212" y2="212" class="f-axis"></line>
+    {
+      ticks.map(tick => (
+        <text
+          x={xAt(tick)}
+          y="203"
+          text-anchor="middle"
+          class="f-small f-text-muted f-num"
+        >
+          {tick}
+        </text>
+      ))
+    }
+
+    {
+      forRepublican.map(dot => (
+        <circle
+          cx={dot.x}
+          cy={dot.y}
+          r={RADIUS}
+          class:list={[dot.miss ? "f-fill-warn" : "f-fill-line", "fx-rise"]}
+          style={dot.delay}
+        />
+      ))
+    }
+    <text x="346" y="250" class="f-label">
+      Called for the Republican: {forRepublican.length} races
+    </text>
+    <text x="346" y="268" class="f-small f-text-muted">
+      {republicanMisses} of them where the forecast leaned Democratic
+    </text>
+
+    <text x="330" y="342" text-anchor="middle" class="f-small f-text-muted">
+      Chance of a Democratic win in the frozen forecast
+    </text>
+  </svg>
+</Figure>

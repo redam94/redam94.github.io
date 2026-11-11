@@ -1,0 +1,370 @@
+---
+/**
+ * The night replayed from the notebook's snapshot table (E95, section 3.1):
+ * the chance of each chamber, the House seat interval and the effective
+ * sample size of the reweighted draws, then the NUTS refit at the last
+ * snapshot. Every value is one the notebook prints; snapshots are spaced
+ * evenly, not by clock time.
+ */
+import Figure from "../Figure.astro";
+import { f1, scale } from "../lib";
+import { path, refit } from "./data";
+
+const ESS_FLOOR = 300;
+const left = 62;
+const step = 27.5;
+const refitX = 596;
+const xOf = (i: number) => f1(left + i * step);
+const plotRight = xOf(path.length - 1);
+
+// Frame -> index of the last snapshot shown in that frame.
+const frameEnds = [0, 1, 2, 4, 9, 17];
+const refitFrame = frameEnds.length;
+const frameOf = (i: number) => frameEnds.findIndex(end => end >= i);
+
+const probAt = scale(0.75, 1, 122, 58);
+const seatAt = scale(210, 295, 262, 166);
+const essAt = (value: number) => f1(372 - (Math.log10(value) / 3.7) * 66);
+
+const comma = (value: number) => value.toLocaleString("en-US");
+
+const points = path.map((row, i) => ({
+  ...row,
+  i,
+  x: xOf(i),
+  frame: frameOf(i),
+  hollow: row.ess < ESS_FLOOR,
+  yHouse: f1(probAt(row.pHouse)),
+  ySenate: f1(probAt(row.pSenate)),
+  seatLow: f1(seatAt(row.house[0])),
+  seatMid: f1(seatAt(row.house[1])),
+  seatHigh: f1(seatAt(row.house[2])),
+  essY: essAt(row.ess),
+  essHeight: f1(372 - essAt(row.ess)),
+  essClass: row.ess < ESS_FLOOR ? "f-fill-warn" : "f-fill-accent",
+}));
+
+const segments = points.slice(1).map((point, k) => ({
+  frame: point.frame,
+  x1: points[k].x,
+  x2: point.x,
+  house: [points[k].yHouse, point.yHouse],
+  senate: [points[k].ySenate, point.ySenate],
+}));
+
+const readouts = [
+  ...frameEnds.map((end, frame) => {
+    const row = path[end];
+    return {
+      frame,
+      text: `P(House) ${row.pHouse.toFixed(3)} · P(Senate) ${row.pSenate.toFixed(3)} · House seats ${row.house[1]} (${row.house[0]} to ${row.house[2]}) · ESS ${comma(row.ess)}`,
+      x: xOf(end),
+      final: false,
+    };
+  }),
+  {
+    frame: refitFrame,
+    text: `P(House) 1.00 · P(Senate) 1.00 · House seats ${refit.house[1]} (${refit.house[0]} to ${refit.house[2]}) · Senate seats ${refit.senate[1]} (${refit.senate[0]} to ${refit.senate[2]})`,
+    x: refitX,
+    final: true,
+  },
+];
+
+const probTicks = [0.8, 0.9, 1];
+const seatTicks = [220, 240, 260, 280];
+const essTicks = [1, 10, 100, 1000];
+const timeLabels = [
+  { i: 0, text: "eve", anchor: "end", x: xOf(0) + 9 },
+  { i: 1, text: "20:20", anchor: "start", x: xOf(1) - 12 },
+  { i: 4, text: "23:18", anchor: "middle", x: xOf(4) },
+  { i: 9, text: "02:21", anchor: "middle", x: xOf(9) },
+  { i: 12, text: "08:49", anchor: "middle", x: xOf(12) },
+  { i: 17, text: "17:22", anchor: "middle", x: xOf(17) },
+];
+
+const majorityY = f1(seatAt(218));
+const frozenTop = f1(seatAt(path[0].house[2]));
+const frozenHeight = f1(seatAt(path[0].house[0]) - seatAt(path[0].house[2]));
+const floorY = essAt(ESS_FLOOR);
+const refitSeat = {
+  low: f1(seatAt(refit.house[0])),
+  mid: f1(seatAt(refit.house[1])),
+  high: f1(seatAt(refit.house[2])),
+};
+const refitProbY = f1(probAt(1));
+---
+
+<Figure
+  frames={refitFrame + 1}
+  interval={3200}
+  frameLabels={[
+    "Eve: the frozen forecast",
+    "20:20 ET: Florida's Senate race is too close to call",
+    "20:50 ET: Florida is called, as forecast",
+    "23:18 ET: Ohio, Texas and South Carolina",
+    "02:21 ET: four effective draws left",
+    "17:22 ET on 4 November: 69 tracked races called",
+    "The same calls, refitted with NUTS",
+  ]}
+  caption="The notebook's replay table, snapshot by snapshot (evenly spaced, not to clock time). Hollow markers are snapshots where the reweighted sample is worth fewer than 300 draws; the last column is the NUTS refit on the same calls. These are model outputs given the calls logged by 17:22 ET on 4 November, not final results."
+>
+  <svg
+    viewBox="0 0 640 424"
+    role="img"
+    aria-label="Three stacked panels across the eve and 17 snapshots of election night. The model's chance of Democratic control rises from 0.946 for the House and 0.801 for the Senate on the eve to 1.000 for both by 23:18 ET. The median Democratic House seat count rises from 237 to 272, above the frozen 90% interval of 217 to 262. The effective sample size of the reweighted draws falls from 4,000 to 2. A final column shows the NUTS refit: 271 House seats with a 90% interval of 260 to 284."
+  >
+    {
+      readouts.map(readout => (
+        <text
+          x="16"
+          y="18"
+          class="f-small f-label f-num"
+          data-show={readout.frame}
+          data-final={readout.final}
+        >
+          {readout.text}
+        </text>
+      ))
+    }
+    {
+      readouts.map(readout => (
+        <line
+          x1={readout.x}
+          x2={readout.x}
+          y1="50"
+          y2="378"
+          class="f-grid"
+          data-show={readout.frame}
+          data-final={readout.final}
+        />
+      ))
+    }
+
+    <!-- Panel A: chance of control -->
+    <text x="16" y="44" class="f-small f-text-muted">
+      Chance of Democratic control
+    </text>
+    <circle cx="348" cy="40" r="4.5" class="f-fill-accent"></circle>
+    <text x="358" y="44" class="f-small f-text-accent f-label">House</text>
+    <circle cx="414" cy="40" r="4.5" class="f-fill-alt"></circle>
+    <text x="424" y="44" class="f-small f-text-alt f-label">Senate</text>
+    <circle cx="488" cy="40" r="4" class="f-line f-fill-bg"></circle>
+    <text x="498" y="44" class="f-small f-text-muted">ESS below 300</text>
+    {
+      probTicks.map(tick => (
+        <g>
+          <line
+            x1={left - 10}
+            x2={refitX + 14}
+            y1={probAt(tick)}
+            y2={probAt(tick)}
+            class="f-grid"
+          />
+          <text
+            x={left - 16}
+            y={probAt(tick) + 4}
+            text-anchor="end"
+            class="f-small f-text-muted f-num"
+          >
+            {tick.toFixed(1)}
+          </text>
+        </g>
+      ))
+    }
+    {
+      segments.map(segment => (
+        <g data-from={segment.frame}>
+          <line
+            x1={segment.x1}
+            x2={segment.x2}
+            y1={segment.senate[0]}
+            y2={segment.senate[1]}
+            class="f-alt"
+          />
+          <line
+            x1={segment.x1}
+            x2={segment.x2}
+            y1={segment.house[0]}
+            y2={segment.house[1]}
+            class="f-accent"
+          />
+        </g>
+      ))
+    }
+    {
+      points.map(point => (
+        <g data-from={point.frame}>
+          <circle
+            cx={point.x}
+            cy={point.ySenate}
+            r="4"
+            class={point.hollow ? "f-alt f-fill-bg" : "f-fill-alt"}
+          />
+          <circle
+            cx={point.x}
+            cy={point.yHouse}
+            r="4"
+            class={point.hollow ? "f-accent f-fill-bg" : "f-fill-accent"}
+          />
+        </g>
+      ))
+    }
+    <g data-from={refitFrame}>
+      <circle cx={refitX} cy={refitProbY} r="5" class="f-fill-line"></circle>
+    </g>
+
+    <!-- Panel B: House seats -->
+    <text x="16" y="154" class="f-small f-text-muted">
+      Democratic House seats: median and 90% interval
+    </text>
+    <rect
+      x={left - 10}
+      y={frozenTop}
+      width={refitX + 14 - (left - 10)}
+      height={frozenHeight}
+      class="f-fill-soft"></rect>
+    <text
+      x={refitX + 10}
+      y={frozenTop + 30}
+      text-anchor="end"
+      class="f-small f-text-accent"
+    >
+      frozen 90% interval, 217 to 262
+    </text>
+    <line
+      x1={left - 10}
+      x2={refitX + 14}
+      y1={majorityY}
+      y2={majorityY}
+      class="f-line f-dash"></line>
+    <text
+      x={refitX + 10}
+      y={majorityY - 6}
+      text-anchor="end"
+      class="f-small f-text-muted"
+    >
+      218 seats: a majority
+    </text>
+    {
+      seatTicks.map(tick => (
+        <text
+          x={left - 16}
+          y={seatAt(tick) + 4}
+          text-anchor="end"
+          class="f-small f-text-muted f-num"
+        >
+          {tick}
+        </text>
+      ))
+    }
+    {
+      points.map(point => (
+        <g data-from={point.frame}>
+          <line
+            x1={point.x}
+            x2={point.x}
+            y1={point.seatLow}
+            y2={point.seatHigh}
+            class="f-accent"
+          />
+          <circle
+            cx={point.x}
+            cy={point.seatMid}
+            r="4"
+            class={point.hollow ? "f-accent f-fill-bg" : "f-fill-accent"}
+          />
+        </g>
+      ))
+    }
+    <g data-from={refitFrame}>
+      <line
+        x1={refitX}
+        x2={refitX}
+        y1={refitSeat.low}
+        y2={refitSeat.high}
+        class="f-line f-thick"></line>
+      <circle cx={refitX} cy={refitSeat.mid} r="5" class="f-fill-line"></circle>
+      <text
+        x={refitX - 10}
+        y={refitSeat.mid + 4}
+        text-anchor="end"
+        class="f-small f-label f-num"
+      >
+        {refit.house[1]}
+      </text>
+    </g>
+
+    <!-- Panel C: effective sample size -->
+    <text x="16" y="296" class="f-small f-text-muted">
+      Effective sample size of the 4,000 reweighted draws (log scale)
+    </text>
+    {
+      essTicks.map(tick => (
+        <text
+          x={left - 16}
+          y={essAt(tick) + 4}
+          text-anchor="end"
+          class="f-small f-text-muted f-num"
+        >
+          {comma(tick)}
+        </text>
+      ))
+    }
+    <line x1={left - 10} x2={plotRight + 12} y1="372" y2="372" class="f-axis"
+    ></line>
+    {
+      points.map(point => (
+        <rect
+          x={point.x - 6}
+          y={point.essY}
+          width="12"
+          height={point.essHeight}
+          class={point.essClass}
+          data-from={point.frame}
+        />
+      ))
+    }
+    <line
+      x1={left - 10}
+      x2={plotRight + 12}
+      y1={floorY}
+      y2={floorY}
+      class="f-warn f-dash"></line>
+    <text x={plotRight + 16} y={floorY + 4} class="f-small f-text-warn">
+      300: refit
+    </text>
+
+    {
+      timeLabels.map(label => (
+        <text
+          x={label.x}
+          y="392"
+          text-anchor={label.anchor}
+          class="f-small f-text-muted f-num"
+        >
+          {label.text}
+        </text>
+      ))
+    }
+    <text
+      x={refitX}
+      y="392"
+      text-anchor="middle"
+      class="f-small f-label"
+      data-from={refitFrame}
+    >
+      refit
+    </text>
+    <text x={xOf(3)} y="412" text-anchor="middle" class="f-small f-text-muted">
+      3 November
+    </text>
+    <text
+      x={xOf(11.5)}
+      y="412"
+      text-anchor="middle"
+      class="f-small f-text-muted"
+    >
+      4 November
+    </text>
+  </svg>
+</Figure>
