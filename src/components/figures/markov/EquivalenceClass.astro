@@ -1,0 +1,123 @@
+---
+/** Four orientations of A - B - C: three share a class, the collider stands alone. */
+import Figure from "../Figure.astro";
+import Dag, { type DagEdge } from "../Dag.astro";
+
+const y = 98;
+const panels: {
+  title: string;
+  cx: number;
+  edges: DagEdge[];
+  lines: string[];
+}[] = [
+  {
+    title: "Chain",
+    cx: 88,
+    edges: [
+      { from: "A", to: "B" },
+      { from: "B", to: "C" },
+    ],
+    lines: ["A and C related", "independent given B"],
+  },
+  {
+    title: "Reversed chain",
+    cx: 244,
+    edges: [
+      { from: "B", to: "A" },
+      { from: "C", to: "B" },
+    ],
+    lines: ["A and C related", "independent given B"],
+  },
+  {
+    title: "Fork",
+    cx: 400,
+    edges: [
+      { from: "B", to: "A" },
+      { from: "B", to: "C" },
+    ],
+    lines: ["A and C related", "independent given B"],
+  },
+  {
+    title: "Collider",
+    cx: 558,
+    edges: [
+      { from: "A", to: "B", tone: "warn" },
+      { from: "C", to: "B", tone: "warn" },
+    ],
+    lines: ["A and C independent", "related given B"],
+  },
+];
+---
+
+<Figure
+  replay
+  caption="Four ways to orient the two edges. The first three imply the same independences and form one Markov equivalence class. The collider implies the opposite pattern, so data can tell it apart."
+>
+  <svg
+    viewBox="0 0 640 236"
+    role="img"
+    aria-label="Chain, reversed chain and fork grouped as one equivalence class, with the collider in a class of its own."
+  >
+    <rect
+      x="12"
+      y="20"
+      width="464"
+      height="160"
+      rx="22"
+      class="f-fill-soft fx-fade"></rect>
+    <rect
+      x="490"
+      y="20"
+      width="138"
+      height="160"
+      rx="22"
+      class="f-fill-warn-soft fx-fade"
+      style="--d: 900ms"></rect>
+    {
+      panels.map((panel, i) => (
+        <g class="fx-rise" style={`--d: ${i * 220}ms`}>
+          <text x={panel.cx} y="52" text-anchor="middle" class="f-label">
+            {panel.title}
+          </text>
+          <Dag
+            r={15}
+            nodes={[
+              { id: "A", label: "A", x: panel.cx - 50, y },
+              { id: "B", label: "B", x: panel.cx, y },
+              { id: "C", label: "C", x: panel.cx + 50, y },
+            ]}
+            edges={panel.edges}
+          />
+          {panel.lines.map((line, row) => (
+            <text
+              x={panel.cx}
+              y={142 + row * 17}
+              text-anchor="middle"
+              class="f-small f-text-muted"
+            >
+              {line}
+            </text>
+          ))}
+        </g>
+      ))
+    }
+    <text
+      x="244"
+      y="210"
+      text-anchor="middle"
+      class="f-label f-text-accent fx-fade"
+      style="--d: 800ms"
+    >
+      One equivalence class: observational data cannot rank these
+    </text>
+    <text
+      x="559"
+      y="210"
+      text-anchor="middle"
+      class="f-label f-text-warn fx-fade"
+      style="--d: 1100ms"
+    >
+      Its own class
+    </text>
+  </svg>
+</Figure>

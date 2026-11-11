@@ -1,0 +1,126 @@
+---
+title: "How Strong Would the Hidden Confounder Have to Be?"
+author: Matthew Reda
+pubDatetime: 2026-11-11T12:00:00Z
+slug: sensitivity-analysis-hidden-confounding
+draft: false
+tags:
+  - causal-inference
+  - statistics
+  - bayesian
+  - pymc
+description: You can't prove there is no unmeasured confounder, but you can say how strong one would have to be to change the decision. A sensitivity analysis on the job-training benchmark, where an experiment supplies the answer key.
+---
+
+import EstimateLadder from "@/components/figures/confounding/EstimateLadder.astro";
+import HiddenConfounder from "@/components/figures/confounding/HiddenConfounder.astro";
+import SensitivityContours from "@/components/figures/confounding/SensitivityContours.astro";
+import ShrinkToZero from "@/components/figures/confounding/ShrinkToZero.astro";
+
+Every observational estimate I have defended rests on a sentence the data cannot test: given what we measured, who got the treatment is as good as random. The review question that follows is always some version of "what if there's something you didn't measure?" The two usual replies are both bad. "We controlled for everything" is a claim nobody can back. "Then nothing can be known" throws away an analysis that may be mostly right.
+
+The useful reply is a number: how strong would a hidden confounder have to be, compared with things we did measure, to change the decision? That is sensitivity analysis. I built a [worked example](https://redam94.github.io/pymc-challenges/examples/E107_hidden_confounding.html) around a job-training study where a randomized experiment supplies the answer key. This post is the short version: what the number is, how it misleads, and how to report it.
+
+## An estimate with an answer key
+
+The National Supported Work program assigned applicants at random. In the Dehejia & Wahba (1999) subset of LaLonde's (1986) data there are 185 trainees and 260 randomized controls, and the experimental effect on 1978 earnings is \$1,794 (robust SE \$671). LaLonde's move was to discard the randomized controls and substitute 15,992 men from the Current Population Survey, as an analyst without an experiment would have to.
+
+All the numbers below come from the worked example. The raw comparison says the program cut earnings by \$8,498, because trainees earn far less than the average CPS man for reasons unrelated to training. A flexible regression with demographics and two years of prior earnings gives \$1,572, close to the truth.
+
+Now play the analyst who never measured prior earnings. The same specification without the earnings terms gives -\$3,690 with $t = -5.2$. Nothing in that analysis is careless. It is confident and of the wrong sign, and [more data would only tighten the interval](/posts/more-data-more-confident-still-wrong/) around the wrong number.
+
+<EstimateLadder />
+
+## Bias in two numbers
+
+Cinelli & Hazlett (2020) rewrite omitted-variable bias so it no longer depends on the scale of the unmeasured $U$. Two partial $R^2$ values carry everything: $R^2_{D\sim U\mid X}$, the share of leftover treatment variation that $U$ explains after the covariates, and $R^2_{Y\sim U\mid D,X}$, the share of leftover outcome variation. Then
+
+$$|\widehat{\text{bias}}| = \operatorname{se}(\hat\tau)\,\sqrt{\text{df}}\;\sqrt{\frac{R^2_{Y\sim U\mid D,X}\;R^2_{D\sim U\mid X}}{1 - R^2_{D\sim U\mid X}}}$$
+
+where $\hat\tau$, its standard error, and the degrees of freedom come from the regression you actually ran. This is exact least-squares algebra. When I plant synthetic confounders of chosen strength on the real rows, the estimate moves as the formula says, to the dollar.
+
+<HiddenConfounder />
+
+Two consequences matter in practice. First, a confounder needs both halves. The indicator for being Black explains 7% of the leftover variation in treatment but under 0.1% in earnings, so hiding it moves the estimate by only about \$500.
+
+Second, a balance table cannot see any of this. After matching on the flexible propensity score, no measured covariate differs by more than 0.18 standard deviations. A planted confounder with 3% partial $R^2$ on both sides, enough to reverse the sign of the estimate, differs by 1.87 standard deviations in the same matched sample. Good balance on what you measured says nothing about what you did not.
+
+## The robustness value
+
+Turn the formula around. The robustness value $RV_q$ is the partial $R^2$ a confounder would need on both sides to cut the estimate by a fraction $q$. With $f_q = q\,|t|/\sqrt{\text{df}}$,
+
+$$RV_q = \tfrac12\left(\sqrt{f_q^4 + 4 f_q^2} - f_q^2\right)$$
+
+It needs only the $t$ statistic and the degrees of freedom:
+
+```python
+import numpy as np
+
+def robustness_value(t, dof, q=1.0):
+    """Partial R2 a confounder needs on both sides to cut the estimate by a fraction q."""
+    f = q * abs(t) / np.sqrt(dof)
+    return 0.5 * (np.sqrt(f**4 + 4 * f**2) - f**2)
+
+robustness_value(t=2.82, dof=16_159)         # 0.0219: brings the estimate to zero
+robustness_value(t=2.82, dof=16_159, q=0.5)  # 0.0110: halves it
+```
+
+A confounder explaining 2.2% of the leftover variation in both training and earnings brings the \$1,572 to zero, and 0.67% removes statistical significance.
+
+<ShrinkToZero />
+
+A bare "2.2%" sounds negligible, and it is not. The worked example translates it: trainees would have to sit 1.5 standard deviations above look-alike comparison men on $U$, with each standard deviation worth about \$1,045 in 1978 earnings. The product is the whole \$1,572. Report strength in units like these.
+
+## A benchmark is an argument, not a measurement
+
+The robustness value says how strong, not whether that strength is plausible. The only scale available is the covariates you did measure, so you benchmark: what if $U$ were $k$ times as strong as some observed variable?
+
+Against the 1975 earnings block (1975 earnings, a zero-earnings indicator, and the square), the answer is uncomfortable. A confounder as strong as that block cuts \$1,572 to \$409, and one twice as strong reverses it to -\$757.
+
+<SensitivityContours />
+
+Benchmarking has two traps.
+
+**Benchmark the group, not its weakest member.** On its own, given the rest of the model, 1975 earnings explains 1.1% of leftover outcome variation, and a confounder three times that strong still leaves \$1,133. The block it belongs to explains 8.7%. Correlated covariates stand in for one another, so each looks weak alone.
+
+**The benchmark is only as good as the analogy.** The wrong-signed -\$3,690 has a robustness value of 4.0%, which looks solid. Three times the strength of marriage, the strongest demographic on the outcome side, allows a confounder with 4.5% of outcome variation and leaves the estimate negative. The earnings history that was actually missing explained 41%. No benchmark built from demographics could have warned about it.
+
+## Putting the belief in a prior
+
+A Bayesian sensitivity model writes the judgment about confounder strength into a prior. The regression identifies $\theta$, the coefficient the data can see, and the causal effect is $\tau = \theta - \text{bias}$, with the bias driven by signed partial correlations $\rho_d$ and $\rho_y$ bounded by the benchmark:
+
+```python
+import pymc as pm
+import pytensor.tensor as pt
+
+with pm.Model() as m_bench:
+    a = pm.Normal("a", 15.0, 10.0)
+    b = pm.Normal("b", 0.0, 10.0, shape=X_std.shape[1])
+    theta = pm.Normal("theta", 0.0, 5.0)  # what the data see
+    s = pm.HalfNormal("s", 10.0)
+    pm.Normal("y", a + theta * d + pt.dot(X_std, b), s, observed=y_k)
+
+    # sensitivity parameters: they never enter the likelihood
+    rho_d = pm.Uniform("rho_d", -rho_d_max, rho_d_max)
+    rho_y = pm.Uniform("rho_y", -rho_y_max, rho_y_max)
+    bias = rho_y * rho_d / pt.sqrt(1 - rho_d**2) * s / sd_d_resid
+    pm.Deterministic("tau", theta - bias)
+    idata = pm.sample()
+```
+
+Here `y_k` is earnings in thousands and `sd_d_resid` is the standard deviation of treatment after regressing it on the covariates. With a confounder no stronger than the 1975 block in either direction, the 90% interval is \$360 to \$2,590. Three times that strength widens it to -\$600 to \$3,690. Both cover the experimental \$1,794.
+
+The posterior for `rho_d` equals its prior to the third decimal, and that is the design working: a sensitivity parameter is a belief the data cannot check. The worked example also fits a binary latent-confounder model where this fails. From a `HalfNormal(1)` prior, three of four chains put the confounder's log-odds effect near 5.8, because a mixture fit the outcome better than a single logistic curve. That is misspecification being absorbed, not confounding being discovered. If your sensitivity parameters move far from their priors, distrust the model.
+
+## What to report
+
+1. **Write the plausible range down first.** Name the measured block the hidden confounder most resembles and the multiple of its strength you find credible, before looking at the estimate. I chose my benchmark afterward and say so, which is why it argues and does not prove.
+2. **Lead with the benchmark, then the robustness value.** "A hidden factor as strong as the 1975 earnings variables we already adjust for would cut the \$1,572 to about \$409, and one twice as strong would reverse it" is a sentence a decision-maker can use.
+3. **Report both directions.** Here a confounder at 0.3% on both sides, pushing the estimate down, was all that separated it from the experiment.
+4. **Say what evidence would narrow it.** Sensitivity analysis measures fragility, and only evidence, ideally a randomized holdout, says whether the fragility matters.
+
+The verdict on the job-training estimate is not flattering: significant, close to the truth, and largely erasable by a plausible confounder. A sensitivity analysis does not say an estimate is wrong. It says how much of its force rests on nothing being missing.
+
+---
+
+_Further reading: the full [worked example](https://redam94.github.io/pymc-challenges/examples/E107_hidden_confounding.html) adds E-values, Rosenbaum bounds, contour plots, and a placebo test. The partial $R^2$ framework is from Cinelli & Hazlett (2020), "Making Sense of Sensitivity: Extending Omitted Variable Bias."_

@@ -1,0 +1,109 @@
+---
+/**
+ * The causal diagram behind the bias formula: measured covariates X are
+ * adjusted for, an unmeasured U is not, and its two arrows are the two
+ * partial R² values the formula needs. Explanatory diagram, no data.
+ */
+import Figure from "../Figure.astro";
+import Dag, { type DagEdge, type DagNode } from "../Dag.astro";
+import { arrowGeom, type Point } from "../lib";
+
+const r = 22;
+const u: Point = [320, 70];
+const d: Point = [150, 204];
+const y: Point = [490, 204];
+
+const observed: DagNode[] = [
+  { id: "D", label: "D", x: d[0], y: d[1] },
+  { id: "Y", label: "Y", x: y[0], y: y[1] },
+  { id: "X", label: "X", x: 320, y: 290 },
+];
+const observedEdges: DagEdge[] = [
+  { from: "X", to: "D", tone: "muted" },
+  { from: "X", to: "Y", tone: "muted" },
+  { from: "D", to: "Y", tone: "accent" },
+];
+const hidden: DagNode[] = [
+  { id: "U", label: "U", x: u[0], y: u[1], state: "ghost" },
+];
+
+const arms = [
+  {
+    geom: arrowGeom(u, d, r + 3, r + 3),
+    x: 204,
+    anchor: "end",
+    subscript: "D~U|X",
+    lines: ["leftover variation in training", "that U explains"],
+    delay: 900,
+  },
+  {
+    geom: arrowGeom(u, y, r + 3, r + 3),
+    x: 436,
+    anchor: "start",
+    subscript: "Y~U|D,X",
+    lines: ["leftover variation in earnings", "that U explains"],
+    delay: 1300,
+  },
+];
+---
+
+<Figure
+  replay
+  caption="The regression adjusts for X and cannot adjust for U. U biases the estimate only through both dashed arrows at once, and the formula measures each arrow as a partial R²."
+>
+  <svg
+    viewBox="0 0 640 350"
+    role="img"
+    aria-label="Causal diagram. Measured covariates X point to training D and earnings Y, and D points to Y. An unmeasured U points to both D and Y with dashed arrows labelled with the two partial R squared values."
+  >
+    <Dag r={r} nodes={observed} edges={observedEdges} />
+    <text x={d[0]} y={d[1] + 44} text-anchor="middle" class="f-label">
+      Training
+    </text>
+    <text x={y[0]} y={y[1] + 44} text-anchor="middle" class="f-label">
+      1978 earnings
+    </text>
+    <text x="320" y="334" text-anchor="middle" class="f-label">
+      Measured covariates
+    </text>
+    <text x="320" y={d[1] - 10} text-anchor="middle" class="f-text-accent">
+      the effect being estimated
+    </text>
+
+    <g class="fx-fade" style="--d: 500ms">
+      <Dag r={r} nodes={hidden} edges={[]} />
+      <text x={u[0]} y={u[1] - 34} text-anchor="middle" class="f-label">
+        Unmeasured confounder
+      </text>
+    </g>
+    {
+      arms.map(arm => (
+        <g class="fx-fade" style={`--d: ${arm.delay}ms`}>
+          <path d={arm.geom.shaft} class="f-warn f-dash" />
+          <polygon points={arm.geom.head} class="f-fill-warn" />
+          <text
+            x={arm.x}
+            y="106"
+            text-anchor={arm.anchor}
+            class="f-title f-text-warn"
+          >
+            R²
+            <tspan dy="4" class="f-small">
+              {arm.subscript}
+            </tspan>
+          </text>
+          {arm.lines.map((line, row) => (
+            <text
+              x={arm.x}
+              y={128 + row * 17}
+              text-anchor={arm.anchor}
+              class="f-small f-text-muted"
+            >
+              {line}
+            </text>
+          ))}
+        </g>
+      ))
+    }
+  </svg>
+</Figure>

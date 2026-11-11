@@ -1,0 +1,284 @@
+---
+/**
+ * The post's failure case: exp(-sin(3x)^2) integrated against N(0, 1).
+ * Left: seven nodes and lambda = 1, a confident answer far from the
+ * reference. Right: fifteen nodes and lambda = 0.3. Computed here with the
+ * same routine as the post.
+ */
+import Figure from "../Figure.astro";
+import { areaPath, f1, linePath, linspace, scale, type Point } from "../lib";
+import { bayesianQuadrature, oscillating, referenceExpectation } from "./bq";
+
+const top = 64;
+const bottom = 226;
+const panelWidth = 268;
+const domain = 3.2;
+const yAt = scale(-0.2, 1.4, bottom, top);
+const grid = linspace(-domain, domain, 221);
+const reference = referenceExpectation(oscillating);
+
+const stripLeft = 170;
+const stripRight = 470;
+const fAt = scale(0.6, 1.0, stripLeft, stripRight);
+const stripTop = 286;
+const stripAxis = 364;
+
+const panels = [
+  {
+    title: "λ = 1, 7 nodes",
+    note: "The prior sees a nearly constant function",
+    tone: "warn",
+    left: 40,
+    lam: 1,
+    count: 7,
+  },
+  {
+    title: "λ = 0.3, 15 nodes",
+    note: "The prior can follow the oscillation",
+    tone: "accent",
+    left: 356,
+    lam: 0.3,
+    count: 15,
+  },
+].map((panel, i) => {
+  const xAt = scale(-domain, domain, panel.left, panel.left + panelWidth);
+  const fit = bayesianQuadrature(
+    oscillating,
+    linspace(-3, 3, panel.count),
+    panel.lam
+  );
+  const posterior = grid.map(x => ({ x, ...fit.at(x) }));
+  const rowY = 316 + i * 26;
+  return {
+    ...panel,
+    clipId: `numerics-mismatch-clip-${i}`,
+    delay: i * 500,
+    xAt,
+    truthPath: linePath(grid.map(x => [xAt(x), yAt(oscillating(x))] as Point)),
+    meanPath: linePath(posterior.map(p => [xAt(p.x), yAt(p.mean)] as Point)),
+    bandPath: areaPath(
+      posterior.map(p => [xAt(p.x), yAt(p.mean + 2 * p.sd)] as Point),
+      posterior.map(p => [xAt(p.x), yAt(p.mean - 2 * p.sd)] as Point)
+    ),
+    nodes: fit.nodes.map((x, j) => ({
+      cx: f1(xAt(x)),
+      cy: f1(yAt(fit.values[j])),
+    })),
+    rowY,
+    barLeft: f1(fAt(fit.mean - 2 * fit.sd)),
+    barRight: f1(fAt(fit.mean + 2 * fit.sd)),
+    dotX: f1(fAt(fit.mean)),
+    label: `${fit.mean.toFixed(3)} ± ${fit.sd.toFixed(3)}`,
+    error: Math.abs(fit.mean - reference),
+  };
+});
+
+const refX = f1(fAt(reference));
+
+// fx-draw sets a dash of one path-length unit. Chrome measures dashes on
+// non-scaling strokes in screen pixels, so a unit of exactly one path length
+// stops short when the figure renders wider than its viewBox. Half a unit
+// per path length keeps the line whole up to twice the viewBox width.
+const drawLength = 0.5;
+const miss = panels[0];
+const missMid = (refX + miss.dotX) / 2;
+---
+
+<Figure
+  replay
+  caption="Computed at build time with the same routine as the post, with bands and bars at two posterior standard deviations. On the left the narrow band misses every trough of the function, and the reported integral inherits that confidence."
+>
+  <svg
+    viewBox="0 0 640 394"
+    role="img"
+    aria-label={`An oscillating integrand fitted twice. With length scale 1 and 7 nodes the fit is nearly flat and reports ${miss.label} against a reference of ${reference.toFixed(3)}. With length scale 0.3 and 15 nodes the fit follows the oscillation and reports ${panels[1].label}.`}
+  >
+    <defs>
+      {
+        panels.map(panel => (
+          <clipPath id={panel.clipId}>
+            <rect
+              x={panel.left}
+              y={top}
+              width={panelWidth}
+              height={bottom - top}
+            />
+          </clipPath>
+        ))
+      }
+    </defs>
+    {
+      panels.map(panel => (
+        <g>
+          <text x={panel.left} y="26" class="f-title">
+            {panel.title}
+          </text>
+          <text
+            x={panel.left}
+            y="46"
+            class:list={["f-small f-label", `f-text-${panel.tone}`]}
+          >
+            {panel.note}
+          </text>
+          {[0, 1].map(tick => (
+            <g>
+              <line
+                x1={panel.left}
+                x2={panel.left + panelWidth}
+                y1={yAt(tick)}
+                y2={yAt(tick)}
+                class="f-grid"
+              />
+              <text
+                x={panel.left - 8}
+                y={yAt(tick) + 4}
+                text-anchor="end"
+                class="f-small f-text-muted f-num"
+              >
+                {tick}
+              </text>
+            </g>
+          ))}
+          <line
+            x1={panel.left}
+            x2={panel.left + panelWidth}
+            y1={bottom}
+            y2={bottom}
+            class="f-axis"
+          />
+          {[-3, -2, -1, 0, 1, 2, 3].map(tick => (
+            <text
+              x={panel.xAt(tick)}
+              y={bottom + 18}
+              text-anchor="middle"
+              class="f-small f-text-muted f-num"
+            >
+              {tick}
+            </text>
+          ))}
+
+          <g clip-path={`url(#${panel.clipId})`}>
+            <path
+              d={panel.bandPath}
+              class:list={[
+                panel.tone === "warn" ? "f-fill-warn-soft" : "f-fill-soft",
+                "fx-fade",
+              ]}
+              style={`--d: ${panel.delay + 1300}ms`}
+            />
+            <path
+              d={panel.truthPath}
+              pathLength={drawLength}
+              class="f-line fx-draw"
+              style={`--d: ${panel.delay}ms`}
+            />
+            <path
+              d={panel.meanPath}
+              pathLength={drawLength}
+              class:list={[`f-${panel.tone}`, "f-thick fx-draw"]}
+              style={`--d: ${panel.delay + 1300}ms`}
+            />
+          </g>
+          <g class="fx-fade" style={`--d: ${panel.delay + 900}ms`}>
+            {panel.nodes.map(node => (
+              <circle
+                cx={node.cx}
+                cy={node.cy}
+                r="3.5"
+                class="f-fill-bg f-line"
+              />
+            ))}
+          </g>
+        </g>
+      ))
+    }
+
+    <g class="f-small">
+      <line x1="40" x2="62" y1="258" y2="258" class="f-line"></line>
+      <text x="70" y="262">integrand</text>
+      <circle cx="150" cy="258" r="3.5" class="f-fill-bg f-line"></circle>
+      <text x="161" y="262">evaluations</text>
+      <line x1="250" x2="272" y1="258" y2="258" class="f-warn f-thick"></line>
+      <line x1="276" x2="298" y1="258" y2="258" class="f-accent f-thick"></line>
+      <text x="306" y="262">posterior mean of the integrand, band ± 2 sd</text>
+    </g>
+
+    <line x1={refX} x2={refX} y1={stripTop} y2={stripAxis} class="f-line f-dash"
+    ></line>
+    <text x={refX + 7} y={stripTop + 8} class="f-small f-text-muted f-num">
+      reference {reference.toFixed(3)}
+    </text>
+    <line
+      x1={stripLeft}
+      x2={stripRight}
+      y1={stripAxis}
+      y2={stripAxis}
+      class="f-axis"></line>
+    {
+      [0.6, 0.7, 0.8, 0.9, 1].map(tick => (
+        <g>
+          <line
+            x1={fAt(tick)}
+            x2={fAt(tick)}
+            y1={stripAxis}
+            y2={stripAxis + 5}
+            class="f-axis"
+          />
+          <text
+            x={fAt(tick)}
+            y={stripAxis + 20}
+            text-anchor="middle"
+            class="f-small f-text-muted f-num"
+          >
+            {tick.toFixed(1)}
+          </text>
+        </g>
+      ))
+    }
+    <g class="fx-fade" style="--d: 2400ms">
+      <line
+        x1={refX + 4}
+        x2={miss.dotX - 7}
+        y1={miss.rowY}
+        y2={miss.rowY}
+        class="f-warn f-dash"></line>
+      <text
+        x={missMid}
+        y={miss.rowY - 7}
+        text-anchor="middle"
+        class="f-small f-num f-text-warn"
+      >
+        error {miss.error.toFixed(3)}
+      </text>
+    </g>
+    {
+      panels.map(panel => (
+        <g class="fx-rise" style={`--d: ${panel.delay + 1900}ms`}>
+          <text x="40" y={panel.rowY + 4} class="f-small">
+            {panel.title}
+          </text>
+          <line
+            x1={panel.barLeft}
+            x2={panel.barRight}
+            y1={panel.rowY}
+            y2={panel.rowY}
+            class:list={[`f-${panel.tone}`, "f-thick"]}
+          />
+          <circle
+            cx={panel.dotX}
+            cy={panel.rowY}
+            r="4"
+            class={`f-fill-${panel.tone}`}
+          />
+          <text
+            x={stripRight + 16}
+            y={panel.rowY + 4}
+            class:list={["f-small f-num f-label", `f-text-${panel.tone}`]}
+          >
+            {panel.label}
+          </text>
+        </g>
+      ))
+    }
+  </svg>
+</Figure>

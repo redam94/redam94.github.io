@@ -1,0 +1,228 @@
+---
+/**
+ * The post's hypothetical reweighting. The same stratum ROAS values are
+ * averaged over the test's market mix and then over the rollout's. Bar width
+ * is the share of markets and bar height the stratum effect, so each weighted
+ * average is the mean height of its panel. Both averages are computed here
+ * from the tiers and shares the post states.
+ */
+import Figure from "../Figure.astro";
+import { f1, scale } from "../lib";
+
+type Mix = "test" | "rollout";
+type Tier = { name: string; roas: number; test: number; rollout: number };
+
+const tiers: Tier[] = [
+  { name: "Small", roas: 1.8, test: 0.5, rollout: 0.1 },
+  { name: "Medium", roas: 1.2, test: 0.3, rollout: 0.3 },
+  { name: "Large", roas: 0.7, test: 0.2, rollout: 0.6 },
+];
+
+const weighted = (mix: Mix) =>
+  tiers.reduce((sum, tier) => sum + tier[mix] * tier.roas, 0);
+
+const headline = weighted("test");
+const reweighted = weighted("rollout");
+const overstatement = Math.round((headline / reweighted - 1) * 100);
+
+const top = 76;
+const bottom = 256;
+const width = 236;
+const yAt = scale(0, 2, bottom, top);
+const ticks = [0, 1, 2];
+
+type Average = { value: number; label: string; line: string; text: string };
+
+function panel(
+  mix: Mix,
+  title: string,
+  left: number,
+  from: number,
+  averages: Average[]
+) {
+  let cumulative = 0;
+  const bars = tiers.map(tier => {
+    const x = left + cumulative * width;
+    const w = tier[mix] * width;
+    cumulative += tier[mix];
+    return {
+      name: tier.name,
+      value: tier.roas.toFixed(1),
+      share: `${Math.round(tier[mix] * 100)}%`,
+      x: f1(x),
+      w: f1(w),
+      cx: f1(x + w / 2),
+      y: f1(yAt(tier.roas)),
+      h: f1(bottom - yAt(tier.roas)),
+    };
+  });
+  const formula = `${tiers
+    .map(tier => `${tier[mix]} × ${tier.roas.toFixed(1)}`)
+    .join(" + ")} = ${weighted(mix).toFixed(2)}`;
+  return {
+    title,
+    left,
+    right: left + width,
+    centre: left + width / 2,
+    from,
+    bars,
+    formula,
+    averages: averages.map(average => ({
+      ...average,
+      y: f1(yAt(average.value)),
+    })),
+  };
+}
+
+const panels = [
+  panel("test", "Test markets", 52, 0, [
+    {
+      value: headline,
+      label: `Headline ${headline.toFixed(2)}`,
+      line: "f-line f-thick",
+      text: "",
+    },
+  ]),
+  panel("rollout", "Rollout markets", 372, 2, [
+    {
+      value: headline,
+      label: `Test headline ${headline.toFixed(2)}`,
+      line: "f-warn f-dash",
+      text: "f-text-warn",
+    },
+    {
+      value: reweighted,
+      label: `Reweighted ${reweighted.toFixed(2)}`,
+      line: "f-accent f-thick",
+      text: "f-text-accent",
+    },
+  ]),
+];
+---
+
+<Figure
+  frames={4}
+  interval={2600}
+  frameLabels={[
+    "The test's mix of markets",
+    "The headline averages over that mix",
+    "The rollout has a different mix",
+    "Same effects, new weights",
+  ]}
+  caption="The post's hypothetical numbers: each bar is as wide as that tier's share of markets and as tall as its incremental ROAS, so the weighted average is the mean height of the panel. The stratum effects never change; only the widths do."
+>
+  <svg
+    viewBox="0 0 640 372"
+    role="img"
+    aria-label={`Two panels of bars for small, medium and large markets with incremental ROAS 1.8, 1.2 and 0.7. Weighted by the test's mix of 50, 30 and 20 percent the average is ${headline.toFixed(2)}. Weighted by the rollout's mix of 10, 30 and 60 percent it is ${reweighted.toFixed(2)}.`}
+  >
+    {
+      panels.map(p => (
+        <g data-from={p.from}>
+          <text x={p.left} y="30" class="f-title">
+            {p.title}
+          </text>
+          <text x={p.left - 30} y={top - 16} class="f-small f-text-muted">
+            Incremental ROAS
+          </text>
+
+          {ticks.map(tick => (
+            <g>
+              <line
+                x1={p.left}
+                x2={p.right}
+                y1={yAt(tick)}
+                y2={yAt(tick)}
+                class="f-grid"
+              />
+              <text
+                x={p.left - 8}
+                y={yAt(tick) + 4}
+                text-anchor="end"
+                class="f-small f-text-muted f-num"
+              >
+                {tick}
+              </text>
+            </g>
+          ))}
+
+          {p.bars.map(bar => (
+            <g>
+              <rect
+                x={bar.x}
+                y={bar.y}
+                width={bar.w}
+                height={bar.h}
+                class="f-alt f-fill-alt-soft"
+              />
+              <text
+                x={bar.cx}
+                y={bottom - 9}
+                text-anchor="middle"
+                class="f-small f-label f-num"
+              >
+                {bar.value}
+              </text>
+              <text
+                x={bar.cx}
+                y={bottom + 18}
+                text-anchor="middle"
+                class="f-small f-label"
+              >
+                {bar.name}
+              </text>
+              <text
+                x={bar.cx}
+                y={bottom + 34}
+                text-anchor="middle"
+                class="f-small f-text-muted f-num"
+              >
+                {bar.share}
+              </text>
+            </g>
+          ))}
+          <line
+            x1={p.left}
+            x2={p.right}
+            y1={bottom}
+            y2={bottom}
+            class="f-axis"
+          />
+
+          <g data-from={p.from + 1}>
+            {p.averages.map(average => (
+              <g>
+                <line
+                  x1={p.left}
+                  x2={p.right}
+                  y1={average.y}
+                  y2={average.y}
+                  class={average.line}
+                />
+                <text
+                  x={p.right}
+                  y={average.y - 7}
+                  text-anchor="end"
+                  class:list={["f-small f-label f-num", average.text]}
+                >
+                  {average.label}
+                </text>
+              </g>
+            ))}
+            <text
+              x={p.centre}
+              y={bottom + 62}
+              text-anchor="middle"
+              class="f-small f-num"
+            >
+              {p.formula}
+            </text>
+          </g>
+        </g>
+      ))
+    }
+    <text x="320" y="352" text-anchor="middle" class="f-label" data-from="3">
+      The headline overstates the rollout return by about {overstatement}%
+    </text>
+  </svg>
+</Figure>

@@ -1,0 +1,182 @@
+---
+/**
+ * The post's three kinds of difference between test and rollout, drawn as
+ * selection diagrams: the square marks what differs, and the node its arrow
+ * points at decides whether the result can be carried over.
+ */
+import Figure from "../Figure.astro";
+import Dag from "../Dag.astro";
+import { arrowGeom, type Point } from "../lib";
+
+type Target = "spend" | "tier" | "sales";
+type Tone = "alt" | "accent" | "warn";
+
+const r = 24;
+const half = 15;
+const offsets: Record<"differs" | Target, Point> = {
+  differs: [-52, 108],
+  tier: [52, 108],
+  spend: [-52, 182],
+  sales: [52, 182],
+};
+
+const kinds: {
+  cx: number;
+  title: string;
+  example: string;
+  target: Target;
+  tone: Tone;
+  soft: string;
+  cut: boolean;
+  verdict: string;
+  reason: string;
+}[] = [
+  {
+    cx: 110,
+    title: "Allocation differs",
+    example: "planners target differently",
+    target: "spend",
+    tone: "alt",
+    soft: "f-fill-alt-soft",
+    cut: true,
+    verdict: "Harmless",
+    reason: "randomization cut this path",
+  },
+  {
+    cx: 320,
+    title: "Modifier mix differs",
+    example: "more large markets",
+    target: "tier",
+    tone: "accent",
+    soft: "f-fill-soft",
+    cut: false,
+    verdict: "Reweight",
+    reason: "if measured in both places",
+  },
+  {
+    cx: 530,
+    title: "Mechanism differs",
+    example: "heavier competitor activity",
+    target: "sales",
+    tone: "warn",
+    soft: "f-fill-warn-soft",
+    cut: false,
+    verdict: "Not transportable",
+    reason: "no reweighting exists",
+  },
+];
+
+const panels = kinds.map(kind => {
+  const at = (key: "differs" | Target): Point => [
+    kind.cx + offsets[key][0],
+    offsets[key][1],
+  ];
+  const from = at("differs");
+  const to = at(kind.target);
+  // Leave the square at its edge, whatever the direction of the arrow.
+  const dx = to[0] - from[0];
+  const dy = to[1] - from[1];
+  const length = Math.hypot(dx, dy);
+  const padStart =
+    half / Math.max(Math.abs(dx / length), Math.abs(dy / length)) + 4;
+  return {
+    ...kind,
+    square: from,
+    arrow: arrowGeom(from, to, padStart, r + 3),
+    stroke: kind.cut ? "f-muted f-dash" : `f-${kind.tone}`,
+    headFill: kind.cut ? "f-fill-muted" : `f-fill-${kind.tone}`,
+    nodes: [
+      {
+        id: "spend",
+        label: "Spend",
+        x: at("spend")[0],
+        y: at("spend")[1],
+        state: "do" as const,
+      },
+      { id: "tier", label: "Tier", x: at("tier")[0], y: at("tier")[1] },
+      { id: "sales", label: "Sales", x: at("sales")[0], y: at("sales")[1] },
+    ],
+  };
+});
+
+const edges = [
+  { from: "spend", to: "sales" },
+  { from: "tier", to: "sales" },
+];
+---
+
+<Figure
+  replay
+  caption="An illustrative diagram, with market tier standing in for any pre-treatment effect modifier and spend dark because the test randomized it. The square marks what differs between the test and the rollout, and where its arrow lands decides whether the result can be carried over."
+>
+  <svg
+    viewBox="0 0 640 286"
+    role="img"
+    aria-label="Three causal diagrams of spend, market tier and sales. A difference that acts on spend allocation is harmless because randomization cut that path. A difference in the mix of market tiers can be reweighted. A difference that acts on sales directly is not transportable."
+  >
+    {
+      panels.map((panel, i) => (
+        <g class="fx-rise" style={`--d: ${i * 320}ms`}>
+          <rect
+            x={panel.cx - 98}
+            y="14"
+            width="196"
+            height="258"
+            rx="22"
+            class={panel.soft}
+          />
+          <text x={panel.cx} y="44" text-anchor="middle" class="f-label">
+            {panel.title}
+          </text>
+          <text
+            x={panel.cx}
+            y="62"
+            text-anchor="middle"
+            class="f-small f-text-muted"
+          >
+            {panel.example}
+          </text>
+
+          <Dag r={r} nodes={panel.nodes} edges={edges} />
+
+          <path d={panel.arrow.shaft} class={panel.stroke} />
+          <polygon points={panel.arrow.head} class={panel.headFill} />
+          <rect
+            x={panel.square[0] - half}
+            y={panel.square[1] - half}
+            width={half * 2}
+            height={half * 2}
+            rx="5"
+            class={`f-fill-${panel.tone}`}
+          />
+          <text
+            x={panel.square[0]}
+            y={panel.square[1]}
+            text-anchor="middle"
+            dominant-baseline="central"
+            class="f-title f-text-inverse"
+          >
+            ≠
+          </text>
+
+          <text
+            x={panel.cx}
+            y="236"
+            text-anchor="middle"
+            class:list={["f-label", `f-text-${panel.tone}`]}
+          >
+            {panel.verdict}
+          </text>
+          <text
+            x={panel.cx}
+            y="254"
+            text-anchor="middle"
+            class="f-small f-text-muted"
+          >
+            {panel.reason}
+          </text>
+        </g>
+      ))
+    }
+  </svg>
+</Figure>

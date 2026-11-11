@@ -1,0 +1,181 @@
+---
+/** Which intervention target separates the three members of the class. */
+import Figure from "../Figure.astro";
+import Dag, { type DagEdge, type DagNode } from "../Dag.astro";
+
+const y = 104;
+const members = [
+  { title: "Chain", cx: 110 },
+  { title: "Reversed chain", cx: 320 },
+  { title: "Fork", cx: 530 },
+];
+
+type State = NonNullable<DagNode["state"]>;
+type Step = {
+  verdict: string;
+  graphs: {
+    states: [State, State, State];
+    edges: DagEdge[];
+    note: string;
+  }[];
+};
+
+const steps: Step[] = [
+  {
+    verdict: "Observational data: all three fit equally well",
+    graphs: [
+      {
+        states: ["plain", "plain", "plain"],
+        edges: [
+          { from: "A", to: "B" },
+          { from: "B", to: "C" },
+        ],
+        note: "",
+      },
+      {
+        states: ["plain", "plain", "plain"],
+        edges: [
+          { from: "B", to: "A" },
+          { from: "C", to: "B" },
+        ],
+        note: "",
+      },
+      {
+        states: ["plain", "plain", "plain"],
+        edges: [
+          { from: "B", to: "A" },
+          { from: "B", to: "C" },
+        ],
+        note: "",
+      },
+    ],
+  },
+  {
+    verdict: "Intervene on A: the chain separates, two stay tied",
+    graphs: [
+      {
+        states: ["do", "accent", "accent"],
+        edges: [
+          { from: "A", to: "B", tone: "accent" },
+          { from: "B", to: "C", tone: "accent" },
+        ],
+        note: "B and C respond",
+      },
+      {
+        states: ["do", "plain", "plain"],
+        edges: [
+          { from: "B", to: "A", kind: "cut" },
+          { from: "C", to: "B" },
+        ],
+        note: "Nothing responds",
+      },
+      {
+        states: ["do", "plain", "plain"],
+        edges: [
+          { from: "B", to: "A", kind: "cut" },
+          { from: "B", to: "C" },
+        ],
+        note: "Nothing responds",
+      },
+    ],
+  },
+  {
+    verdict: "Intervene on B: every member answers differently",
+    graphs: [
+      {
+        states: ["plain", "do", "accent"],
+        edges: [
+          { from: "A", to: "B", kind: "cut" },
+          { from: "B", to: "C", tone: "accent" },
+        ],
+        note: "Only C responds",
+      },
+      {
+        states: ["accent", "do", "plain"],
+        edges: [
+          { from: "B", to: "A", tone: "accent" },
+          { from: "C", to: "B", kind: "cut" },
+        ],
+        note: "Only A responds",
+      },
+      {
+        states: ["accent", "do", "accent"],
+        edges: [
+          { from: "B", to: "A", tone: "accent" },
+          { from: "B", to: "C", tone: "accent" },
+        ],
+        note: "A and C respond",
+      },
+    ],
+  },
+];
+---
+
+<Figure
+  frames={steps.length}
+  interval={2600}
+  frameLabels={["The class", "do(A)", "do(B)"]}
+  caption="Dark nodes are set by the experimenter, which cuts their incoming arrows (dashed). Green nodes respond. Choosing B as the target identifies the graph in one experiment."
+>
+  <svg
+    viewBox="0 0 640 228"
+    role="img"
+    aria-label="The three class members under an intervention on A and then on B. Intervening on B gives a different response pattern in each."
+  >
+    {
+      members.map(member => (
+        <text x={member.cx} y="40" text-anchor="middle" class="f-label">
+          {member.title}
+        </text>
+      ))
+    }
+    {
+      steps.map((step, frame) => (
+        <g data-show={frame} data-final={frame === steps.length - 1}>
+          {step.graphs.map((graph, i) => (
+            <g>
+              <Dag
+                r={18}
+                nodes={[
+                  {
+                    id: "A",
+                    label: "A",
+                    x: members[i].cx - 62,
+                    y,
+                    state: graph.states[0],
+                  },
+                  {
+                    id: "B",
+                    label: "B",
+                    x: members[i].cx,
+                    y,
+                    state: graph.states[1],
+                  },
+                  {
+                    id: "C",
+                    label: "C",
+                    x: members[i].cx + 62,
+                    y,
+                    state: graph.states[2],
+                  },
+                ]}
+                edges={graph.edges}
+              />
+              <text
+                x={members[i].cx}
+                y="158"
+                text-anchor="middle"
+                class="f-small f-text-muted"
+              >
+                {graph.note}
+              </text>
+            </g>
+          ))}
+          <text x="320" y="204" text-anchor="middle" class="f-title">
+            {step.verdict}
+          </text>
+        </g>
+      ))
+    }
+  </svg>
+</Figure>

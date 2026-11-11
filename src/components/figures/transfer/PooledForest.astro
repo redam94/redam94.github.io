@@ -1,0 +1,245 @@
+---
+/**
+ * Forest plot of the post's five hypothetical geo tests, then the pooled
+ * average and the predictive interval for an untested market. Every value is
+ * one the post states: the estimates and standard errors from its code block,
+ * and the rounded posterior summaries from its prose. Nothing is refitted
+ * here, so only the first test's partially pooled estimate is drawn (the
+ * post gives no other) and the new-market row has an interval but no centre.
+ */
+import Figure from "../Figure.astro";
+import { arrowGeom, f1, scale, type Point } from "../lib";
+
+const roasHat = [2.8, 1.1, 0.4, 2.0, 0.9];
+const se = [1.0, 0.6, 0.5, 1.2, 0.4];
+const average = { centre: 1.05, low: 0.3, high: 1.9 };
+const newMarket = { low: -0.4, high: 2.7 };
+const firstPooled = 1.4;
+
+const plotLeft = 204;
+const plotRight = 604;
+const xAt = scale(-1, 4, plotLeft, plotRight);
+const ticks = [-1, 0, 1, 2, 3, 4];
+const signed = (value: number) => String(value).replace("-", "−");
+
+const rowTop = 72;
+const rowGap = 32;
+const gridTop = 52;
+const axisY = 326;
+const averageY = 250;
+const newY = 294;
+
+const tests = roasHat.map((estimate, i) => ({
+  name: `Test ${i + 1}`,
+  text: `${estimate.toFixed(1)} ± ${se[i].toFixed(1)}`,
+  y: rowTop + i * rowGap,
+  x: f1(xAt(estimate)),
+  low: f1(xAt(estimate - se[i])),
+  high: f1(xAt(estimate + se[i])),
+}));
+
+// Curved arrow from the first raw estimate to its partially pooled value.
+const first = tests[0];
+const arcFrom: Point = [first.x, first.y - 9];
+const arcTip: Point = [xAt(firstPooled) + 3, first.y - 9];
+const arcControl: Point = [(arcFrom[0] + arcTip[0]) / 2, first.y - 46];
+const arcLength = Math.hypot(
+  arcTip[0] - arcControl[0],
+  arcTip[1] - arcControl[1]
+);
+const arcEnd: Point = [
+  arcTip[0] - ((arcTip[0] - arcControl[0]) / arcLength) * 7,
+  arcTip[1] - ((arcTip[1] - arcControl[1]) / arcLength) * 7,
+];
+const arcPath = `M${f1(arcFrom[0])} ${f1(arcFrom[1])} Q${f1(arcControl[0])} ${f1(arcControl[1])} ${f1(arcEnd[0])} ${f1(arcEnd[1])}`;
+const arcHead = arrowGeom(arcControl, arcTip, 0, 0, 8).head;
+
+const summaries = [
+  {
+    name: "Average market (tau)",
+    range: `94% interval: ${signed(average.low)} to ${signed(average.high)}`,
+    note: `centers near ${average.centre}`,
+    y: averageY,
+    low: f1(xAt(average.low)),
+    high: f1(xAt(average.high)),
+    tone: "alt",
+    soft: "f-fill-alt-soft",
+    from: 1,
+  },
+  {
+    name: "New market (tau_new)",
+    range: `94% interval: ${signed(newMarket.low)} to ${signed(newMarket.high)}`,
+    note: "about twice as wide",
+    y: newY,
+    low: f1(xAt(newMarket.low)),
+    high: f1(xAt(newMarket.high)),
+    tone: "accent",
+    soft: "f-fill-soft",
+    from: 2,
+  },
+];
+---
+
+<Figure
+  frames={3}
+  interval={2800}
+  frameLabels={[
+    "Five tests of one channel",
+    "Pool: the average across markets like these",
+    "Predict: a market not yet tested",
+  ]}
+  caption="The post's hypothetical tests and the rounded posterior summaries it quotes, with nothing refitted here. Whiskers on the tests are one standard error and the two bands are 94% intervals; the band for a new market is the one to carry into the next market's prior."
+>
+  <svg
+    viewBox="0 0 640 376"
+    role="img"
+    aria-label="Forest plot of five hypothetical geo tests with incremental ROAS 2.8, 1.1, 0.4, 2.0 and 0.9 and standard errors 1.0, 0.6, 0.5, 1.2 and 0.4. Below them the pooled average centers near 1.05 with a 94% interval of 0.3 to 1.9, and the predictive interval for an untested market runs from −0.4 to 2.7."
+  >
+    <text x="16" y="44" class="f-small f-text-muted">Geo test</text>
+    <text x="188" y="44" text-anchor="end" class="f-small f-text-muted">
+      estimate ± 1 se
+    </text>
+
+    {
+      ticks.map(tick => (
+        <g>
+          <line
+            x1={xAt(tick)}
+            x2={xAt(tick)}
+            y1={gridTop}
+            y2={axisY}
+            class={tick === 0 ? "f-axis" : "f-grid"}
+          />
+          <text
+            x={xAt(tick)}
+            y={axisY + 18}
+            text-anchor="middle"
+            class="f-small f-text-muted f-num"
+          >
+            {signed(tick)}
+          </text>
+        </g>
+      ))
+    }
+    <line x1={plotLeft} x2={plotRight} y1={axisY} y2={axisY} class="f-axis"
+    ></line>
+    <text
+      x={(plotLeft + plotRight) / 2}
+      y={axisY + 38}
+      text-anchor="middle"
+      class="f-small f-text-muted"
+    >
+      Incremental ROAS
+    </text>
+
+    <g data-from="1">
+      <line
+        x1={xAt(average.centre)}
+        x2={xAt(average.centre)}
+        y1={gridTop}
+        y2={averageY}
+        class="f-alt f-dash"></line>
+    </g>
+
+    {
+      tests.map(test => (
+        <g>
+          <text x="16" y={test.y + 4} class="f-label">
+            {test.name}
+          </text>
+          <text
+            x="188"
+            y={test.y + 4}
+            text-anchor="end"
+            class="f-small f-text-muted f-num"
+          >
+            {test.text}
+          </text>
+          <line
+            x1={test.low}
+            x2={test.high}
+            y1={test.y}
+            y2={test.y}
+            class="f-line"
+          />
+          <line
+            x1={test.low}
+            x2={test.low}
+            y1={test.y - 4}
+            y2={test.y + 4}
+            class="f-line"
+          />
+          <line
+            x1={test.high}
+            x2={test.high}
+            y1={test.y - 4}
+            y2={test.y + 4}
+            class="f-line"
+          />
+          <circle cx={test.x} cy={test.y} r="4.5" class="f-fill-line" />
+        </g>
+      ))
+    }
+
+    <g data-from="1">
+      <path d={arcPath} class="f-alt"></path>
+      <polygon points={arcHead} class="f-fill-alt"></polygon>
+      <circle
+        cx={f1(xAt(firstPooled))}
+        cy={first.y}
+        r="4.5"
+        class="f-alt f-fill-bg"></circle>
+      <text
+        x={arcControl[0]}
+        y={first.y - 40}
+        text-anchor="middle"
+        class="f-small f-label f-text-alt"
+      >
+        shrinks to about {firstPooled}
+      </text>
+    </g>
+
+    <line x1="16" x2={plotRight} y1="222" y2="222" class="f-grid"></line>
+
+    {
+      summaries.map(row => (
+        <g data-from={row.from}>
+          <text x="16" y={row.y - 3} class="f-label">
+            {row.name}
+          </text>
+          <text x="16" y={row.y + 14} class="f-small f-text-muted f-num">
+            {row.range}
+          </text>
+          <rect
+            x={row.low}
+            y={row.y - 8}
+            width={f1(row.high - row.low)}
+            height="16"
+            rx="8"
+            class={row.soft}
+          />
+          <line
+            x1={row.low}
+            x2={row.high}
+            y1={row.y}
+            y2={row.y}
+            class={`f-${row.tone} f-thick`}
+          />
+          <text
+            x={row.high + 12}
+            y={row.y + 4}
+            class:list={["f-small f-label", `f-text-${row.tone}`]}
+          >
+            {row.note}
+          </text>
+        </g>
+      ))
+    }
+    <circle
+      cx={f1(xAt(average.centre))}
+      cy={averageY}
+      r="5"
+      class="f-fill-alt"
+      data-from="1"></circle>
+  </svg>
+</Figure>

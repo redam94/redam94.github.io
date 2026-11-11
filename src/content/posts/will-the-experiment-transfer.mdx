@@ -1,0 +1,121 @@
+---
+title: "Will the Experiment Transfer? A Lift Test Measures One Place at One Time"
+author: Matthew Reda
+pubDatetime: 2026-11-11T14:30:00Z
+slug: will-the-experiment-transfer
+draft: false
+tags:
+  - causal-inference
+  - experimental-design
+  - bayesian
+  - measurement
+description: A randomized geo test identifies the effect in the markets and weeks you tested. Carrying that number somewhere else takes an extra assumption about effect modifiers, or a hierarchical model that admits how much markets differ.
+---
+
+import PooledForest from "@/components/figures/transfer/PooledForest.astro";
+import ReweightMix from "@/components/figures/transfer/ReweightMix.astro";
+import TransportConditions from "@/components/figures/transfer/TransportConditions.astro";
+
+A geo test is the cleanest number most marketing teams ever get. Markets are randomized, some are held out, and the difference in outcomes is the effect of the spend. Randomization takes care of the confounding that haunts every observational estimate. Then the number starts to travel. It gets pasted into the plan for markets that were never in the test, reused for next year's campaign, and set as a prior on a channel coefficient in an MMM fitted on national data.
+
+Randomization buys internal validity: an unbiased effect for the markets and weeks that were in the test. It says nothing about anywhere else. Moving the result is a second inference with its own assumptions, and those assumptions are about effect modifiers and how they are distributed in the place you care about. There are two honest ways to make the move: reweight by the modifiers you can name, or pool across experiments and report how much markets actually differ. I have been working through this literature in my [notes on evidence synthesis and generalization](https://redam94.github.io/second-brain/Research/Evidence-Synthesis,-Generalization-and-Privacy/), and this is the practitioner's version.
+
+## Two ingredients make the bias
+
+Let $\Delta(z)$ be the effect of the spend change in markets of type $z$, where $z$ is anything that changes how strongly a market responds: size tier, baseline brand strength, customer mix. The test measures the average over its own mix of markets, $P(z)$. The rollout has a different mix, $P^*(z)$. The gap between what you measured and what you will get is
+
+$$\Delta_{\text{test}} - \Delta_{\text{target}} = \sum_z \Delta(z)\,\big[P(z) - P^*(z)\big]$$
+
+This is zero in exactly two situations: the effect is the same in every stratum, or the two mixes match. You need both heterogeneity and a difference in composition to get into trouble, and in marketing you usually have both.
+
+A hypothetical makes the size concrete. Suppose a test finds incremental ROAS of 1.8 in small markets, 1.2 in medium and 0.7 in large, and the test was 50% small, 30% medium, 20% large. The headline is
+
+$$0.5(1.8) + 0.3(1.2) + 0.2(0.7) = 1.40$$
+
+The rollout is 10% small, 30% medium, 60% large. Same stratum effects, new weights:
+
+$$0.1(1.8) + 0.3(1.2) + 0.6(0.7) = 0.96$$
+
+The headline overstates the rollout return by about 46%, and nothing was wrong with the experiment. It answered a question about a different set of markets.
+
+<ReweightMix />
+
+## What has to be true for the reweighting to be allowed
+
+That second calculation is the simplest transport formula from Pearl and Bareinboim (2014): take the stratum-specific experimental effects from the test and average them over the target's covariate distribution. The formula is only licensed under a specific condition. Once you know a market's tier, nothing else that differs between test and rollout can change how spend turns into sales. Their term for a covariate set that satisfies this is S-admissible.
+
+Running a marketing problem through that condition sorts the differences between two settings into three kinds (the [worked mapping is in my notes](https://redam94.github.io/second-brain/Research/Evidence-Synthesis,-Generalization-and-Privacy/Causal-Transportability/Pearl-Bareinboim-2014---External-Validity-and-Transportability/Pearl-2014---Marketing-Application-Transporting-Geo-and-Lift-Results)):
+
+- **How spend gets allocated.** Planners in the new market target differently. This one is harmless, because the test randomized spend and already cut that path.
+- **The mix of a pre-treatment modifier.** More large markets, weaker baseline brand. Reweighting handles this, provided you measured the modifier in both places.
+- **The mechanism itself.** Heavier competitor activity, worn-out creative, a different attribution window. If something like this differs and is not captured by a measured variable, no reweighting exists. The honest report is "not transportable from this test."
+
+<TransportConditions />
+
+Two further conditions matter. The modifier has to be pre-treatment. If the thing that differs is something the ads themselves move, such as branded search, weighting by its marginal distribution gives the wrong answer. And the test has to contain markets of every type present in the target. If the rollout is mostly large markets and the test had none, the "transported" number is a functional-form extrapolation.
+
+With continuous modifiers the same idea becomes outcome regression, participation weighting, or a doubly robust combination, reviewed by Degtiar and Rose (2023). All of them rest on the same untestable premise: you measured the modifiers that matter.
+
+## When you cannot name the modifiers, pool
+
+Often you cannot. You have five tests of the same channel in different markets, the results disagree, and nobody can say which market attribute explains it. The other route treats each test as a draw from a distribution of market-level effects and estimates that distribution:
+
+$$\hat\tau_k \sim \mathcal{N}(\tau_k,\ \text{se}_k^2), \qquad \tau_k \sim \mathcal{N}(\tau,\ \sigma_\tau^2)$$
+
+Here $\tau$ is the channel's general effect and $\sigma_\tau$ is how much the true effect varies from market to market. That second parameter is the direct measure of portability. If $\sigma_\tau$ is near zero, one market's test tells you about every market. If it is large, each test mostly tells you about itself.
+
+```python
+import numpy as np
+import pymc as pm
+import arviz as az
+
+# Hypothetical incremental ROAS from five geo tests of one channel
+roas_hat = np.array([2.8, 1.1, 0.4, 2.0, 0.9])
+se = np.array([1.0, 0.6, 0.5, 1.2, 0.4])
+
+with pm.Model() as pooled:
+    tau = pm.Normal("tau", mu=0, sigma=2)  # channel-level average
+    sigma_tau = pm.HalfNormal("sigma_tau", sigma=1)  # between-market spread
+
+    z = pm.Normal("z", 0, 1, shape=len(roas_hat))
+    tau_k = pm.Deterministic("tau_k", tau + sigma_tau * z)  # each market's true effect
+    pm.Normal("obs", mu=tau_k, sigma=se, observed=roas_hat)
+
+    # A market that has not been tested yet
+    z_new = pm.Normal("z_new", 0, 1)
+    tau_new = pm.Deterministic("tau_new", tau + sigma_tau * z_new)
+
+    idata = pm.sample(2000, tune=2000, target_accept=0.95, random_seed=1)
+
+az.summary(idata, var_names=["tau", "sigma_tau", "tau_new", "tau_k"], hdi_prob=0.94)
+```
+
+Three outputs matter, and the last is the one that answers the transfer question.
+
+The posterior for `tau` is the average effect across markets like these. With the numbers above it centers near 1.05, with a 94% interval of roughly 0.3 to 1.9.
+
+Each `tau_k` is a partially pooled estimate. In the normal model the pull toward the average is governed by the pooling factor $\omega_k = \text{se}_k^2 / (\sigma_\tau^2 + \text{se}_k^2)$, so noisy tests move the most. The 2.8 from the first test, with its standard error of 1.0, shrinks to about 1.4. The precise 0.9 barely moves.
+
+`tau_new` is the predictive distribution for a market you have not tested. Its spread adds $\sigma_\tau^2$ to the uncertainty about $\tau$, and here it runs from roughly $-0.4$ to 2.7, about twice as wide as the interval for the average. That wider interval is the correct prior for the next market's channel ROAS in an MMM. Using the interval for `tau` instead claims that the new market _is_ the average market. This is the reporting approach Meager (2019) takes with seven microcredit experiments, and the [pooling metrics are worked through in my notes](https://redam94.github.io/second-brain/Research/Evidence-Synthesis,-Generalization-and-Privacy/Meta-Analysis/Meager-2019---Bayesian-Hierarchical-Analysis-of-Microcredit/Meager-2019---Pooling-Factors-and-Measuring-External-Validity).
+
+<PooledForest />
+
+## Pooling does not fix how the tests were chosen
+
+The hierarchical model has its own transfer assumption: the new market is exchangeable with the tested ones. That fails quietly when tests are run where they are expected to work. Brands test in markets with good tracking, strong distribution and an enthusiastic local team, and then roll out to everyone else.
+
+Allcott (2015) documents this for a non-marketing program, Opower's home energy reports. Effects at the early sites overstated effects at the sites that adopted later, and adjusting with rich household data from the first ten sites did not recover the gap. His conclusion is that the guaranteed remedies are design-based: evaluate everywhere the program might expand, or randomly select sites within strata of the attributes you suspect matter. The [marketing translation in my notes](https://redam94.github.io/second-brain/Research/Evidence-Synthesis,-Generalization-and-Privacy/Causal-Transportability/Allcott-2015---Site-Selection-Bias-in-Program-Evaluation/Allcott-2015---Conclusions,-Remedies-and-Marketing-Implications) is direct: a pooled model over hand-picked markets returns a confident average of hand-picked markets.
+
+## What to do in practice
+
+1. **Name the target before quoting the number.** "Incremental ROAS was 1.4 in the test markets during Q2" is a finding. "TV ROAS is 1.4" is a transport claim.
+2. **Compare test and target on suspected modifiers.** Report the two mixes side by side. If they differ and you have stratum-level effects, reweight. If the target contains market types the test never saw, say so.
+3. **Separate mix differences from mechanism differences.** A different share of large markets can be adjusted for. A new competitor or a changed attribution window cannot, and an old test should not be stretched to cover it.
+4. **With several tests, fit the hierarchy and report the predictive interval.** Calibrate the next market's prior with `tau_new`, and treat a wide predictive interval as the argument for running a local test. This is where [calibrating an MMM with experiments](/posts/closing-the-loop-mmm-calibration/) either works or quietly imports the wrong number.
+5. **Randomize where you test.** Stratify candidate markets by size, region and media mix, then draw test markets at random within strata. Keep every result, including the flat ones.
+
+An experiment is a measurement of one place at one time. Carrying it somewhere new takes either a stated assumption about what differs or a model that estimates how much does.
+
+---
+
+_Further reading: my [Second Brain notes on evidence synthesis and generalization](https://redam94.github.io/second-brain/Research/Evidence-Synthesis,-Generalization-and-Privacy/), which cover Pearl and Bareinboim (2014), "External Validity: From Do-Calculus to Transportability Across Populations"; Degtiar and Rose (2023), "A Review of Generalizability and Transportability"; Meager (2019), "Understanding the Average Impact of Microcredit Expansions"; and Allcott (2015), "Site Selection Bias in Program Evaluation." All ROAS figures in this post are invented for illustration. Related: [Wiring Your MMM to Your Experiments](/posts/closing-the-loop-mmm-calibration/) and [Designing Experiments to Maximize Information](/posts/designing-experiments-to-maximize-information/)._

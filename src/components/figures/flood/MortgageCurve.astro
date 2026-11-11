@@ -1,0 +1,143 @@
+---
+/**
+ * The mortgage arithmetic as a curve: the chance of at least one exceedance
+ * of a 1%-per-year flow within n independent years, 1 - 0.99^n. Both marked
+ * points are computed here from that formula.
+ */
+import Figure from "../Figure.astro";
+import { f1, linePath, range, scale, type Point } from "../lib";
+
+const annual = 0.01;
+const chance = (years: number) => 1 - Math.pow(1 - annual, years);
+
+const left = 56;
+const right = 600;
+const top = 40;
+const bottom = 270;
+const xAt = scale(0, 100, left, right);
+const yAt = scale(0, 0.7, bottom, top);
+
+const curve = linePath(
+  range(101).map(years => [xAt(years), yAt(chance(years))] as Point)
+);
+
+const mortgage = { years: 30, value: chance(30) };
+const century = { years: 100, value: chance(100) };
+const percent = (value: number) => `${Math.round(value * 100)}%`;
+
+const xTicks = [0, 20, 40, 60, 80, 100];
+const yTicks = [0, 0.2, 0.4, 0.6];
+
+const mx = f1(xAt(mortgage.years));
+const my = f1(yAt(mortgage.value));
+const cx = f1(xAt(century.years));
+const cy = f1(yAt(century.value));
+---
+
+<Figure
+  replay
+  caption="The chance of at least one exceedance in n independent years when each year carries a 1% chance, computed from the formula above. A 30-year mortgage sees about 26%, and a full century is still far from a certainty."
+>
+  <svg
+    viewBox="0 0 640 326"
+    role="img"
+    aria-label={`Curve of one minus 0.99 to the power n against years of exposure. It reaches ${percent(mortgage.value)} at 30 years and ${percent(century.value)} at 100 years.`}
+  >
+    <text x={left} y="22" class="f-label">
+      Chance of at least one exceedance
+    </text>
+
+    <rect
+      x={left}
+      y={top}
+      width={mx - left}
+      height={bottom - top}
+      class="f-fill-soft fx-fade"></rect>
+    <text x={left + 10} y={top + 20} class="f-small f-text-accent fx-fade">
+      30-year mortgage
+    </text>
+
+    {
+      yTicks.map(tick => (
+        <g>
+          <line
+            x1={left}
+            x2={right}
+            y1={yAt(tick)}
+            y2={yAt(tick)}
+            class="f-grid"
+          />
+          <text
+            x={left - 8}
+            y={yAt(tick) + 4}
+            text-anchor="end"
+            class="f-small f-text-muted f-num"
+          >
+            {percent(tick)}
+          </text>
+        </g>
+      ))
+    }
+    <line x1={left} x2={right} y1={bottom} y2={bottom} class="f-axis"></line>
+    <line x1={left} x2={left} y1={top} y2={bottom} class="f-axis"></line>
+    {
+      xTicks.map(tick => (
+        <text
+          x={xAt(tick)}
+          y={bottom + 20}
+          text-anchor="middle"
+          class="f-small f-text-muted f-num"
+        >
+          {tick}
+        </text>
+      ))
+    }
+    <text
+      x={(left + right) / 2}
+      y={bottom + 44}
+      text-anchor="middle"
+      class="f-small f-text-muted"
+    >
+      Years of exposure, n
+    </text>
+
+    <path d={curve} pathLength="1" class="f-line f-thick fx-draw"></path>
+    <text
+      x={xAt(40)}
+      y={yAt(chance(40)) - 40}
+      class="f-small f-text-muted fx-fade"
+      style="--d: 700ms"
+    >
+      1 − 0.99ⁿ
+    </text>
+
+    <g class="fx-fade" style="--d: 900ms">
+      <line x1={mx} x2={mx} y1={my} y2={bottom} class="f-accent f-dash"></line>
+      <line x1={left} x2={mx} y1={my} y2={my} class="f-accent f-dash"></line>
+      <circle cx={mx} cy={my} r="5.5" class="f-fill-accent"></circle>
+      <text x={mx + 12} y={my + 20} class="f-label f-text-accent f-num">
+        30 years: {percent(mortgage.value)}
+      </text>
+      <text
+        x={mx}
+        y={bottom + 20}
+        text-anchor="middle"
+        class="f-small f-label f-text-accent f-num"
+      >
+        30
+      </text>
+    </g>
+
+    <g class="fx-fade" style="--d: 1500ms">
+      <circle cx={cx} cy={cy} r="5.5" class="f-fill-alt"></circle>
+      <text
+        x={cx - 14}
+        y={cy - 14}
+        text-anchor="end"
+        class="f-label f-text-alt f-num"
+      >
+        100 years: {percent(century.value)}
+      </text>
+    </g>
+  </svg>
+</Figure>

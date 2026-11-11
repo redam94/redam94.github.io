@@ -1,0 +1,150 @@
+---
+/**
+ * How the two leading bias terms scale with n when the nuisance error
+ * shrinks like n^(-a). Plug-in: sqrt(n) * n^(-a), so the power is 1/2 - a.
+ * Orthogonal: sqrt(n) * n^(-a) * n^(-a), so the power is 1/2 - 2a, which
+ * crosses zero at a = 1/4. Rates only, no simulated data.
+ */
+import Figure from "../Figure.astro";
+import { f1, linePath, scale, type Point } from "../lib";
+
+const left = 92;
+const right = 560;
+const top = 52;
+const bottom = 272;
+
+const xAt = scale(0, 0.5, left, right);
+const yAt = scale(-0.5, 0.5, bottom, top);
+
+const plugInPower = (a: number) => 0.5 - a;
+const orthogonalPower = (a: number) => 0.5 - 2 * a;
+
+const ends = [0, 0.5];
+const plugIn = linePath(ends.map(a => [xAt(a), yAt(plugInPower(a))] as Point));
+const orthogonal = linePath(
+  ends.map(a => [xAt(a), yAt(orthogonalPower(a))] as Point)
+);
+
+/** Rate at which the orthogonal power is zero: 1/2 - 2a = 0. */
+const threshold = 0.25;
+const zeroY = f1(yAt(0));
+const thresholdX = f1(xAt(threshold));
+
+const xTicks = [
+  { a: 0, label: "0" },
+  { a: 0.25, label: "1/4" },
+  { a: 0.5, label: "1/2" },
+].map(tick => ({ ...tick, x: f1(xAt(tick.a)) }));
+
+const yTicks = [
+  { power: 0.5, label: "+1/2" },
+  { power: 0, label: "0" },
+  { power: -0.5, label: "−1/2" },
+].map(tick => ({ ...tick, y: f1(yAt(tick.power)) }));
+---
+
+<Figure
+  replay
+  caption="An illustration of rates read off the two bias terms, not a simulation. If the nuisance errors shrink like n to the power −a, the plug-in bias scales like n to the power 1/2 − a and the orthogonal bias like n to the power 1/2 − 2a, which turns negative once a passes 1/4."
+>
+  <svg
+    viewBox="0 0 640 334"
+    role="img"
+    aria-label="Line chart of the power of n in the scaled bias against the learner's convergence rate a. The plug-in line falls from one half to zero and never goes below zero. The orthogonal line falls twice as fast and crosses zero at a equal to one quarter."
+  >
+    <text x="16" y="26" class="f-label">Power of n in the √n-scaled bias</text>
+
+    <rect
+      x={left}
+      y={top}
+      width={right - left}
+      height={zeroY - top}
+      class="f-fill-warn-soft fx-fade"></rect>
+    <rect
+      x={left}
+      y={zeroY}
+      width={right - left}
+      height={bottom - zeroY}
+      class="f-fill-soft fx-fade"></rect>
+
+    {
+      xTicks.map(tick => (
+        <text
+          x={tick.x}
+          y={bottom + 20}
+          text-anchor="middle"
+          class="f-small f-text-muted f-num"
+        >
+          {tick.label}
+        </text>
+      ))
+    }
+    {
+      yTicks.map(tick => (
+        <text
+          x={left - 10}
+          y={tick.y + 4}
+          text-anchor="end"
+          class="f-small f-text-muted f-num"
+        >
+          {tick.label}
+        </text>
+      ))
+    }
+    <line x1={left} x2={left} y1={top} y2={bottom} class="f-axis"></line>
+    <line x1={left} x2={right} y1={bottom} y2={bottom} class="f-axis"></line>
+    <line x1={left} x2={right} y1={zeroY} y2={zeroY} class="f-line"></line>
+    {
+      xTicks.map(tick => (
+        <line
+          x1={tick.x}
+          x2={tick.x}
+          y1={bottom}
+          y2={bottom + 5}
+          class="f-axis"
+        />
+      ))
+    }
+    <text x="320" y="318" text-anchor="middle" class="f-small f-text-muted">
+      a: the nuisance error shrinks like n to the power −a
+    </text>
+
+    <text x={right - 10} y={top + 20} text-anchor="end" class="f-small">
+      above zero: the bias grows with n
+    </text>
+    <text x={left + 10} y={bottom - 10} class="f-small">
+      below zero: the bias vanishes
+    </text>
+
+    <path d={plugIn} class="f-warn f-thick fx-fade" style="--d: 300ms"></path>
+    <g class="fx-fade" style="--d: 300ms">
+      <text x="392" y="92" class="f-label f-text-warn">Plug-in: one error</text>
+      <text x="392" y="109" class="f-small f-text-muted">
+        n to the power 1/2 − a
+      </text>
+    </g>
+
+    <path d={orthogonal} class="f-accent f-thick fx-fade" style="--d: 900ms"
+    ></path>
+    <g class="fx-fade" style="--d: 900ms">
+      <text x="428" y="236" text-anchor="end" class="f-label f-text-accent">
+        Orthogonal: error × error
+      </text>
+      <text x="428" y="253" text-anchor="end" class="f-small f-text-muted">
+        n to the power 1/2 − 2a
+      </text>
+    </g>
+
+    <g class="fx-fade" style="--d: 1500ms">
+      <circle cx={thresholdX} cy={zeroY} r="4.5" class="f-fill-accent"></circle>
+      <text
+        x={thresholdX - 10}
+        y={zeroY + 20}
+        text-anchor="end"
+        class="f-small f-label"
+      >
+        zero at a = 1/4
+      </text>
+    </g>
+  </svg>
+</Figure>
