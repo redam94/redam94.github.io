@@ -236,8 +236,10 @@
   pointer-events: none;
 }
 
-/* Without JavaScript only the last frame of a stepped figure shows. */
-.post-figure:not([data-ready]) [data-show]:not([data-final]) {
+/* Without JavaScript only the last frame of a stepped figure shows. Astro
+   renders data-final={false} as data-final="false", so match that too. */
+.post-figure:not([data-ready])
+  [data-show]:is(:not([data-final]), [data-final="false"]) {
   display: none;
 }
 
