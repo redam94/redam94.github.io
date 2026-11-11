@@ -1,0 +1,130 @@
+---
+/**
+ * The twelve uncalled House districts the notebook lists as having moved
+ * most at its last update (E95, section 4): the chance of a Democratic win
+ * on the eve, at 16:22 ET and at 17:22 ET on 4 November. All values are
+ * printed in that table; none of these districts had been called.
+ */
+import Figure from "../Figure.astro";
+import { f1, scale } from "../lib";
+import { movers } from "./data";
+
+const xAt = scale(0, 1, 96, 476);
+const rowTop = 70;
+const rowGap = 23;
+const axisY = rowTop + movers.length * rowGap - 4;
+
+const rows = [...movers]
+  .sort((a, b) => b.latest - a.latest)
+  .map((mover, i) => ({
+    ...mover,
+    y: rowTop + i * rowGap,
+    x0: f1(xAt(mover.eve)),
+    x1: f1(xAt(mover.latest)),
+    xPrevious: f1(xAt(mover.previous)),
+    text: `${mover.eve.toFixed(2)} to ${mover.latest.toFixed(2)}`,
+    lineDelay: `--d: ${i * 90}ms`,
+    endDelay: `--d: ${i * 90 + 900}ms`,
+  }));
+
+const ticks = [0, 0.25, 0.5, 0.75, 1];
+const evenX = f1(xAt(0.5));
+---
+
+<Figure
+  replay
+  caption="The twelve uncalled House districts the notebook lists as having moved most at its last update, with its printed chances on the eve, at 16:22 ET and at 17:22 ET on 4 November. No outlet had called any of them, so the movement since the eve comes from calls made elsewhere. The 16:22 and 17:22 values come from two separate refits and differ partly by sampling noise."
+>
+  <svg
+    viewBox="0 0 640 392"
+    role="img"
+    aria-label="Dumbbell chart of twelve uncalled House districts. The model's chance of a Democratic win rose from the eve to 17:22 ET on 4 November in every one: for example CO-05 from 0.36 to 0.81, MN-01 from 0.28 to 0.74, FL-13 from 0.26 to 0.70, TN-09 from 0.16 to 0.52 and NJ-02 from 0.07 to 0.30."
+  >
+    <circle cx="102" cy="22" r="4.5" class="f-muted f-fill-bg"></circle>
+    <text x="112" y="26" class="f-small f-text-muted">eve</text>
+    <line x1="160" x2="160" y1="15" y2="29" class="f-line"></line>
+    <text x="168" y="26" class="f-small f-text-muted">16:22 ET</text>
+    <circle cx="250" cy="22" r="5" class="f-fill-accent"></circle>
+    <text x="261" y="26" class="f-small f-text-accent f-label">
+      17:22 ET, 4 November
+    </text>
+
+    <text x="16" y="50" class="f-small f-text-muted">District</text>
+    <text x="624" y="50" text-anchor="end" class="f-small f-text-muted">
+      eve to latest
+    </text>
+
+    {
+      ticks.map(tick => (
+        <g>
+          <line
+            x1={xAt(tick)}
+            x2={xAt(tick)}
+            y1="58"
+            y2={axisY}
+            class={tick === 0.5 ? "f-line f-dash" : "f-grid"}
+          />
+          <text
+            x={xAt(tick)}
+            y={axisY + 18}
+            text-anchor="middle"
+            class="f-small f-text-muted f-num"
+          >
+            {tick}
+          </text>
+        </g>
+      ))
+    }
+    <text x={evenX + 6} y="50" class="f-small f-text-muted">even odds</text>
+    <line x1={xAt(0)} x2={xAt(1)} y1={axisY} y2={axisY} class="f-axis"></line>
+    <text
+      x={xAt(0.5)}
+      y={axisY + 40}
+      text-anchor="middle"
+      class="f-small f-text-muted"
+    >
+      Model's chance of a Democratic win
+    </text>
+
+    {
+      rows.map(row => (
+        <g>
+          <text x="16" y={row.y + 4} class="f-small f-label f-num">
+            {row.race}
+          </text>
+          <path
+            d={`M${row.x0} ${row.y} L${row.x1} ${row.y}`}
+            pathLength="1"
+            class="f-accent f-thick fx-draw"
+            style={row.lineDelay}
+          />
+          <circle cx={row.x0} cy={row.y} r="4.5" class="f-muted f-fill-bg" />
+          <line
+            x1={row.xPrevious}
+            x2={row.xPrevious}
+            y1={row.y - 7}
+            y2={row.y + 7}
+            class="f-line fx-fade"
+            style={row.endDelay}
+          />
+          <circle
+            cx={row.x1}
+            cy={row.y}
+            r="5"
+            class="f-fill-accent fx-fade"
+            style={row.endDelay}
+          />
+          <text
+            x="624"
+            y={row.y + 4}
+            text-anchor="end"
+            class="f-small f-num fx-fade"
+            style={row.endDelay}
+          >
+            {row.text}
+          </text>
+        </g>
+      ))
+    }
+  </svg>
+</Figure>

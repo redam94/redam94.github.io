@@ -1,0 +1,251 @@
+---
+/**
+ * A call as an interval on the margin, for two Senate races the notebook
+ * reports: Georgia (eve median D+14.1, chance 0.9935) and Iowa (eve median
+ * D+0.8, chance 0.566), both called for the Democrat. The curves are normal
+ * densities matched to those two printed numbers per race, so their shape is
+ * schematic. The soft edge is the notebook's tau of 0.5 points.
+ */
+import Figure from "../Figure.astro";
+import { areaPath, f1, linePath, linspace, scale, type Point } from "../lib";
+
+const TAU = 0.5;
+const xAt = scale(-20, 36, 40, 600);
+const zeroX = f1(xAt(0));
+const DENSITY_PX = 790;
+/** Height of the call's likelihood curve, which runs from 0 to 1. */
+const LIKELIHOOD_PX = 114;
+
+/** Standard normal CDF (Abramowitz and Stegun 26.2.17). */
+function normalCdf(z: number): number {
+  const t = 1 / (1 + 0.2316419 * Math.abs(z));
+  const poly =
+    t *
+    (0.31938153 +
+      t *
+        (-0.356563782 +
+          t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))));
+  const tail = (Math.exp(-0.5 * z * z) / Math.sqrt(2 * Math.PI)) * poly;
+  return z >= 0 ? 1 - tail : tail;
+}
+
+const pdf = (x: number, mean: number, sd: number) =>
+  Math.exp(-0.5 * ((x - mean) / sd) ** 2) / (sd * Math.sqrt(2 * Math.PI));
+
+const grid = linspace(-20, 36, 281);
+
+function race(options: {
+  name: string;
+  detail: string;
+  median: number;
+  /** sd that reproduces the printed chance given the printed median. */
+  sd: number;
+  chance: number;
+  surprise: string;
+  verdict: string;
+  baseline: number;
+  labelX: number;
+  labelAnchor: string;
+  removedX: number;
+  removedAnchor: string;
+}) {
+  const { median, sd, baseline } = options;
+  const before = grid.map(x => pdf(x, median, sd));
+  const kept = grid.map((x, i) => before[i] * normalCdf(x / TAU));
+  const dx = grid[1] - grid[0];
+  const mass = kept.reduce((sum, value) => sum + value, 0) * dx;
+  const after = kept.map(value => value / mass);
+  const yOf = (density: number) => baseline - density * DENSITY_PX;
+  const curve = (values: number[]): Point[] =>
+    grid.map((x, i) => [xAt(x), yOf(values[i])] as Point);
+  const floor = (from: number, to: number): Point[] =>
+    grid
+      .filter(x => x >= from && x <= to)
+      .map(x => [xAt(x), baseline] as Point);
+  const slice = (values: number[], from: number, to: number): Point[] =>
+    curve(values).filter((_, i) => grid[i] >= from && grid[i] <= to);
+  return {
+    ...options,
+    beforeLine: linePath(curve(before)),
+    afterLine: linePath(curve(after)),
+    afterArea: areaPath(curve(after), floor(-20, 36)),
+    removedArea: areaPath(slice(before, -20, 0), floor(-20, 0)),
+    keptArea: areaPath(slice(before, 0, 36), floor(0, 36)),
+    likelihood: linePath(
+      grid.map(
+        x => [xAt(x), baseline - normalCdf(x / TAU) * LIKELIHOOD_PX] as Point
+      )
+    ),
+    removedShare: `${((1 - options.chance) * 100).toFixed(options.chance > 0.9 ? 2 : 1)}%`,
+    keptShare: `${(options.chance * 100).toFixed(options.chance > 0.9 ? 2 : 1)}%`,
+  };
+}
+
+const races = [
+  race({
+    name: "Georgia Senate",
+    detail: "eve median D+14.1, chance 0.994",
+    median: 14.101,
+    sd: 5.677,
+    chance: 0.9935,
+    surprise: "0.007 nats",
+    verdict: "almost no news",
+    baseline: 150,
+    labelX: 40,
+    labelAnchor: "start",
+    removedX: zeroX - 12,
+    removedAnchor: "end",
+  }),
+  race({
+    name: "Iowa Senate",
+    detail: "eve median D+0.8, chance 0.566",
+    median: 0.832,
+    sd: 5.006,
+    chance: 0.566,
+    surprise: "0.569 nats",
+    verdict: "real news",
+    baseline: 330,
+    labelX: 600,
+    labelAnchor: "end",
+    removedX: 40,
+    removedAnchor: "start",
+  }),
+];
+
+const ticks = [
+  { value: -20, text: "R+20" },
+  { value: -10, text: "R+10" },
+  { value: 0, text: "tie" },
+  { value: 10, text: "D+10" },
+  { value: 20, text: "D+20" },
+  { value: 30, text: "D+30" },
+];
+---
+
+<Figure
+  frames={3}
+  interval={3000}
+  frameLabels={[
+    "Before the call: the frozen forecast for two races",
+    "The call says only that the margin is right of zero",
+    "After: what is left, renormalised",
+  ]}
+  caption="Two Senate calls from the notebook's log, both for the Democrat. The curves are normal densities matched to the eve median and chance it prints for each race, so the shapes are schematic; the soft edge at zero is its 0.5-point allowance for a wrong call. The surprise is minus the log of the eve chance."
+>
+  <svg
+    viewBox="0 0 640 384"
+    role="img"
+    aria-label="Two margin distributions on one axis. Georgia's Senate race has an eve median of D+14.1 and a 0.994 chance; a call for the Democrat removes 0.65% of the distribution and leaves it almost unchanged. Iowa's Senate race has an eve median of D+0.8 and a 0.566 chance; the same call removes 43.4% of the distribution and the remainder is renormalised to the right of zero."
+  >
+    <line x1={zeroX} x2={zeroX} y1="28" y2="336" class="f-axis"></line>
+    {
+      races.map(item => (
+        <g>
+          <line
+            x1="40"
+            x2="600"
+            y1={item.baseline}
+            y2={item.baseline}
+            class="f-axis"
+          />
+          <text
+            x={item.labelX}
+            y={item.baseline - 96}
+            text-anchor={item.labelAnchor}
+            class="f-label"
+          >
+            {item.name}
+          </text>
+          <text
+            x={item.labelX}
+            y={item.baseline - 78}
+            text-anchor={item.labelAnchor}
+            class="f-small f-text-muted f-num"
+          >
+            {item.detail}
+          </text>
+
+          <g data-show="0">
+            <path d={item.beforeLine} class="f-line" />
+          </g>
+
+          <g data-show="1">
+            <path d={item.removedArea} class="f-fill-warn-soft" />
+            <path d={item.keptArea} class="f-fill-soft" />
+            <path d={item.likelihood} class="f-alt" />
+            <text
+              x={item.removedX}
+              y={item.baseline - 40}
+              text-anchor={item.removedAnchor}
+              class="f-small f-text-warn f-label f-num"
+            >
+              ruled out: {item.removedShare}
+            </text>
+            <text
+              x={item.labelX}
+              y={item.baseline - 58}
+              text-anchor={item.labelAnchor}
+              class="f-small f-text-accent f-label f-num"
+            >
+              kept: {item.keptShare}
+            </text>
+          </g>
+          <g data-from="1">
+            <path d={item.beforeLine} class="f-muted" />
+          </g>
+
+          <g data-show="2" data-final>
+            <path d={item.afterArea} class="f-fill-soft" />
+            <path d={item.afterLine} class="f-accent f-thick" />
+            <text
+              x={item.labelX}
+              y={item.baseline - 58}
+              text-anchor={item.labelAnchor}
+              class="f-small f-text-accent f-label f-num"
+            >
+              surprise {item.surprise}: {item.verdict}
+            </text>
+          </g>
+        </g>
+      ))
+    }
+    <g data-show="1">
+      <text x={zeroX + 12} y="20" class="f-small f-text-alt">
+        chance of the call given the margin: 0 left of the tie, 1 right of it
+      </text>
+    </g>
+    <g data-show="0">
+      <text x={zeroX + 12} y="20" class="f-small f-text-muted"> tie </text>
+    </g>
+    <g data-show="2" data-final>
+      <text x={zeroX + 12} y="20" class="f-small f-text-muted">
+        grey: before the call
+      </text>
+    </g>
+
+    {
+      ticks.map(tick => (
+        <g>
+          <line
+            x1={xAt(tick.value)}
+            x2={xAt(tick.value)}
+            y1="330"
+            y2="336"
+            class="f-axis"
+          />
+          <text
+            x={xAt(tick.value)}
+            y="352"
+            text-anchor="middle"
+            class="f-small f-text-muted f-num"
+          >
+            {tick.text}
+          </text>
+        </g>
+      ))
+    }
+    <text x="320" y="374" text-anchor="middle" class="f-small f-text-muted">
+      Final margin, points
+    </text>
+  </svg>
+</Figure>
