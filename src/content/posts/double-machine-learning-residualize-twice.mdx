@@ -1,0 +1,132 @@
+---
+title: "Double Machine Learning: Residualize Twice, Then Regress"
+author: Matthew Reda
+pubDatetime: 2026-11-11T13:00:00Z
+slug: double-machine-learning-residualize-twice
+draft: false
+tags:
+  - causal-inference
+  - machine-learning
+  - econometrics
+  - statistics
+description: Plugging a flexible ML fit into a causal regression biases the estimate through regularization and overfitting. Residualizing both outcome and treatment, out of fold, repairs the estimation. It does nothing for confounders you never measured.
+---
+
+import BiasRates from "@/components/figures/dml/BiasRates.astro";
+import CrossFitting from "@/components/figures/dml/CrossFitting.astro";
+import EstimatorComparison from "@/components/figures/dml/EstimatorComparison.astro";
+import SetupDag from "@/components/figures/dml/SetupDag.astro";
+
+The pitch for using machine learning as a control strategy sounds like a free upgrade. I have a treatment, an outcome, and a pile of confounders whose effects are curved and interact. A linear adjustment is obviously misspecified, so I hand the confounders to a penalized regression or a boosted model, let it "control for" them, and read the treatment effect off what's left.
+
+It isn't free. A model tuned to predict well is biased on purpose, and that bias lands on the one coefficient I care about. Double/debiased machine learning (Chernozhukov et al., 2018) is the repair, and it comes down to two moves: residualize both the outcome and the treatment on the confounders, and compute those residuals out of fold. Each move removes a distinct bias. Neither one touches confounders that aren't in the data. I built an [interactive explainer](https://redam94.github.io/double-ml-explainer/) that runs every step below as a live simulation in the browser; this post is the written version of the argument.
+
+## The setup
+
+The workhorse is the partially linear model:
+
+$$Y = \theta D + g(X) + \varepsilon, \qquad D = m(X) + v$$
+
+$\theta$ is the effect of the treatment $D$ on the outcome $Y$. The functions $g$ and $m$ are nuisance: I have to learn them well, but I don't care about them for their own sake. In the explainer, $D$ is weekly paid social spend, $Y$ is revenue, and $X$ is demand. The media team spends more in weeks it expects to be busy, and those weeks bring in more revenue regardless. The simulation sets $\theta = 0.50$.
+
+<SetupDag />
+
+Regressing revenue on spend alone gives a slope near 1.4, almost three times the truth, because
+
+$$\text{plim}\,\hat\theta_{\text{OLS}} = \theta + \frac{\text{Cov}(m(X),\, g(X))}{\text{Var}(D)}$$
+
+That second term is ordinary confounding. Everyone agrees on the fix: adjust for $X$. The trouble is in how.
+
+## Bias one: regularization
+
+The naive ML approach fits one flexible model of $Y$ on $D$ and $X$ and reads $\theta$ off the treatment coefficient. The penalty that makes the model predict well also shrinks $\hat g$ toward something flatter than $g$. The revenue that $\hat g$ fails to explain has to go somewhere, and since the peaks of $g$ sit in the same weeks where spend is high, it goes to the spend coefficient.
+
+The error of this plug-in estimator splits into two pieces:
+
+$$\sqrt{n}\,(\hat\theta - \theta) \approx \underbrace{\frac{\frac{1}{\sqrt n}\sum_i D_i \varepsilon_i}{E[D^2]}}_{\text{noise, well behaved}} + \underbrace{\frac{\frac{1}{\sqrt n}\sum_i m(X_i)\,(g - \hat g)(X_i)}{E[D^2]}}_{\text{regularization bias}}$$
+
+The first piece is a normal sampling term. The second is the problem. Flexible learners converge more slowly than $1/\sqrt{n}$, so after scaling by $\sqrt{n}$ that sum does not settle down. It grows. In the explainer's simulation (500 weeks per dataset, 300 datasets, ridge regression on a basis of Gaussian bumps), the plug-in estimates cluster around 0.64 and the 95% intervals contain the truth 4% of the time. This is the same pattern I wrote about in [More Data, More Confident, Still Wrong](/posts/more-data-more-confident-still-wrong/): the interval tightens around the wrong number.
+
+## The repair: residualize both sides
+
+The fix is to stop asking the learner for $\theta$ at all. Give it two prediction problems, which is what it is good at:
+
+$$\ell(X) = E[Y \mid X], \qquad m(X) = E[D \mid X]$$
+
+Subtract each prediction, then regress residual on residual:
+
+$$\tilde Y = Y - \hat\ell(X), \qquad \tilde D = D - \hat m(X), \qquad \hat\theta = \frac{\sum_i \tilde D_i \tilde Y_i}{\sum_i \tilde D_i^2}$$
+
+This is the Frisch-Waugh-Lovell theorem with flexible first stages, which is the estimator Robinson (1988) analyzed. The "twice" matters. If I residualize only the outcome and regress $\tilde Y$ on raw $D$, then even with the true $\ell$ the slope converges to $\theta \cdot \text{Var}(v) / \text{Var}(D)$, which is too small: spend still carries all the variation that demand put there, but revenue no longer moves with it. In the explainer that halfway step drops the slope to 0.17. Residualizing spend as well leaves only the budget surprises $v$, and the slope returns to the truth.
+
+Both $\hat\ell$ and $\hat m$ are still shrunk and still wrong. What changed is how their errors enter. The leading bias term is now
+
+$$\frac{1}{\sqrt n}\sum_i (m - \hat m)(X_i)\,(\ell - \hat\ell)(X_i)$$
+
+a product of two errors instead of a single one. If each learner converges faster than $n^{-1/4}$, the product shrinks faster than $n^{-1/2}$ and vanishes even after the $\sqrt{n}$ scaling. That property has a name, Neyman orthogonality: the moment condition that defines $\theta$ has zero derivative with respect to the nuisance functions at their true values, so small mistakes in $\hat\ell$ and $\hat m$ do not move $\hat\theta$ to first order. With the same ridge model and the same penalty as before, the explainer's estimates center on 0.50 and the intervals cover 94% of the time.
+
+<BiasRates />
+
+## Bias two: overfitting
+
+Orthogonality handles a learner that is too stiff. It does not handle one that is too flexible. Every row's outcome decomposes as
+
+$$Y_i = \ell(X_i) + \theta v_i + \varepsilon_i$$
+
+A model that trained on row $i$ has already seen $Y_i$, so its prediction absorbs some of $\theta v_i + \varepsilon_i$. Subtracting that prediction removes part of the effect I am trying to measure. Formally, the term $\frac{1}{\sqrt n}\sum_i v_i\,(\ell - \hat\ell)(X_i)$ has mean zero only when $\hat\ell$ never saw row $i$.
+
+The explainer makes this concrete with a two-nearest-neighbor average, where each training row counts as one of its own two neighbors. In-sample $R^2$ rises from 0.84 to 0.92, and the estimate falls to 0.25, half the truth, with 0% coverage. A better fit produced a worse answer. Deep forests and long boosting runs do a milder version of the same thing.
+
+Cross-fitting is the fix: split the data into folds, train both nuisance models on the other folds, and compute residuals only for the held-out rows. No data is wasted, since every row trains models and every row gets scored.
+
+<CrossFitting />
+
+```python
+import numpy as np
+from sklearn.ensemble import HistGradientBoostingRegressor as HGBR
+from sklearn.model_selection import KFold
+
+# X: (n, p) pre-treatment confounders   d: treatment   y: outcome
+n = len(y)
+y_res, d_res = np.zeros(n), np.zeros(n)
+
+for train, test in KFold(5, shuffle=True, random_state=0).split(X):
+    y_res[test] = y[test] - HGBR().fit(X[train], y[train]).predict(X[test])
+    d_res[test] = d[test] - HGBR().fit(X[train], d[train]).predict(X[test])
+
+theta = np.sum(d_res * y_res) / np.sum(d_res**2)
+
+psi = d_res * (y_res - theta * d_res)  # orthogonal score
+se = np.sqrt(np.mean(psi**2) / n) / np.mean(d_res**2)
+print(f"theta = {theta:.3f} +/- {1.96 * se:.3f}")
+```
+
+With the same memorizing learner, cross-fitted, the explainer's estimates go back to a mean of 0.50 and 94% coverage. One detail I appreciate from that simulation: with the stiff ridge model, partialling out worked fine without cross-fitting. Cross-fitting is what buys the freedom to use any learner on a wide, messy $X$, which was the reason to reach for machine learning in the first place.
+
+<EstimatorComparison />
+
+## What it does not fix
+
+Everything above is about estimation. The model's assumption $E[\varepsilon \mid D, X] = 0$ is about identification, and DML takes it as given.
+
+**Unobserved confounding.** If something outside $X$ moves both treatment and outcome, the residual-on-residual slope converges, with honest-looking intervals, to a number that is not the causal effect. Two worlds can generate identical $(X, D, Y)$ and have different effects, so no diagnostic on the observed data can tell them apart. A better learner does not help.
+
+**Bad controls.** The learner cannot tell a confounder from a mediator or a collider. Predictive power says nothing about where a column sits in the causal graph, and the columns a treatment causes are often the best predictors of the outcome. Whether a variable belongs in $X$ is decided before any model is fit.
+
+**A single $\theta$.** The partially linear model lets $g$ and $m$ bend freely, but the effect stays one number. If the effect varies, $\hat\theta$ is a weighted average that leans toward the observations where treatment varies most after conditioning on $X$.
+
+**No residual variation.** If $X$ predicts $D$ almost perfectly, $\tilde D$ is nearly zero and there is nothing left to regress on.
+
+## What to do in practice
+
+1. **Choose $X$ from the causal graph, not from feature importance.** Pre-treatment variables only.
+2. **Fit two nuisance models and cross-fit both.** Check the out-of-fold predictive performance of each. Poor out-of-fold fit in both means the adjustment is doing little, either because the learner is weak or because $X$ carries little of the confounding.
+3. **Look at the residualized treatment.** Its variance is the information the estimate runs on.
+4. **Use a maintained implementation for real work.** The DoubleML package provides `DoubleMLPLR` for this model, with cross-fitting and repeated sample splitting built in. For a binary treatment, the doubly robust score is the same idea: its bias is the propensity error times the outcome-model error.
+5. **Report how wrong the identifying assumption would have to be.** Pair the estimate with a sensitivity analysis, and where possible with a randomized holdout, which replaces the untestable assumption with a design.
+
+DML is a precise answer to a narrow question: given the right adjustment set, how do I estimate the effect without my nuisance models contaminating it? It answers that question well. Whether the adjustment set is right is a separate question that the method cannot ask.
+
+---
+
+_Grounded in Chernozhukov, Chetverikov, Demirer, Duflo, Hansen, Newey & Robins (2018), "Double/debiased machine learning for treatment and structural parameters," The Econometrics Journal, 21(1). All simulation numbers come from my [double ML explainer](https://redam94.github.io/double-ml-explainer/), which also covers doubly robust ad-lift estimation, sensitivity analysis, and experiments. Related: [The Table 2 Fallacy](/posts/table-2-fallacy/), [The Assumptions Are the Model](/posts/the-assumptions-are-the-model/)._

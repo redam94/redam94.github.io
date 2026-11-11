@@ -1,0 +1,182 @@
+---
+/**
+ * Frame for a figure inside a post.
+ *
+ * The slot holds one <svg viewBox="0 0 640 H">. Two kinds of motion are
+ * supported, both optional and both skipped under prefers-reduced-motion:
+ *
+ * 1. Entrance: elements with class fx-draw (paths with pathLength="1"),
+ *    fx-fade or fx-rise animate once when the figure scrolls into view.
+ *    Delay each with style="--d: 400ms".
+ * 2. Frames: pass frames={n} and mark elements with data-show="0,2"
+ *    (visible only on those frames) or data-from="1" (visible from that
+ *    frame on, optionally data-until="2"). The figure plays through once
+ *    when it scrolls into view; the controls replay and scrub.
+ *
+ * Without JavaScript the last frame and the finished entrance state show.
+ * Give data-final to every data-show element that belongs to the last frame.
+ */
+type Props = {
+  caption: string;
+  /** Number of animation frames. 1 means no frame controls. */
+  frames?: number;
+  /** One short label per frame, shown next to the controls. */
+  frameLabels?: string[];
+  /** Milliseconds per frame while playing. */
+  interval?: number;
+  /** Show a replay button for entrance animations. */
+  replay?: boolean;
+  tone?: "mist" | "white" | "dark";
+};
+
+const {
+  caption,
+  frames = 1,
+  frameLabels = [],
+  interval = 2200,
+  replay = false,
+  tone = "mist",
+} = Astro.props;
+
+const last = frames - 1;
+const stepped = frames > 1;
+const showReplay = !stepped && replay;
+---
+
+<figure
+  class:list={["post-figure not-prose", `post-figure-${tone}`]}
+  data-figure
+  data-frames={frames}
+  data-interval={interval}
+  data-frame-labels={JSON.stringify(frameLabels)}
+>
+  <div class="post-figure-stage"><slot /></div>
+  {
+    stepped && (
+      <div class="post-figure-controls">
+        <button type="button" data-figure-play>
+          Play
+        </button>
+        <input
+          type="range"
+          min="0"
+          max={last}
+          step="1"
+          value={last}
+          data-figure-scrub
+          aria-label="Animation step"
+        />
+        <output data-figure-label>{frameLabels[last] ?? ""}</output>
+      </div>
+    )
+  }
+  {
+    showReplay && (
+      <div class="post-figure-controls">
+        <button type="button" data-figure-replay>
+          Replay
+        </button>
+      </div>
+    )
+  }
+  <figcaption>{caption}</figcaption>
+</figure>
+
+<script>
+  const reducedMotion = () =>
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function setUp(figure: HTMLElement) {
+    if (figure.dataset.ready) return;
+    figure.dataset.ready = "true";
+
+    const frames = Number(figure.dataset.frames ?? "1");
+    const interval = Number(figure.dataset.interval ?? "2200");
+    const labels: string[] = JSON.parse(figure.dataset.frameLabels ?? "[]");
+    const play = figure.querySelector<HTMLButtonElement>("[data-figure-play]");
+    const scrub = figure.querySelector<HTMLInputElement>("[data-figure-scrub]");
+    const label = figure.querySelector<HTMLElement>("[data-figure-label]");
+    const replay = figure.querySelector<HTMLButtonElement>(
+      "[data-figure-replay]"
+    );
+    const staged = Array.from(
+      figure.querySelectorAll<SVGElement | HTMLElement>(
+        "[data-show], [data-from]"
+      )
+    );
+    let timer: number | undefined;
+
+    function showFrame(frame: number) {
+      figure.dataset.frame = String(frame);
+      for (const element of staged) {
+        const { show, from, until } = element.dataset;
+        const visible = show
+          ? show.split(",").map(Number).includes(frame)
+          : frame >= Number(from) &&
+            (until === undefined || frame <= Number(until));
+        element.classList.toggle("is-off", !visible);
+      }
+      if (scrub) scrub.value = String(frame);
+      if (label) label.textContent = labels[frame] ?? "";
+    }
+
+    function stop() {
+      window.clearInterval(timer);
+      timer = undefined;
+      if (play) play.textContent = "Play";
+    }
+
+    function start() {
+      stop();
+      let frame = 0;
+      showFrame(frame);
+      if (play) play.textContent = "Pause";
+      timer = window.setInterval(() => {
+        frame += 1;
+        showFrame(frame);
+        if (frame >= frames - 1) stop();
+      }, interval);
+    }
+
+    function enter() {
+      figure.classList.add("is-visible");
+      if (frames > 1 && !reducedMotion()) start();
+    }
+
+    if (frames > 1) showFrame(frames - 1);
+
+    play?.addEventListener("click", () => (timer ? stop() : start()));
+    scrub?.addEventListener("input", () => {
+      stop();
+      showFrame(Number(scrub.value));
+    });
+    replay?.addEventListener("click", () => {
+      figure.classList.remove("is-visible");
+      // Reading a layout property restarts the entrance transitions.
+      void figure.offsetWidth;
+      figure.classList.add("is-visible");
+    });
+
+    if (!("IntersectionObserver" in window)) {
+      enter();
+      return;
+    }
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries.some(entry => entry.isIntersecting)) {
+          observer.disconnect();
+          enter();
+        }
+      },
+      { threshold: 0.35 }
+    );
+    observer.observe(figure);
+  }
+
+  function setUpAll() {
+    document.querySelectorAll<HTMLElement>("[data-figure]").forEach(setUp);
+  }
+
+  document.addEventListener("astro:page-load", setUpAll);
+  setUpAll();
+</script>

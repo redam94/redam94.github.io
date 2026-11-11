@@ -68,22 +68,13 @@ export default defineConfig({
     plugins: [tailwindcss()],
   },
   fonts: [
-    // Augur design system — Fraunces (display serif), IBM Plex Sans (UI/body),
-    // JetBrains Mono (numerals/code).
+    // Inter is the fallback behind the system UI font; JetBrains Mono the
+    // fallback behind the system monospace (see src/styles/theme.css).
     {
-      name: "Fraunces",
-      cssVariable: "--font-fraunces",
+      name: "Inter",
+      cssVariable: "--font-inter",
       provider: fontProviders.google(),
-      fallbacks: ["Georgia", "Times New Roman", "serif"],
-      weights: [400, 500, 600, 700],
-      styles: ["normal", "italic"],
-      formats: ["woff2", "woff"],
-    },
-    {
-      name: "IBM Plex Sans",
-      cssVariable: "--font-plex",
-      provider: fontProviders.google(),
-      fallbacks: ["system-ui", "-apple-system", "sans-serif"],
+      fallbacks: ["Helvetica Neue", "Arial", "sans-serif"],
       weights: [400, 500, 600, 700],
       styles: ["normal", "italic"],
       formats: ["woff2", "woff"],

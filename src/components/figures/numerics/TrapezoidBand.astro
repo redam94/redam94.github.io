@@ -1,0 +1,227 @@
+---
+/**
+ * The trapezoidal rule as a posterior mean under a Wiener process prior,
+ * with the variance the post quotes: Var(F | Y) = theta^2 / 12 * sum(gap^3).
+ * Between two nodes the posterior is a Brownian bridge, so the pointwise
+ * variance is theta^2 (x - a)(b - x) / (b - a). The scale theta is fixed
+ * for drawing, and the bars are reported in units of theta.
+ */
+import Figure from "../Figure.astro";
+import { areaPath, f1, linePath, linspace, scale, type Point } from "../lib";
+import { response } from "./bq";
+
+const left = 48;
+const right = 624;
+const top = 56;
+const bottom = 226;
+const xAt = scale(-3.15, 3.15, left, right);
+const yAt = scale(-0.35, 1.5, bottom, top);
+const theta = 0.3;
+
+const truthPath = linePath(
+  linspace(-3, 3, 121).map(x => [xAt(x), yAt(response(x))] as Point)
+);
+
+const barLeft = 200;
+const barUnit = 300;
+
+const grids = [
+  {
+    heading: "7 nodes, uneven gaps",
+    nodes: [-3, -2.6, -2.2, -1.4, 0.2, 1.4, 3],
+  },
+  { heading: "7 nodes, equal gaps", nodes: linspace(-3, 3, 7) },
+  { heading: "13 nodes, equal gaps", nodes: linspace(-3, 3, 13) },
+];
+
+const steps = grids.map((grid, frame) => {
+  const values = grid.nodes.map(response);
+  const upper: Point[] = [];
+  const lower: Point[] = [];
+  let cubes = 0;
+  for (let i = 0; i < grid.nodes.length - 1; i++) {
+    const a = grid.nodes[i];
+    const b = grid.nodes[i + 1];
+    cubes += (b - a) ** 3;
+    for (const t of linspace(0, 1, 25)) {
+      const x = a + t * (b - a);
+      const mean = values[i] + t * (values[i + 1] - values[i]);
+      const sd = theta * Math.sqrt(((x - a) * (b - x)) / (b - a));
+      upper.push([xAt(x), yAt(mean + 2 * sd)]);
+      lower.push([xAt(x), yAt(mean - 2 * sd)]);
+    }
+  }
+  const points = grid.nodes.map((x, i) => [xAt(x), yAt(values[i])] as Point);
+  // Standard deviation of the integral in units of theta.
+  const sd = Math.sqrt(cubes / 12);
+  return {
+    ...grid,
+    frame,
+    isLast: frame === grids.length - 1,
+    bandPath: areaPath(upper, lower),
+    meanPath: linePath(points),
+    areaPath: areaPath(
+      points,
+      grid.nodes.map(x => [xAt(x), yAt(0)] as Point)
+    ),
+    dots: points.map(([cx, cy]) => ({ cx: f1(cx), cy: f1(cy) })),
+    rowY: 288 + frame * 22,
+    barRight: f1(barLeft + barUnit * sd),
+    label: `${sd.toFixed(2)} θ`,
+  };
+});
+
+const legend = [
+  { kind: "line", tone: "f-line", text: "integrand" },
+  { kind: "swatch", tone: "f-fill-alt-soft", text: "trapezoid area" },
+  { kind: "line", tone: "f-accent f-thick", text: "posterior mean" },
+  { kind: "swatch", tone: "f-fill-mid", text: "± 2 sd" },
+].map((item, i) => ({
+  ...item,
+  x: i < 2 ? 346 : 486,
+  y: 22 + (i % 2) * 19,
+  isLine: item.kind === "line",
+}));
+---
+
+<Figure
+  frames={3}
+  interval={2600}
+  frameLabels={grids.map(grid => grid.heading)}
+  caption="Illustration of the variance formula above on an example integrand, with the scale θ held fixed. Each gap contributes its length cubed, so the widest gaps dominate, and halving every gap halves the standard deviation."
+>
+  <svg
+    viewBox="0 0 640 348"
+    role="img"
+    aria-label={`A curve interpolated linearly through its evaluations, with an uncertainty band that bulges between nodes. The standard deviation of the integral is ${steps[0].label} for seven unevenly spaced nodes, ${steps[1].label} for seven equally spaced nodes and ${steps[2].label} for thirteen.`}
+  >
+    {
+      steps.map(step => (
+        <text
+          x={left}
+          y="26"
+          class="f-title"
+          data-show={step.frame}
+          data-final={step.isLast}
+        >
+          {step.heading}
+        </text>
+      ))
+    }
+    {
+      legend.map(item => (
+        <g>
+          {item.isLine ? (
+            <line
+              x1={item.x}
+              x2={item.x + 24}
+              y1={item.y - 4}
+              y2={item.y - 4}
+              class={item.tone}
+            />
+          ) : (
+            <rect
+              x={item.x}
+              y={item.y - 10}
+              width="24"
+              height="12"
+              rx="2"
+              class={item.tone}
+            />
+          )}
+          <text x={item.x + 32} y={item.y} class="f-small">
+            {item.text}
+          </text>
+        </g>
+      ))
+    }
+
+    {
+      [0, 1].map(tick => (
+        <g>
+          <line
+            x1={left}
+            x2={right}
+            y1={yAt(tick)}
+            y2={yAt(tick)}
+            class="f-grid"
+          />
+          <text
+            x={left - 8}
+            y={yAt(tick) + 4}
+            text-anchor="end"
+            class="f-small f-text-muted f-num"
+          >
+            {tick}
+          </text>
+        </g>
+      ))
+    }
+    <line x1={left} x2={right} y1={bottom} y2={bottom} class="f-axis"></line>
+    {
+      [-3, -2, -1, 0, 1, 2, 3].map(tick => (
+        <text
+          x={xAt(tick)}
+          y={bottom + 18}
+          text-anchor="middle"
+          class="f-small f-text-muted f-num"
+        >
+          {tick}
+        </text>
+      ))
+    }
+
+    {
+      steps.map(step => (
+        <g data-show={step.frame} data-final={step.isLast}>
+          <path d={step.areaPath} class="f-fill-alt-soft" />
+          <path d={step.bandPath} class="f-fill-mid" />
+          <path d={step.meanPath} class="f-accent f-thick" />
+        </g>
+      ))
+    }
+    <path d={truthPath} class="f-line"></path>
+    {
+      steps.map(step => (
+        <g data-show={step.frame} data-final={step.isLast}>
+          {step.dots.map(dot => (
+            <circle cx={dot.cx} cy={dot.cy} r="3.5" class="f-fill-bg f-line" />
+          ))}
+        </g>
+      ))
+    }
+
+    <text x={left} y="270" class="f-label">
+      Standard deviation of the integral
+    </text>
+    {
+      steps.map(step => (
+        <g data-from={step.frame}>
+          <text x={left} y={step.rowY + 4} class="f-small">
+            {step.heading}
+          </text>
+          <line
+            x1={barLeft}
+            x2={step.barRight}
+            y1={step.rowY}
+            y2={step.rowY}
+            class="f-accent f-thick"
+          />
+          <circle
+            cx={step.barRight}
+            cy={step.rowY}
+            r="3.5"
+            class="f-fill-accent"
+          />
+          <text
+            x={step.barRight + 12}
+            y={step.rowY + 4}
+            class="f-small f-num f-text-accent"
+          >
+            {step.label}
+          </text>
+        </g>
+      ))
+    }
+  </svg>
+</Figure>

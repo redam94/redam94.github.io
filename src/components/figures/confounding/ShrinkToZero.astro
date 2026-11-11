@@ -1,0 +1,187 @@
+---
+/**
+ * Stepped figure: the $1,572 estimate as a hypothetical confounder with the
+ * same partial R² on both sides gets stronger. The curve is the post's bias
+ * formula with its t statistic and degrees of freedom; the stops are the
+ * strengths the post names (0.67%, the two robustness values, 3%).
+ */
+import Figure from "../Figure.astro";
+import { f1, linePath, linspace, scale, type Point } from "../lib";
+import { adjusted, dollars, estimate, robustnessValue } from "./model";
+
+const left = 78;
+const right = 604;
+const top = 84;
+const bottom = 312;
+const maxR = 0.035;
+const xAt = scale(0, maxR, left, right);
+const yAt = scale(-1000, 2000, bottom, top);
+const zeroY = yAt(0);
+
+const curve = (from: number, to: number): string =>
+  linePath(
+    linspace(from, to, 24).map(r => [xAt(r), yAt(adjusted(r))] as Point)
+  );
+
+/** Rounded to the nearest $10, for values that depend on a rounded t. */
+const about = (value: number) =>
+  `about ${dollars(Math.round(value / 10) * 10)}`;
+
+const stops = [
+  {
+    r: 0,
+    headline: "No hidden confounder",
+    readout: `Estimate: ${dollars(estimate)}`,
+    mark: dollars(estimate),
+  },
+  {
+    r: 0.0067,
+    headline: "0.67% on both sides: no longer statistically significant",
+    readout: `Estimate left: ${about(adjusted(0.0067))}`,
+    mark: "0.67%: significance gone",
+  },
+  {
+    r: robustnessValue(0.5),
+    headline: "1.1% on both sides: the estimate is halved",
+    readout: `Estimate left: ${dollars(adjusted(robustnessValue(0.5)))}`,
+    mark: "1.1%: halved",
+  },
+  {
+    r: robustnessValue(1),
+    headline: "2.2% on both sides: the estimate is gone",
+    readout: `Estimate left: ${dollars(adjusted(robustnessValue(1)))}`,
+    mark: "2.2%: zero",
+  },
+  {
+    r: 0.03,
+    headline: "3% on both sides: the sign reverses",
+    readout: `Estimate left: ${about(adjusted(0.03))}`,
+    mark: "3%: sign reversed",
+    below: true,
+  },
+].map((stop, i, all) => {
+  const value = adjusted(stop.r);
+  const negative = value < -0.5;
+  const x = xAt(stop.r);
+  const y = yAt(value);
+  return {
+    ...stop,
+    x: f1(x),
+    y: f1(y),
+    tone: negative ? "warn" : "accent",
+    segment: i === 0 ? "" : curve(all[i - 1].r, stop.r),
+    barY: f1(Math.min(y, zeroY)),
+    barHeight: f1(Math.abs(y - zeroY)),
+    isLast: i === all.length - 1,
+    // The last label would run off the right edge, so it sits under the curve.
+    markX: f1("below" in stop ? x - 10 : x + 10),
+    markY: f1("below" in stop ? y + 20 : y - 9),
+    markAnchor: "below" in stop ? "end" : "start",
+  };
+});
+
+const xTicks = [0, 0.01, 0.02, 0.03];
+const yTicks = [-1000, 0, 1000, 2000];
+---
+
+<Figure
+  frames={stops.length}
+  interval={2400}
+  frameLabels={["No confounder", "0.67%", "1.1%", "2.2%", "3%"]}
+  caption="Computed from the bias formula with t = 2.82 and 16,159 degrees of freedom, for a hypothetical confounder equally strong on both sides. The curve crosses zero at the robustness value, 2.2%."
+>
+  <svg
+    viewBox="0 0 640 366"
+    role="img"
+    aria-label="Line chart of the adjusted estimate against confounder strength. It starts at $1,572, is halved at 1.1 percent, reaches zero at 2.2 percent and is negative at 3 percent."
+  >
+    {
+      yTicks.map(tick => (
+        <g>
+          <line
+            x1={left}
+            x2={right}
+            y1={f1(yAt(tick))}
+            y2={f1(yAt(tick))}
+            class="f-grid"
+          />
+          <text
+            x={left - 10}
+            y={f1(yAt(tick)) + 4}
+            text-anchor="end"
+            class="f-small f-text-muted f-num"
+          >
+            {dollars(tick)}
+          </text>
+        </g>
+      ))
+    }
+    {
+      xTicks.map(tick => (
+        <text
+          x={f1(xAt(tick))}
+          y={bottom + 20}
+          text-anchor="middle"
+          class="f-small f-text-muted f-num"
+        >
+          {tick * 100}%
+        </text>
+      ))
+    }
+    <line x1={left} x2={left} y1={top} y2={bottom} class="f-axis"></line>
+    <line x1={left} x2={right} y1={bottom} y2={bottom} class="f-axis"></line>
+    <line x1={left} x2={right} y1={zeroY} y2={zeroY} class="f-line"></line>
+    <text x="341" y={bottom + 44} text-anchor="middle" class="f-small">
+      Strength of the hidden confounder: partial R² with both training and
+      earnings
+    </text>
+
+    <path d={curve(0, maxR)} class="f-muted f-dash"></path>
+
+    {
+      stops.map((stop, frame) => (
+        <g>
+          <g data-show={frame} data-final={stop.isLast}>
+            <text x="20" y="28" class="f-title">
+              {stop.headline}
+            </text>
+            <text
+              x="20"
+              y="52"
+              class:list={["f-label f-num", `f-text-${stop.tone}`]}
+            >
+              {stop.readout}
+            </text>
+            <rect
+              x={stop.x - 5}
+              y={stop.barY}
+              width="10"
+              height={stop.barHeight}
+              class={`f-fill-${stop.tone}`}
+              fill-opacity="0.4"
+            />
+          </g>
+          <g data-from={frame}>
+            {stop.segment && (
+              <path d={stop.segment} class={`f-${stop.tone} f-thick`} />
+            )}
+            <circle
+              cx={stop.x}
+              cy={stop.y}
+              r="5"
+              class={`f-fill-${stop.tone}`}
+            />
+            <text
+              x={stop.markX}
+              y={stop.markY}
+              text-anchor={stop.markAnchor}
+              class:list={["f-small f-label", `f-text-${stop.tone}`]}
+            >
+              {stop.mark}
+            </text>
+          </g>
+        </g>
+      ))
+    }
+  </svg>
+</Figure>

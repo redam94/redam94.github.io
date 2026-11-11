@@ -4,6 +4,8 @@
   /* ===== Override default Tailwind Typography styles ===== */
   .app-prose {
     @apply prose;
+    font-size: 1.0625rem;
+    line-height: 1.65;
 
     h1,
     h2,
@@ -13,8 +15,12 @@
       @apply text-foreground mb-3;
     }
 
-    h3 {
-      @apply italic;
+    h1,
+    h2,
+    h3,
+    h4 {
+      font-weight: 600;
+      letter-spacing: -0.022em;
     }
 
     p,
@@ -28,7 +34,7 @@
     }
 
     a {
-      @apply text-foreground hover:text-accent wrap-break-word decoration-dashed underline-offset-4 focus-visible:no-underline;
+      @apply text-accent decoration-accent/40 hover:decoration-accent wrap-break-word underline-offset-4 focus-visible:no-underline;
     }
 
     ul {
@@ -44,7 +50,7 @@
     }
 
     img {
-      @apply border-border mx-auto rounded-lg border shadow-sm;
+      @apply border-border mx-auto rounded-2xl border;
     }
 
     img[role="button"] {
@@ -71,7 +77,7 @@
     }
 
     code {
-      @apply bg-muted/75 text-foreground rounded p-1 font-mono wrap-break-word before:content-none after:content-none;
+      @apply bg-muted text-foreground rounded-md px-1.5 py-0.5 font-mono text-[0.9em] font-normal wrap-break-word before:content-none after:content-none;
     }
 
     .astro-code code {
@@ -79,7 +85,7 @@
     }
 
     blockquote {
-      @apply border-s-accent/80 wrap-break-word opacity-80;
+      @apply border-s-accent text-foreground font-normal wrap-break-word not-italic;
     }
 
     details:not(.callout) {
@@ -97,7 +103,7 @@
 
   /* ===== Code Blocks & Syntax Highlighting ===== */
   .astro-code {
-    @apply outline-border flex rounded-lg border bg-(--shiki-light-bg) font-mono text-(--shiki-light) shadow-sm [&_span]:text-(--shiki-light);
+    @apply outline-border flex rounded-2xl border bg-(--shiki-light-bg) font-mono text-(--shiki-light) [&_span]:text-(--shiki-light);
   }
 
   html[data-theme="dark"] .astro-code {

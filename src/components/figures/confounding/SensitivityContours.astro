@@ -1,0 +1,248 @@
+---
+/**
+ * Sensitivity contour plot. Each contour is the set of (treatment-side,
+ * outcome-side) partial R² pairs that leave a given estimate, from the
+ * post's bias formula with its t statistic and degrees of freedom. The
+ * levels are the estimates the post reports: $409 and -$757 for the two
+ * benchmarks, and zero.
+ *
+ * The post gives the Black indicator's outcome-side share only as "under
+ * 0.1%", so its dot is drawn at that upper bound.
+ */
+import Figure from "../Figure.astro";
+import { f1, linePath, range, scale, type Point } from "../lib";
+import { contour, dollars, estimate, percent, robustnessValue } from "./model";
+
+const left = 64;
+const right = 604;
+const top = 40;
+const bottom = 320;
+const maxX = 0.08;
+const maxY = 0.07;
+const xAt = scale(0, maxX, left, right);
+const yAt = scale(0, maxY, bottom, top);
+
+/** Points along a contour, from where it enters at the top to the right edge. */
+function contourPoints(target: number): Point[] {
+  const c = contour(target, 0.5);
+  const start = c / (maxY + c);
+  const steps = 60;
+  return range(steps + 1).map(i => {
+    const r2d = start * (maxX / start) ** (i / steps);
+    return [xAt(r2d), yAt(contour(target, r2d))] as Point;
+  });
+}
+
+const levels = [
+  { target: 409, tone: "alt", thick: false, labelAt: 0.062, delay: 200 },
+  { target: 0, tone: "warn", thick: true, labelAt: 0.05, delay: 700 },
+  { target: -757, tone: "alt", thick: false, labelAt: 0.04, delay: 1200 },
+].map(level => {
+  const text = dollars(level.target);
+  const width = text.length * 7.4 + 10;
+  return {
+    ...level,
+    text,
+    path: linePath(contourPoints(level.target)),
+    labelX: f1(xAt(level.labelAt)),
+    labelY: f1(yAt(contour(level.target, level.labelAt))),
+    width,
+  };
+});
+
+const reversed = `${linePath(contourPoints(0))} L${right} ${top} Z`;
+
+const rv = robustnessValue(1);
+const rvPoint = { x: f1(xAt(rv)), y: f1(yAt(rv)) };
+const black = { x: f1(xAt(0.07)), y: f1(yAt(0.001)) };
+
+const keyX = 290;
+const key = [
+  {
+    y: 86,
+    kind: "alt",
+    text: `${dollars(409)}: as strong as the 1975 earnings block`,
+  },
+  { y: 106, kind: "warn", text: `${dollars(0)}: nothing left` },
+  {
+    y: 126,
+    kind: "alt",
+    text: `${dollars(-757)}: twice as strong as that block`,
+  },
+  { y: 146, kind: "area", text: "Shaded: the sign flips" },
+].map(row => ({
+  ...row,
+  isArea: row.kind === "area",
+  isThick: row.kind === "warn",
+}));
+
+const xTicks = [0, 0.02, 0.04, 0.06, 0.08];
+const yTicks = [0, 0.02, 0.04, 0.06];
+---
+
+<Figure
+  replay
+  caption="Each line joins hypothetical confounders that would leave the same estimate, computed from the bias formula with t = 2.82 and 16,159 degrees of freedom. A benchmark line shows the estimate that benchmark leaves, not where along the line such a confounder would sit."
+>
+  <svg
+    viewBox="0 0 640 372"
+    role="img"
+    aria-label="Contour plot with the confounder's partial R squared with training on the horizontal axis and with earnings on the vertical axis. Curved lines mark where the estimate falls to $409, to zero and to minus $757. The robustness value sits on the zero line at 2.2 percent on both axes."
+  >
+    {
+      xTicks.map(tick => (
+        <g>
+          <line
+            x1={f1(xAt(tick))}
+            x2={f1(xAt(tick))}
+            y1={top}
+            y2={bottom}
+            class="f-grid"
+          />
+          <text
+            x={f1(xAt(tick))}
+            y={bottom + 20}
+            text-anchor="middle"
+            class="f-small f-text-muted f-num"
+          >
+            {percent(tick, 0)}
+          </text>
+        </g>
+      ))
+    }
+    {
+      yTicks.map(tick => (
+        <g>
+          <line
+            x1={left}
+            x2={right}
+            y1={f1(yAt(tick))}
+            y2={f1(yAt(tick))}
+            class="f-grid"
+          />
+          <text
+            x={left - 10}
+            y={f1(yAt(tick)) + 4}
+            text-anchor="end"
+            class="f-small f-text-muted f-num"
+          >
+            {percent(tick, 0)}
+          </text>
+        </g>
+      ))
+    }
+    <text x="334" y={bottom + 44} text-anchor="middle" class="f-small">
+      Partial R² of the hidden confounder with training
+    </text>
+    <text
+      x="20"
+      y="180"
+      text-anchor="middle"
+      transform="rotate(-90 20 180)"
+      class="f-small"
+    >
+      Partial R² with earnings
+    </text>
+
+    <path d={reversed} class="f-fill-warn-soft fx-fade" style="--d: 900ms"
+    ></path>
+    <line x1={left} x2={left} y1={top} y2={bottom} class="f-axis"></line>
+    <line x1={left} x2={right} y1={bottom} y2={bottom} class="f-axis"></line>
+
+    {
+      levels.map(level => (
+        <path
+          d={level.path}
+          pathLength="1"
+          class:list={[`f-${level.tone} fx-draw`, { "f-thick": level.thick }]}
+          style={`--d: ${level.delay}ms`}
+        />
+      ))
+    }
+    {
+      levels.map(level => (
+        <g class="fx-fade" style={`--d: ${level.delay + 900}ms`}>
+          <rect
+            x={level.labelX - level.width / 2}
+            y={level.labelY - 9}
+            width={level.width}
+            height="18"
+            rx="4"
+            class="f-fill-bg"
+          />
+          <text
+            x={level.labelX}
+            y={level.labelY + 4.5}
+            text-anchor="middle"
+            class:list={["f-small f-label f-num", `f-text-${level.tone}`]}
+          >
+            {level.text}
+          </text>
+        </g>
+      ))
+    }
+
+    <g class="fx-fade" style="--d: 300ms">
+      <circle cx={left} cy={bottom} r="4.5" class="f-fill-accent"></circle>
+      <text x={left + 10} y={bottom - 9} class="f-small f-label f-text-accent">
+        No confounder: {dollars(estimate)}
+      </text>
+    </g>
+
+    <g class="fx-fade" style="--d: 1700ms">
+      <line
+        x1={rvPoint.x + 5}
+        y1={rvPoint.y - 4}
+        x2={keyX - 6}
+        y2="178"
+        class="f-line"></line>
+      <circle cx={rvPoint.x} cy={rvPoint.y} r="5" class="f-fill-warn"></circle>
+      <text x={keyX} y="180" class="f-small f-label">
+        Robustness value: {percent(rv)} on both sides
+      </text>
+    </g>
+
+    <g class="fx-fade" style="--d: 2100ms">
+      <line x1={black.x} y1={black.y - 7} x2={black.x} y2="226" class="f-line"
+      ></line>
+      <circle cx={black.x} cy={black.y} r="4.5" class="f-fill-line"></circle>
+      <text x={right - 4} y="202" text-anchor="end" class="f-small f-label">
+        Black indicator: 7% and under 0.1%,
+      </text>
+      <text x={right - 4} y="219" text-anchor="end" class="f-small">
+        hiding it moves the estimate about $500
+      </text>
+    </g>
+
+    <g class="fx-fade" style="--d: 1500ms">
+      <text x={keyX} y="64" class="f-label">Estimate left on each line</text>
+      {
+        key.map(row => (
+          <g>
+            {row.isArea ? (
+              <rect
+                x={keyX}
+                y={row.y - 11}
+                width="24"
+                height="14"
+                rx="3"
+                class="f-fill-warn-soft"
+              />
+            ) : (
+              <line
+                x1={keyX}
+                x2={keyX + 24}
+                y1={row.y - 4}
+                y2={row.y - 4}
+                class:list={[`f-${row.kind}`, { "f-thick": row.isThick }]}
+              />
+            )}
+            <text x={keyX + 34} y={row.y} class="f-small">
+              {row.text}
+            </text>
+          </g>
+        ))
+      }
+    </g>
+  </svg>
+</Figure>

@@ -1,0 +1,274 @@
+---
+/**
+ * The post's table, one row per frame: the median 100-year flow and the
+ * 30-year chance of beating the textbook flow as each source of information
+ * enters the model. Every number is copied from the post. Only the two
+ * intervals the post quotes are drawn.
+ */
+import Figure from "../Figure.astro";
+import { f1, linePath, scale, type Point } from "../lib";
+
+const table = [
+  { label: "Gauge alone", sub: "vague skew prior", flow: 725655, chance: 29.2 },
+  { label: "+ regional skew prior", sub: "", flow: 714924, chance: 27.4 },
+  { label: "+ floods of 1786 to 1889", sub: "", flow: 660766, chance: 18.8 },
+  {
+    label: "+ eleven neighbouring gauges",
+    sub: "",
+    flow: 636793,
+    chance: 14.4,
+  },
+  {
+    label: "+ decline since 1950",
+    sub: "at today's level",
+    flow: 576556,
+    chance: 8.1,
+  },
+  { label: "Three trend shapes, stacked", sub: "", flow: 604743, chance: 10.8 },
+];
+
+/** Quoted in the post: gauged years alone, 89% interval, in cfs. */
+const gaugedInterval = [620000, 880000];
+/** Quoted in the post: the fixed "textbook" 100-year flow, in cfs. */
+const textbookFlow = 715000;
+/** Quoted in the post: 1 - 0.99^30, the chance with no uncertainty. */
+const plugInChance = 26;
+/** Quoted in the post: 89% range of the stacked 30-year chance. */
+const stackedRange = [3, 22];
+
+const top = 50;
+const bottom = 296;
+const flowLeft = 214;
+const flowRight = 404;
+const chanceLeft = 446;
+const chanceRight = 590;
+const flowAt = scale(440000, 900000, flowLeft, flowRight);
+const chanceAt = scale(0, 30, chanceLeft, chanceRight);
+
+function chanceLabel(chance: number, isLast: boolean) {
+  if (chance > plugInChance) {
+    return { chanceLabelX: f1(chanceAt(chance) + 10), chanceAnchor: "start" };
+  }
+  const edge = isLast ? stackedRange[0] : chance;
+  return { chanceLabelX: f1(chanceAt(edge) - 10), chanceAnchor: "end" };
+}
+
+const last = table.length - 1;
+const rows = table.map((row, i) => {
+  const y = 72 + i * 38;
+  const hasSub = row.sub !== "";
+  const isLast = i === last;
+  return {
+    ...row,
+    y,
+    hasSub,
+    isLast,
+    labelY: hasSub ? y - 3 : y + 4,
+    fx: f1(flowAt(row.flow)),
+    cx: f1(chanceAt(row.chance)),
+    flowText: row.flow.toLocaleString("en-US"),
+    chanceText: `${row.chance.toFixed(1)}%`,
+    // Labels sit on the side of the dot away from the dashed 26% line.
+    ...chanceLabel(row.chance, isLast),
+  };
+});
+
+const connectors = rows.slice(1).map((row, i) => ({
+  frame: i + 1,
+  flow: linePath([
+    [rows[i].fx, rows[i].y],
+    [row.fx, row.y],
+  ] as Point[]),
+  chance: linePath([
+    [rows[i].cx, rows[i].y],
+    [row.cx, row.y],
+  ] as Point[]),
+}));
+
+const flowTicks = [500000, 600000, 700000, 800000, 900000];
+const chanceTicks = [0, 10, 20, 30];
+
+const bandX = f1(flowAt(gaugedInterval[0]));
+const bandWidth = f1(flowAt(gaugedInterval[1]) - flowAt(gaugedInterval[0]));
+const textbookX = f1(flowAt(textbookFlow));
+const plugInX = f1(chanceAt(plugInChance));
+const rangeX0 = f1(chanceAt(stackedRange[0]));
+const rangeX1 = f1(chanceAt(stackedRange[1]));
+const rangeY = rows[last].y;
+---
+
+<Figure
+  frames={rows.length}
+  interval={2400}
+  frameLabels={[
+    "Gauge alone",
+    "Add the regional skew prior",
+    "Add the floods of 1786 to 1889",
+    "Add eleven neighbouring gauges",
+    "Add the decline since 1950",
+    "Stack three trend shapes",
+  ]}
+  caption="The table above, one source of information at a time. Dots are the posterior medians; the shaded band and the bar on the last row are the only two 89% intervals quoted in this post, so no other row shows one."
+>
+  <svg
+    viewBox="0 0 640 372"
+    role="img"
+    aria-label="Dot plot of the six rows of the table. The median 100-year flow falls from 725,655 to 576,556 cubic feet per second as information is added, and the 30-year chance of beating the textbook flow falls from 29.2% to 8.1%. Stacking three trend shapes gives 604,743 and 10.8%, with an 89% range from 3% to 22%."
+  >
+    <text x={flowLeft} y="20" class="f-label">100-year flow, median</text>
+    <text x={flowLeft} y="38" class="f-small f-text-muted">thousand cfs</text>
+    <text x={chanceLeft} y="20" class="f-label">Chance in 30 years</text>
+    <text x={chanceLeft} y="38" class="f-small f-text-muted">
+      of beating the textbook flow
+    </text>
+
+    <rect
+      x={bandX}
+      y={top}
+      width={bandWidth}
+      height={bottom - top}
+      class="f-fill-soft"></rect>
+    {
+      flowTicks.map(tick => (
+        <g>
+          <line
+            x1={flowAt(tick)}
+            x2={flowAt(tick)}
+            y1={bottom}
+            y2={bottom + 5}
+            class="f-axis"
+          />
+          <text
+            x={flowAt(tick)}
+            y={bottom + 20}
+            text-anchor="middle"
+            class="f-small f-text-muted f-num"
+          >
+            {tick / 1000}
+          </text>
+        </g>
+      ))
+    }
+    {
+      chanceTicks.map(tick => (
+        <g>
+          <line
+            x1={chanceAt(tick)}
+            x2={chanceAt(tick)}
+            y1={bottom}
+            y2={bottom + 5}
+            class="f-axis"
+          />
+          <text
+            x={chanceAt(tick)}
+            y={bottom + 20}
+            text-anchor="middle"
+            class="f-small f-text-muted f-num"
+          >
+            {tick}%
+          </text>
+        </g>
+      ))
+    }
+    <line x1={flowLeft} x2={flowRight} y1={bottom} y2={bottom} class="f-axis"
+    ></line>
+    <line
+      x1={chanceLeft}
+      x2={chanceRight}
+      y1={bottom}
+      y2={bottom}
+      class="f-axis"></line>
+    <line
+      x1={textbookX}
+      x2={textbookX}
+      y1={top}
+      y2={bottom}
+      class="f-line f-dash"></line>
+    <line x1={plugInX} x2={plugInX} y1={top} y2={bottom} class="f-line f-dash"
+    ></line>
+
+    {
+      connectors.map(connector => (
+        <g data-from={connector.frame}>
+          <path d={connector.flow} class="f-muted" />
+          <path d={connector.chance} class="f-muted" />
+        </g>
+      ))
+    }
+
+    <g data-from={last}>
+      <line
+        x1={rangeX0}
+        x2={rangeX1}
+        y1={rangeY}
+        y2={rangeY}
+        class="f-accent f-thick"></line>
+      <line
+        x1={rangeX0}
+        x2={rangeX0}
+        y1={rangeY - 6}
+        y2={rangeY + 6}
+        class="f-accent f-thick"></line>
+      <line
+        x1={rangeX1}
+        x2={rangeX1}
+        y1={rangeY - 6}
+        y2={rangeY + 6}
+        class="f-accent f-thick"></line>
+      <text
+        x={rangeX1 + 4}
+        y={rangeY + 22}
+        text-anchor="end"
+        class="f-small f-text-accent f-num"
+      >
+        89% range: 3% to 22%
+      </text>
+    </g>
+
+    {
+      rows.map((row, i) => (
+        <g data-from={i}>
+          <text x="16" y={row.labelY} class="f-small f-label">
+            {row.label}
+          </text>
+          {row.hasSub && (
+            <text x="16" y={row.y + 13} class="f-small f-text-muted">
+              {row.sub}
+            </text>
+          )}
+          <text
+            x={row.fx - 10}
+            y={row.y + 4}
+            text-anchor="end"
+            class="f-small f-num"
+          >
+            {row.flowText}
+          </text>
+          <circle cx={row.fx} cy={row.y} r="5" class="f-fill-line" />
+          <text
+            x={row.chanceLabelX}
+            y={row.y + 4}
+            text-anchor={row.chanceAnchor}
+            class="f-small f-num"
+          >
+            {row.chanceText}
+          </text>
+          <circle cx={row.cx} cy={row.y} r="5" class="f-fill-line" />
+          <g data-show={i} data-final={row.isLast}>
+            <circle cx={row.fx} cy={row.y} r="6.5" class="f-fill-accent" />
+            <circle cx={row.cx} cy={row.y} r="6.5" class="f-fill-accent" />
+          </g>
+        </g>
+      ))
+    }
+
+    <rect x="16" y="333" width="22" height="12" class="f-fill-mid"></rect>
+    <text x="46" y="344" class="f-small f-text-muted">
+      89% interval from the gauged years alone, roughly 620 to 880
+    </text>
+    <line x1="16" x2="38" y1="359" y2="359" class="f-line f-dash"></line>
+    <text x="46" y="363" class="f-small f-text-muted">
+      Textbook flow, about 715, and the 26% from the arithmetic alone
+    </text>
+  </svg>
+</Figure>

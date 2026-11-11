@@ -1,0 +1,123 @@
+---
+title: "The Hundred-Year Flood Is an Estimate, and Its Uncertainty Is the Result"
+author: Matthew Reda
+pubDatetime: 2026-11-11T12:30:00Z
+slug: hundred-year-flood-extreme-values
+draft: false
+tags:
+  - bayesian
+  - statistics
+  - pymc
+  - extreme-values
+description: A "100-year flood" is a tail quantile estimated from about a century of annual peaks. A worked example on the Susquehanna shows why the interval around it, and the assumptions that move it, are the answer rather than the caveat.
+---
+
+import CensoredRecord from "@/components/figures/flood/CensoredRecord.astro";
+import InformationLadder from "@/components/figures/flood/InformationLadder.astro";
+import MortgageCurve from "@/components/figures/flood/MortgageCurve.astro";
+
+The "100-year flood" is the flow with a 1% chance of being exceeded in any one year. It is the line on the flood map, and it gets misread in two ways. The first is "once a century." The second is quieter and does more damage: people read it as a fixed fact about the river.
+
+It is an estimate: a 0.99 quantile fitted to about a century of annual maxima, a sample in which the observations that matter most are the rarest by construction. I built a [worked example](https://redam94.github.io/pymc-challenges/examples/E113_hundred_year_flood.html) around the Susquehanna at Harrisburg to see how much that matters. Depending on which defensible information went into the model, the chance of beating the nominal 100-year flow during a 30-year mortgage ran from about 29% down to about 8%. The interval on a return level is the result. So is the list of assumptions that moves it.
+
+## The arithmetic of a mortgage
+
+Start with the part that needs no model. A flow with a 1% annual exceedance chance is beaten at least once in 30 independent years with probability
+
+$$P_{30} = 1 - (1 - 0.01)^{30} \approx 0.26$$
+
+More generally, if $F_t(x)$ is the probability that year $t$'s peak stays below $x$, the chance of at least one exceedance over a horizon is $1 - \prod_t F_t(x)$. That is the quantity a homeowner cares about: a named event, a stated horizon, a probability. "Return period" is a property of a fitted curve. The 26% is a property of a decision.
+
+<MortgageCurve />
+
+## One gauge, 134 years, a quarter of a million cfs
+
+The US standard for flood frequency (Bulletin 17C, England et al. 2019) fits a log-Pearson III distribution to the base-10 logs of the annual peaks. It is not the GEV from the extreme-value textbooks, but the inferential problem is the same: three parameters, a mean $\mu$, a spread $\sigma$, and a skew $\gamma$ that sets the upper tail and is the thing a single gauge knows least about.
+
+The one-gauge model in the worked example is short. The drainage area, the log peaks, and the centre and sd of the skew prior are data. The log density `p3_logp` is hand-written there, because the Pearson III support has a wall that moves with every parameter:
+
+```python
+import numpy as np
+import pymc as pm
+import pytensor.tensor as pt
+
+with pm.Model() as one_gauge:
+    mu = pm.Normal("mu", 5.0 + 0.8 * np.log10(area / 1e4), 0.5)
+    sigma = pm.LogNormal("sigma", np.log(0.18), 0.4)
+    z = pm.Normal("z_gamma", 0.0, 1.0)
+    gamma = pm.Deterministic("gamma", skew_centre + skew_sd * z)
+    pm.Potential("gauged", pt.sum(p3_logp(log10_peaks, mu, sigma, gamma)))
+```
+
+Harrisburg has a gapless gauged record of 134 water years. That sounds like plenty until you count how many times a 1-in-100 event is expected to show up in it: 1.34. In the worked example, the posterior for the 100-year flow from the gauged years alone sits near 720,000 cubic feet per second, with an 89% interval of roughly 620,000 to 880,000. A quarter of a million cfs of uncertainty, from more than a century of clean data.
+
+Turning draws into the two quantities of interest takes a few lines of SciPy:
+
+```python
+from scipy import stats
+
+def return_level(mu, sigma, gamma, p=0.99):
+    """Flow with annual non-exceedance probability p, one value per draw."""
+    return 10 ** stats.pearson3.ppf(p, gamma, loc=mu, scale=sigma)
+
+def chance_in_30(x, mu, sigma, gamma):
+    """Chance of at least one annual peak above x in 30 years, per draw."""
+    logcdf = stats.pearson3.logcdf(np.log10(x), gamma, loc=mu, scale=sigma)
+    return -np.expm1(30 * logcdf)
+```
+
+Here is the first place the uncertainty stops being a footnote. Take a fixed "textbook" 100-year flow (about 715,000 cfs, computed in the worked example from the gauged years by the older hand method; the official map value may differ) and average `chance_in_30` over the posterior. You get 27% to 29%, not 26%. Exceedance probability is a nonlinear function of the parameters, so averaging over what you do not know gives a different number than plugging in the point estimate. Hydrologists call this the expected probability. The uncertainty does not sit symmetrically around the answer. It moves the answer.
+
+## "Nothing bigger for a century" is data
+
+Harrisburg flooded before it had a gauge. The record names six floods between 1786 and 1889, and it implies something just as useful about the other 98 years: nobody wrote down anything to rival them. Each recorded peak $q_h$ enters the likelihood through its density. Each of the $m$ unrecorded years says only "below the perception threshold $X$," which is a censored observation:
+
+$$\sum_h \log p(q_h) + m \log F(X)$$
+
+Adding those terms moved the 100-year flow down by about 8%, to about 660,000 cfs, and shrank its 89% interval by a third. A century in which nothing came close to the largest gauged flood is evidence against the heavy tail the gauged years alone allowed. One detail is instructive: replacing each old flood's value with a ±25% interval changed almost nothing. The fact of the old marks mattered more than their precision.
+
+<CensoredRecord />
+
+## What each piece of information did
+
+The worked example builds the answer one source of information at a time. These are its numbers:
+
+| Information in the model               | 100-year flow, median (cfs) | 30-year chance of beating the textbook flow |
+| -------------------------------------- | --------------------------- | ------------------------------------------- |
+| Gauge alone, vague skew prior          | 725,655                     | 29.2%                                       |
+| + regional skew prior                  | 714,924                     | 27.4%                                       |
+| + floods of 1786 to 1889               | 660,766                     | 18.8%                                       |
+| + eleven neighbouring gauges           | 636,793                     | 14.4%                                       |
+| + decline since 1950, at today's level | 576,556                     | 8.1%                                        |
+| Three trend shapes, stacked            | 604,743                     | 10.8%                                       |
+
+Across the rows the point estimate moves by up to a fifth and the probability by a factor of more than three. No row is wrong given what it conditions on, and no row is "the" answer without saying what it conditions on.
+
+<InformationLadder />
+
+## The uncertainty the posterior does not show
+
+The last two rows depend on a question the standard method assumes away: is the river the same river it was? Bulletin 17C treats the record as stationary, and Milly et al. (2008) argued in _Science_ that stationarity is dead. The usual worry is heavier rain. Here the data lean the other way. Pooled over twelve gauges, the worked example estimates a regional decline of $-0.066 \pm 0.020$ log10 units per century since 1950, with posterior probability above 0.99 that it is negative.
+
+That 0.99 is too sure. It is another case of [more data producing more confidence than it has earned](/posts/more-data-more-confident-still-wrong/): the twelve gauges share their storms. Their yearly log peaks correlate at about 0.56 on average, which makes them worth roughly 1.7 independent gauges for a change they all share. Leave out one peak at a time and the decline model beats the stationary one by about 6 log units with a standard error of 3.5. Leave out a whole water year at a time, all gauges together, and the lead is about 4 with a standard error near 9. Stacking on the year-blocked comparison gives the decline about half the weight and no change about a third.
+
+So the headline is about 11%, with an 89% range from 3% to 22%: about 8% if the decline is real and holds, about 14% if the river has not changed. The data cannot separate dams, regrown forests, and fewer ice jams as causes. That range is the finding.
+
+## What to do in practice
+
+1. **Report the event over the horizon.** "About 11 in 100 over a 30-year mortgage" answers the question people have. "The 100-year flow is 604,743 cfs" answers one they did not ask, to [six figures the model never earned](/posts/false-precision-in-reporting/).
+
+2. **Put the interval in the headline.** A range of 3% to 22% tells the reader how much weight the number can bear.
+3. **Show the ladder.** A table of what each information source did is the most honest sensitivity analysis I know. It tells the reader exactly which assumption to argue with.
+
+4. **Check the independence your precision rests on.** If your units share shocks, block the cross-validation by the shared unit and see whether the comparison survives.
+
+5. **Treat stationarity as a model choice.** The worked example holds each trend model at its current level rather than extrapolating the line, and shows the alternatives side by side.
+
+6. **Test the tail machinery before trusting it.** Tails are where numerical code is least exercised. The worked example found a library gradient that was off by orders of magnitude at the shape values these rivers have, and a centred parameterisation that stranded chains at two of five seeds. [Read the diagnostics first](/posts/read-the-diagnostics-first/), per chain.
+
+A return level is the least-observed quantity in the dataset, estimated through the parameter the data constrain least, under an assumption about the future that the data cannot verify. Reporting it as a single number discards most of what the analysis learned.
+
+---
+
+_Further reading: the full [worked example](https://redam94.github.io/pymc-challenges/examples/E113_hundred_year_flood.html) has the data, the full models, and the public-facing figures. All empirical numbers above come from it. It is a modelling lesson, not an engineering flood study; for a real property, start with the official flood maps and a local engineer. References: England et al. (2019), "Guidelines for Determining Flood Flow Frequency: Bulletin 17C," USGS Techniques and Methods 4-B5; Milly et al. (2008), "Stationarity Is Dead: Whither Water Management?", Science._

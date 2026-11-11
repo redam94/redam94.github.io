@@ -1,0 +1,148 @@
+---
+/**
+ * The four estimates of the training effect quoted in the post, on one
+ * dollar axis, against the experimental benchmark. No computed values: the
+ * whisker is the experiment's robust standard error as stated.
+ */
+import Figure from "../Figure.astro";
+import { f1, scale } from "../lib";
+import { dollars, estimate } from "./model";
+
+const experiment = 1794;
+const experimentSe = 671;
+
+const left = 36;
+const right = 604;
+/** Bars stop short of the right edge, which holds the value labels. */
+const barsRight = 540;
+const xAt = scale(-9000, 3000, left, barsRight);
+const zero = xAt(0);
+
+const rows = [
+  {
+    label: "Randomized experiment (the answer key)",
+    value: experiment,
+    tone: "alt",
+  },
+  { label: "Raw comparison with CPS men", value: -8498, tone: "warn" },
+  {
+    label: "Flexible regression without prior earnings",
+    value: -3690,
+    tone: "warn",
+  },
+  {
+    label: "Flexible regression with prior earnings",
+    value: estimate,
+    tone: "accent",
+  },
+].map((row, i) => {
+  const header = 38 + i * 60;
+  const end = xAt(row.value);
+  return {
+    ...row,
+    header,
+    barY: header + 11,
+    barX: f1(Math.min(zero, end)),
+    barWidth: f1(Math.abs(end - zero)),
+    delay: 200 + i * 260,
+  };
+});
+
+const barHeight = 18;
+const axisY = 262;
+const whiskerY = rows[0].barY + barHeight / 2;
+const whisker = {
+  x1: f1(xAt(experiment - experimentSe)),
+  x2: f1(xAt(experiment + experimentSe)),
+};
+const ticks = [-8000, -6000, -4000, -2000, 0, 2000];
+---
+
+<Figure
+  replay
+  caption="The four estimates quoted above, in 1978 dollars. The dashed line is the experimental effect and the whisker is its robust standard error. Only the regression that includes prior earnings lands near it."
+>
+  <svg
+    viewBox="0 0 640 296"
+    role="img"
+    aria-label="Horizontal bars: experiment $1,794, raw comparison minus $8,498, regression without prior earnings minus $3,690, regression with prior earnings $1,572."
+  >
+    {
+      ticks.map(tick => (
+        <g>
+          <line
+            x1={f1(xAt(tick))}
+            x2={f1(xAt(tick))}
+            y1="48"
+            y2={axisY}
+            class="f-grid"
+          />
+          <text
+            x={f1(xAt(tick))}
+            y={axisY + 20}
+            text-anchor="middle"
+            class="f-small f-text-muted f-num"
+          >
+            {dollars(tick)}
+          </text>
+        </g>
+      ))
+    }
+    <line x1={left} x2={right} y1={axisY} y2={axisY} class="f-axis"></line>
+
+    {
+      rows.map(row => (
+        <g class="fx-rise" style={`--d: ${row.delay}ms`}>
+          <text x={left} y={row.header} class="f-label">
+            {row.label}
+          </text>
+          <text
+            x={right}
+            y={row.header}
+            text-anchor="end"
+            class:list={["f-label f-num", `f-text-${row.tone}`]}
+          >
+            {dollars(row.value)}
+          </text>
+          <rect
+            x={row.barX}
+            y={row.barY}
+            width={row.barWidth}
+            height={barHeight}
+            rx="3"
+            class={`f-fill-${row.tone}`}
+          />
+        </g>
+      ))
+    }
+
+    <line x1={zero} x2={zero} y1="44" y2={axisY} class="f-line"></line>
+    <line
+      x1={f1(xAt(experiment))}
+      x2={f1(xAt(experiment))}
+      y1="44"
+      y2={axisY}
+      class="f-alt f-dash fx-fade"
+      style="--d: 200ms"></line>
+    <g class="fx-fade" style="--d: 500ms">
+      <line
+        x1={whisker.x1}
+        x2={whisker.x2}
+        y1={whiskerY}
+        y2={whiskerY}
+        class="f-line"></line>
+      <line
+        x1={whisker.x1}
+        x2={whisker.x1}
+        y1={whiskerY - 5}
+        y2={whiskerY + 5}
+        class="f-line"></line>
+      <line
+        x1={whisker.x2}
+        x2={whisker.x2}
+        y1={whiskerY - 5}
+        y2={whiskerY + 5}
+        class="f-line"></line>
+    </g>
+  </svg>
+</Figure>

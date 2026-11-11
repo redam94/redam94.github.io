@@ -1,0 +1,183 @@
+---
+/**
+ * Schematic of the three kinds of information in the likelihood: the gauged
+ * peaks, the six recorded floods of 1786 to 1889, and the 98 years in which
+ * nothing was recorded (censored below the perception threshold X).
+ *
+ * The counts, the two dates and the likelihood terms come from the post.
+ * Bar heights and positions are illustrative draws, not the gauge series.
+ */
+import Figure from "../Figure.astro";
+import { f1, gaussian, range, rng } from "../lib";
+
+const historicYears = 104; // 1786 to 1889 inclusive
+const recorded = 6;
+const silent = historicYears - recorded;
+const gaugedYears = 134;
+
+const pxPerYear = 2.3;
+const histLeft = 46;
+const histRight = histLeft + historicYears * pxPerYear;
+const gaugeLeft = histRight + 14;
+const gaugeRight = gaugeLeft + gaugedYears * pxPerYear;
+const base = 250;
+const tallest = 186;
+const thresholdHeight = 118;
+const thresholdY = base - thresholdHeight;
+
+// Illustrative gauged peaks: lognormal heights, rescaled so the largest
+// gauged bar is the tallest thing in the picture. The seed was picked so
+// that one gauged bar clearly stands above the rest.
+const draw = gaussian(rng(115));
+const raw = range(gaugedYears).map(() => Math.exp(0.42 * draw()));
+const rawMax = Math.max(...raw);
+const gauged = raw.map((value, i) => ({
+  x: f1(gaugeLeft + (i + 0.5) * pxPerYear),
+  y: f1(base - (value / rawMax) * tallest),
+}));
+
+// Illustrative recorded floods: evenly spaced, all above the threshold and
+// below the largest gauged bar.
+const historicHeights = [134, 124, 140, 128, 137, 126];
+const historic = historicHeights.map((height, i) => ({
+  x: f1(
+    histLeft + (0.5 + (i * (historicYears - 1)) / (recorded - 1)) * pxPerYear
+  ),
+  y: base - height,
+}));
+
+const histMid = (histLeft + histRight) / 2;
+const histWidth = f1(histRight - histLeft);
+---
+
+<Figure
+  frames={3}
+  interval={2800}
+  frameLabels={[
+    "The gauged record",
+    "Six floods written down before the gauge",
+    "The years in which nothing was written down",
+  ]}
+  caption="Schematic, not the Harrisburg series: bar heights and positions are illustrative, and only the counts, the two dates and the likelihood terms come from the post. Years without a record still say that the peak stayed below the perception threshold."
+>
+  <svg
+    viewBox="0 0 640 338"
+    role="img"
+    aria-label={`Schematic timeline of annual peak flows. A gauged record of ${gaugedYears} water years enters the likelihood through the density of each peak. Before it, between 1786 and 1889, ${recorded} recorded floods enter through their densities and ${silent} unrecorded years enter as censored observations below a perception threshold X.`}
+  >
+    <text x={histLeft} y="22" class="f-title" data-from="1"
+      >Before the gauge</text
+    >
+    <text x={gaugeLeft} y="22" class="f-title">
+      Gauged record, {gaugedYears} water years
+    </text>
+    <text x="624" y="44" text-anchor="end" class="f-small f-text-muted">
+      schematic
+    </text>
+    <text
+      x="16"
+      y={base - 60}
+      text-anchor="middle"
+      transform={`rotate(-90 16 ${base - 60})`}
+      class="f-small f-text-muted"
+    >
+      Annual peak flow
+    </text>
+
+    <rect
+      x={histLeft}
+      y={thresholdY}
+      width={histWidth}
+      height={thresholdHeight}
+      class="f-fill-alt-soft"
+      data-from="2"></rect>
+
+    <text
+      x={histMid}
+      y={base - 60}
+      text-anchor="middle"
+      class="f-small f-text-muted"
+      data-show="0"
+    >
+      no gauge yet
+    </text>
+
+    {
+      gauged.map(bar => (
+        <line x1={bar.x} x2={bar.x} y1={base} y2={bar.y} class="f-line" />
+      ))
+    }
+
+    <g data-from="1">
+      {
+        historic.map(bar => (
+          <g>
+            <line
+              x1={bar.x}
+              x2={bar.x}
+              y1={base}
+              y2={bar.y}
+              class="f-accent f-thick"
+            />
+            <circle cx={bar.x} cy={bar.y} r="4" class="f-fill-accent" />
+          </g>
+        ))
+      }
+    </g>
+
+    <g data-from="2">
+      <line
+        x1={histLeft}
+        x2={histRight}
+        y1={thresholdY}
+        y2={thresholdY}
+        class="f-alt f-thick f-dash"></line>
+      <text
+        x={histLeft - 8}
+        y={thresholdY + 5}
+        text-anchor="end"
+        class="f-label f-text-alt"
+      >
+        X
+      </text>
+    </g>
+
+    <line x1={histLeft} x2={histRight} y1={base} y2={base} class="f-axis"
+    ></line>
+    <line x1={gaugeLeft} x2={gaugeRight} y1={base} y2={base} class="f-axis"
+    ></line>
+    <g data-from="1">
+      <text x={histLeft} y={base + 18} class="f-small f-text-muted f-num">
+        1786
+      </text>
+      <text
+        x={histRight}
+        y={base + 18}
+        text-anchor="end"
+        class="f-small f-text-muted f-num"
+      >
+        1889
+      </text>
+    </g>
+
+    <text x={gaugeLeft} y={base + 44} class="f-small f-label">
+      {gaugedYears} peaks: the density of each, log p(q)
+    </text>
+    <text
+      x={histLeft}
+      y={base + 44}
+      class="f-small f-label f-text-accent"
+      data-from="1"
+    >
+      {recorded} recorded floods: log p(q) each
+    </text>
+    <g data-from="2">
+      <text x={histLeft} y={base + 62} class="f-small f-label f-text-alt">
+        {silent} years with no record, each below
+      </text>
+      <text x={histLeft} y={base + 80} class="f-small f-label f-text-alt">
+        the perception threshold X: log F(X) each
+      </text>
+    </g>
+  </svg>
+</Figure>

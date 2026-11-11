@@ -1,0 +1,181 @@
+---
+/**
+ * Every estimate the post quotes from the explainer's simulation, placed
+ * against the true effect. The post reports centres and (for four of the
+ * six) 95% interval coverage, so no spread is drawn.
+ */
+import Figure from "../Figure.astro";
+import { f1, scale } from "../lib";
+
+const truth = 0.5;
+
+type Row = {
+  label: string;
+  detail: string;
+  estimate: number;
+  /** The post says "near 1.4", so that value is shown as approximate. */
+  approximate?: boolean;
+  /** Share of 95% intervals containing the truth, where the post gives it. */
+  coverage?: number;
+};
+
+const rows: Row[] = [
+  {
+    label: "Revenue on spend alone",
+    detail: "no adjustment",
+    estimate: 1.4,
+    approximate: true,
+  },
+  {
+    label: "Plug-in ML fit",
+    detail: "ridge, treatment coefficient",
+    estimate: 0.64,
+    coverage: 4,
+  },
+  {
+    label: "Residualize outcome only",
+    detail: "regressed on raw spend",
+    estimate: 0.17,
+  },
+  {
+    label: "Residualize both",
+    detail: "ridge, in sample",
+    estimate: 0.5,
+    coverage: 94,
+  },
+  {
+    label: "Residualize both",
+    detail: "2-nearest-neighbor, in sample",
+    estimate: 0.25,
+    coverage: 0,
+  },
+  {
+    label: "Residualize both, cross-fitted",
+    detail: "2-nearest-neighbor, out of fold",
+    estimate: 0.5,
+    coverage: 94,
+  },
+];
+
+const plotLeft = 252;
+const plotRight = 528;
+const top = 62;
+const rowH = 42;
+const bottom = top + rows.length * rowH;
+const xAt = scale(0, 1.5, plotLeft, plotRight);
+const truthX = f1(xAt(truth));
+
+const marks = rows.map((row, i) => {
+  const y = top + i * rowH + rowH / 2;
+  const x = f1(xAt(row.estimate));
+  const biased = Math.abs(row.estimate - truth) > 1e-9;
+  const below = row.estimate < truth;
+  return {
+    ...row,
+    y,
+    x,
+    biased,
+    stick: `M${truthX} ${y} L${x} ${y}`,
+    tone: biased ? "warn" : "accent",
+    value: row.approximate
+      ? `≈ ${row.estimate.toFixed(1)}`
+      : row.estimate.toFixed(2),
+    valueX: below ? x - 11 : x + 11,
+    valueAnchor: below ? "end" : "start",
+    coverageText: row.coverage === undefined ? "–" : `${row.coverage}%`,
+    delay: 200 + i * 220,
+  };
+});
+
+const ticks = [0, 0.5, 1, 1.5].map(value => ({
+  x: f1(xAt(value)),
+  label: value.toFixed(1),
+}));
+---
+
+<Figure
+  replay
+  caption="The values this post quotes from the explainer's simulation, against the true effect of 0.50. Only the reported centers are drawn, with no spread, and a dash marks a step for which the post gives no coverage figure."
+>
+  <svg
+    viewBox="0 0 640 368"
+    role="img"
+    aria-label="Dot chart of six estimates against the true effect 0.50. Spend alone is near 1.4. Plug-in ridge is 0.64 with 4 percent coverage. Residualizing only the outcome gives 0.17. Residualizing both with ridge gives 0.50 with 94 percent coverage. Residualizing both in sample with two nearest neighbors gives 0.25 with 0 percent coverage. Cross-fitting the same learner gives 0.50 with 94 percent coverage."
+  >
+    <text x={truthX} y="24" text-anchor="middle" class="f-label f-text-accent">
+      true effect 0.50
+    </text>
+    <text x="624" y="24" text-anchor="end" class="f-small f-text-muted">
+      95% interval
+    </text>
+    <text x="624" y="41" text-anchor="end" class="f-small f-text-muted">
+      coverage
+    </text>
+
+    {
+      ticks.map(tick => (
+        <g>
+          <line x1={tick.x} x2={tick.x} y1={top} y2={bottom} class="f-grid" />
+          <text
+            x={tick.x}
+            y={bottom + 20}
+            text-anchor="middle"
+            class="f-small f-text-muted f-num"
+          >
+            {tick.label}
+          </text>
+        </g>
+      ))
+    }
+    <line x1={plotLeft} x2={plotRight} y1={bottom} y2={bottom} class="f-axis"
+    ></line>
+    <line x1={truthX} x2={truthX} y1="34" y2={bottom} class="f-accent f-dash"
+    ></line>
+    <text
+      x={(plotLeft + plotRight) / 2}
+      y={bottom + 42}
+      text-anchor="middle"
+      class="f-small f-text-muted"
+    >
+      estimated effect of spend on revenue
+    </text>
+
+    {
+      marks.map(mark => (
+        <g>
+          <text x="16" y={mark.y - 3} class="f-label">
+            {mark.label}
+          </text>
+          <text x="16" y={mark.y + 14} class="f-small f-text-muted">
+            {mark.detail}
+          </text>
+          <g class="fx-fade" style={`--d: ${mark.delay}ms`}>
+            {mark.biased && <path d={mark.stick} class="f-warn f-thick" />}
+            <circle
+              cx={mark.x}
+              cy={mark.y}
+              r="6.5"
+              class={`f-fill-${mark.tone}`}
+            />
+            <text
+              x={mark.valueX}
+              y={mark.y + 5}
+              text-anchor={mark.valueAnchor}
+              class:list={["f-label f-num", `f-text-${mark.tone}`]}
+            >
+              {mark.value}
+            </text>
+            <text
+              x="624"
+              y={mark.y + 5}
+              text-anchor="end"
+              class="f-label f-num"
+            >
+              {mark.coverageText}
+            </text>
+          </g>
+        </g>
+      ))
+    }
+  </svg>
+</Figure>

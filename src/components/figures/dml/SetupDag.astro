@@ -1,0 +1,90 @@
+---
+/**
+ * The partially linear model as a graph: demand X drives both spend D and
+ * revenue Y, and the effect of interest is the D -> Y arrow. The layers are
+ * separate Dag groups so they can enter one after another.
+ */
+import Figure from "../Figure.astro";
+import Dag, { type DagNode } from "../Dag.astro";
+
+const r = 20;
+const X: DagNode = { id: "X", label: "X", x: 320, y: 78, state: "warn" };
+const D: DagNode = { id: "D", label: "D", x: 196, y: 214 };
+const Y: DagNode = { id: "Y", label: "Y", x: 444, y: 214 };
+const v: DagNode = { id: "v", label: "v", x: 66, y: 214, state: "ghost" };
+const e: DagNode = { id: "e", label: "ε", x: 574, y: 214, state: "ghost" };
+---
+
+<Figure
+  replay
+  caption="The explainer's setup as a graph. Demand moves both spend and revenue, so the raw slope of revenue on spend mixes that path with the effect θ. Dashed nodes are unobserved."
+>
+  <svg
+    viewBox="0 0 640 284"
+    role="img"
+    aria-label="Causal diagram. Demand X points to paid social spend D through m(X) and to revenue Y through g(X). Spend points to revenue with effect theta equal to 0.50. Budget surprises v feed spend and noise epsilon feeds revenue."
+  >
+    <Dag
+      r={r}
+      nodes={[D, Y, v, e]}
+      edges={[
+        { from: "v", to: "D", tone: "muted" },
+        { from: "e", to: "Y", tone: "muted" },
+      ]}
+      class="fx-fade"
+      style="--d: 1400ms"
+    />
+    <Dag
+      r={r}
+      nodes={[X, D, Y]}
+      edges={[
+        { from: "X", to: "D", tone: "warn" },
+        { from: "X", to: "Y", tone: "warn" },
+      ]}
+      class="fx-fade"
+      style="--d: 700ms"
+    />
+    <Dag
+      r={r}
+      nodes={[D, Y]}
+      edges={[{ from: "D", to: "Y", tone: "accent" }]}
+      class="fx-fade"
+    />
+
+    <g class="fx-fade">
+      <text x={D.x} y="258" text-anchor="middle" class="f-label">
+        Paid social spend
+      </text>
+      <text x={Y.x} y="258" text-anchor="middle" class="f-label">Revenue</text>
+      <text x="320" y="200" text-anchor="middle" class="f-label f-text-accent">
+        θ = 0.50
+      </text>
+      <text x="320" y="236" text-anchor="middle" class="f-small f-text-muted">
+        the effect to estimate
+      </text>
+    </g>
+
+    <g class="fx-fade" style="--d: 700ms">
+      <text x={X.x} y="42" text-anchor="middle" class="f-label">Demand</text>
+      <text x="236" y="132" text-anchor="end" class="f-label f-text-warn">
+        m(X)
+      </text>
+      <text x="236" y="150" text-anchor="end" class="f-small f-text-muted">
+        busy weeks get more budget
+      </text>
+      <text x="404" y="132" class="f-label f-text-warn">g(X)</text>
+      <text x="404" y="150" class="f-small f-text-muted">
+        busy weeks earn more anyway
+      </text>
+    </g>
+
+    <g class="fx-fade" style="--d: 1400ms">
+      <text x={v.x} y="258" text-anchor="middle" class="f-small f-text-muted">
+        budget surprises
+      </text>
+      <text x={e.x} y="258" text-anchor="middle" class="f-small f-text-muted">
+        noise
+      </text>
+    </g>
+  </svg>
+</Figure>

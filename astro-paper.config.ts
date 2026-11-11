@@ -18,7 +18,7 @@ export default defineAstroPaperConfig({
     scheduledPostMargin: 15 * 60 * 1000,
   },
   features: {
-    lightAndDarkMode: false, // Augur is a light-only, warm-paper identity
+    lightAndDarkMode: false, // single light theme, shared with the portfolio
     dynamicOgImage: true,
     showArchives: true,
     showBackButton: true,

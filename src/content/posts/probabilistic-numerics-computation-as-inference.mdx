@@ -1,0 +1,127 @@
+---
+title: "Your Integral Has a Posterior: Probabilistic Numerics and Computation as Inference"
+author: Matthew Reda
+pubDatetime: 2026-11-11T14:00:00Z
+slug: probabilistic-numerics-computation-as-inference
+draft: false
+tags:
+  - bayesian
+  - statistics
+  - mathematics
+  - probabilistic-numerics
+description: An integral, an ODE solve, or an optimum is an estimate built from a finite number of function evaluations. Probabilistic numerics treats that computation as inference, so its error bar can travel with the number into the decision it feeds.
+---
+
+import BqSteps from "@/components/figures/numerics/BqSteps.astro";
+import InferenceLoop from "@/components/figures/numerics/InferenceLoop.astro";
+import PriorMismatch from "@/components/figures/numerics/PriorMismatch.astro";
+import TrapezoidBand from "@/components/figures/numerics/TrapezoidBand.astro";
+
+Bayesian models report uncertainty about their parameters. The numerical work underneath them almost never does. The integral that turns a response curve into an expected return, the ODE solve inside a mechanistic model, the optimizer that hands back an allocation: each returns one number, and from then on I treat that number as exact. A tolerance argument is the only trace that it was ever an approximation.
+
+Probabilistic numerics says that habit is a modeling choice, and usually an unexamined one. A numerical routine sees a finite number of evaluations and estimates a quantity it cannot compute exactly. That is inference, so it should return a posterior. This post is built from my [notes on probabilistic numerics](https://redam94.github.io/second-brain/Research/Probabilistic-Numerics/), which follow Hennig, Osborne and Kersting's _Probabilistic Numerics: Computation as Machine Learning_ (Cambridge University Press, 2022). The argument I find most useful is practical: when a numerical result feeds a decision, its error is part of the decision's uncertainty, and a point estimate throws that part away.
+
+## A numerical answer is an estimate
+
+The integral $F = \int f(x)\,\nu(dx)$ is fully determined once $f$ and $\nu$ are written down. Nothing about it is random. But if I can afford only $N$ evaluations of $f$, I do not know $F$, and probability is the standard language for not knowing something. The uncertainty is epistemic. It describes my state of knowledge after a finite computation, not noise in the world.
+
+The recipe has the same parts as any Bayesian analysis. Put a prior on the unknown object: the integrand, the ODE solution, the objective. Treat each evaluation (a function value, a gradient, a matrix-vector product) as data. Condition, and report a posterior over the quantity you wanted. The book adds a second idea: the solver is an agent that chooses its own data, and a calibrated posterior tells it where to evaluate next and when to stop.
+
+<InferenceLoop />
+
+## Bayesian quadrature
+
+Integration is the cleanest worked example, and my [Bayesian quadrature note](https://redam94.github.io/second-brain/Research/Probabilistic-Numerics/Integration/Bayesian-Quadrature) has the full derivation. Put a Gaussian process prior on the integrand, $f \sim \mathcal{GP}(0, k)$. Integration is a linear operation and Gaussians are closed under linear maps, so $F$ is jointly Gaussian with the evaluations $Y = [f(x_1), \dots, f(x_N)]$. Conditioning gives a Gaussian posterior on the integral:
+
+$$\mathbb{E}[F \mid Y] = \ell_X^\top k_{XX}^{-1} Y, \qquad \text{Var}(F \mid Y) = \mathfrak{K} - \ell_X^\top k_{XX}^{-1} \ell_X$$
+
+Here $k_{XX}$ is the kernel Gram matrix at the nodes, $\ell_X$ has entries $\ell(x_i) = \int k(x, x_i)\,\nu(dx)$, and $\mathfrak{K} = \iint k(x, x')\,\nu(dx)\,\nu(dx')$ is the prior variance of $F$ before any evaluation.
+
+Two things are worth noticing. The posterior mean is a weighted sum $\sum_i w_i f(x_i)$, which is exactly the shape of a classical quadrature rule, except the weights come from the prior. And the variance does not depend on $Y$ at all. It is a function of the nodes and the kernel only. Node placement becomes a design problem you can solve before evaluating anything. It is also a warning I will come back to.
+
+With a squared-exponential kernel $k(x, x') = \theta^2\,\mathcal{N}(x; x', \lambda^2)$ and a Gaussian measure $\nu = \mathcal{N}(\mu, \sigma^2)$, every integral is closed form: $\ell(x_i) = \theta^2\,\mathcal{N}(x_i; \mu, \lambda^2 + \sigma^2)$ and $\mathfrak{K} = \theta^2 / \sqrt{2\pi(2\sigma^2 + \lambda^2)}$. The scale $\theta$ cancels out of the mean and only sets the width of the error bar, so I estimate it from the evaluations by maximum likelihood.
+
+```python
+import numpy as np
+
+def norm_pdf(x, mean, var):
+    return np.exp(-0.5 * (x - mean) ** 2 / var) / np.sqrt(2 * np.pi * var)
+
+def bayesian_quadrature(f, nodes, lam=1.0, mu=0.0, sigma=1.0):
+    """Posterior mean and sd of F = E[f(x)], x ~ N(mu, sigma^2)."""
+    y, n = f(nodes), len(nodes)
+    gram = norm_pdf(nodes[:, None], nodes[None, :], lam**2) + 1e-10 * np.eye(n)
+    kernel_mean = norm_pdf(nodes, mu, lam**2 + sigma**2)
+    prior_var = 1.0 / np.sqrt(2 * np.pi * (2 * sigma**2 + lam**2))
+
+    weights = np.linalg.solve(gram, kernel_mean)
+    theta2 = y @ np.linalg.solve(gram, y) / n  # ML estimate of the kernel scale
+    var = theta2 * (prior_var - weights @ kernel_mean)
+    return weights @ y, np.sqrt(max(var, 0.0))
+
+def response(x):
+    return 1.0 / (1.0 + np.exp(-2.0 * (x - 0.5)))  # saturating response curve
+
+xs, ws = np.polynomial.hermite_e.hermegauss(200)  # dense reference rule
+truth = ws @ response(xs) / np.sqrt(2 * np.pi)
+
+for n in (5, 7, 9):
+    mean, sd = bayesian_quadrature(response, np.linspace(-3, 3, n))
+    print(f"n={n}: {mean:.4f} +/- {sd:.4f}  (error {mean - truth:+.4f})")
+```
+
+```text
+n=5: 0.3453 +/- 0.0246  (error -0.0069)
+n=7: 0.3520 +/- 0.0006  (error -0.0002)
+n=9: 0.3522 +/- 0.0001  (error -0.0001)
+```
+
+Seven evaluations of a smooth response curve give the expectation to three decimals, and the actual error stays within about one reported standard deviation at every $n$.
+
+<BqSteps />
+
+Now the warning. Replace the integrand with `lambda x: np.exp(-np.sin(3 * x) ** 2)` and keep seven nodes and $\lambda = 1$. The routine reports $0.981 \pm 0.001$. The reference value is $0.645$. The seven nodes happen to land near the peaks of the oscillation, the smooth prior sees a nearly constant function, and because the variance ignores the values except through one scale parameter, nothing in the output flags the problem. With $\lambda = 0.3$ and fifteen nodes the same code returns $0.6458 \pm 0.0040$, an error of $0.0007$. The error bar is a statement conditional on the prior. It is honest when the prior describes the function and overconfident when it does not.
+
+<PriorMismatch />
+
+## The rules you already trust are posterior means
+
+The result that convinced me this is more than a reframing is in my note on [classical quadrature as inference](https://redam94.github.io/second-brain/Research/Probabilistic-Numerics/Integration/Classical-Quadrature-as-Inference). Under a Wiener process prior on the integrand, the posterior mean is the piecewise-linear interpolant of the evaluations, so the posterior mean of the integral is the trapezoidal rule. The same posterior supplies the variance the classical rule leaves out:
+
+$$\text{Var}(F \mid Y) = \frac{\theta^2}{12} \sum_{i=1}^{N-1} \delta_i^3$$
+
+where $\delta_i$ are the gaps between nodes. An equally spaced grid minimizes it, the standard deviation then shrinks like $1/N$, and written as a Kalman filter the whole computation costs $\mathcal{O}(N)$, the same as the classical rule. Smoother priors (integrated Wiener processes) give spline rules, and polynomial kernels recover Gaussian quadrature. Monte Carlo fits the pattern too: it is the limiting posterior mean under a white-noise prior in which neighboring function values tell you nothing about each other, which is why its standard deviation falls only like $N^{-1/2}$.
+
+<TrapezoidBand />
+
+ODE solvers get the same treatment. An ODE filter puts a Gauss-Markov prior on the solution and its first $q$ derivatives, then at each grid point treats the residual $x'(t_n) - f(x(t_n))$ as an observation whose value is zero. That is a nonlinear state-space model, and an extended Kalman filter and smoother handles it in linear time, returning a mean trajectory together with a covariance.
+
+## When the number feeds a decision
+
+A distribution matters most at the handoff between computations. Take the inverse problem of fitting ODE parameters $\beta$ to noisy observations $z$. The usual likelihood treats the numerical solution $\hat{x}_\beta$ as the truth:
+
+$$p(z \mid \beta) = \mathcal{N}(z;\ \hat{x}_\beta,\ \sigma^2 I)$$
+
+A probabilistic solver returns a mean $m_\beta$ and covariance $P$, and marginalizing over the solution gives
+
+$$p(z \mid \beta) = \mathcal{N}(z;\ m_\beta,\ P + \sigma^2 I)$$
+
+When the step size is coarse, $P$ is large relative to $\sigma^2$ and the likelihood widens to match. The first version blames every discrepancy on the parameters or the noise, so it produces a posterior that is tight in the wrong place. My note on [further topics in ODE solvers](https://redam94.github.io/second-brain/Research/Probabilistic-Numerics/Differential-Equations/Further-Topics-in-ODE-Solvers) covers the book's Lotka-Volterra illustration, where the uncertainty-unaware likelihood puts almost no mass on the true parameter at large step sizes and the aware one stays calibrated.
+
+This is the same failure as [a confounded coefficient that gets more confident with more data](/posts/more-data-more-confident-still-wrong/). The interval is narrow because a source of error was left out of the model, not because the answer is known.
+
+## What to do in practice
+
+1. **Check whether numerical error is material.** Halve the step size or double the nodes and see whether the downstream decision moves. If it does, the numerical error belongs in the uncertainty budget.
+
+2. **Model the integrand when evaluations are expensive.** If each evaluation is a simulation or a model refit, a prior that lets one evaluation inform its neighbors pays for itself in fewer evaluations. Keep expectations modest in high dimension: the notes record that Bayesian quadrature is rarely used beyond roughly twenty dimensions.
+
+3. **Treat the error bar as conditional on the prior.** Estimate the scale from the evaluations, then rerun with a different length scale. If the answer moves by more than the reported error, the reported error is wrong.
+
+4. **Carry the uncertainty forward.** When a solver output enters a likelihood, add its covariance instead of conditioning on the point value.
+
+You already do a version of this. The Monte Carlo standard error printed next to every posterior mean in an MCMC summary is uncertainty about a computation, not about the world. Probabilistic numerics extends that habit to the rest of the numerical stack.
+
+---
+
+_Grounded in my [Second Brain notes on probabilistic numerics](https://redam94.github.io/second-brain/Research/Probabilistic-Numerics/), which summarize Hennig, Osborne and Kersting, "Probabilistic Numerics: Computation as Machine Learning" (Cambridge University Press, 2022). The NumPy example and its numbers are my own._

@@ -1,0 +1,257 @@
+---
+/**
+ * Cross-fitting with K = 5 folds, as in the post's code. One frame per
+ * held-out fold: the nuisance models train on the other four and score the
+ * held-out rows. The last frame regresses residual on residual over all rows.
+ */
+import Figure from "../Figure.astro";
+import { arrowGeom, range } from "../lib";
+
+const K = 5;
+const foldW = 108;
+const gap = 10;
+const x0 = 30;
+const foldY = 40;
+const boxH = 46;
+const fitY = 126;
+const fitH = 50;
+const slotY = 214;
+const spanEnd = x0 + K * foldW + (K - 1) * gap;
+
+const folds = range(K).map(i => {
+  const x = x0 + i * (foldW + gap);
+  return { n: i + 1, x, cx: x + foldW / 2 };
+});
+
+const steps = folds.map(held => {
+  const train = folds.filter(fold => fold.n !== held.n);
+  const labelOnRight = held.n * 2 < K + 2;
+  return {
+    frame: held.n,
+    held,
+    folds: folds.map(fold => ({ ...fold, isHeld: fold.n === held.n })),
+    trainList: train.map(fold => fold.n).join(", "),
+    feeds: train.map(fold =>
+      arrowGeom([fold.cx, foldY + boxH + 4], [fold.cx, fitY - 4], 0, 0, 8)
+    ),
+    out: arrowGeom([held.cx, fitY + fitH + 4], [held.cx, slotY - 4], 0, 0, 8),
+    noteX: labelOnRight ? held.cx + 12 : held.cx - 12,
+    noteAnchor: labelOnRight ? "start" : "end",
+  };
+});
+
+const lastFrame = K + 1;
+const frameLabels = [
+  `Split the rows into ${K} folds`,
+  ...folds.map(fold => `Hold out fold ${fold.n}, train on the rest`),
+  "Regress residual on residual",
+];
+
+/** Empty residual slot for fold n shows on every frame before frame n. */
+const slots = folds.map(fold => ({
+  ...fold,
+  emptyOn: range(fold.n).join(","),
+}));
+
+const finalArrow = arrowGeom([320, slotY + boxH + 14], [320, 302], 0, 0, 8);
+---
+
+<Figure
+  frames={lastFrame + 1}
+  interval={1900}
+  frameLabels={frameLabels}
+  caption="A schematic of the loop in the code below, with five folds. Each fold is scored by an outcome model and a treatment model that never trained on it, and the final regression uses every row's out-of-fold residuals."
+>
+  <svg
+    viewBox="0 0 640 340"
+    role="img"
+    aria-label="Five folds of the sample. In turn each fold is held out while the outcome and treatment models are fitted on the other four, then the held-out fold's residuals are stored. At the end one residual-on-residual regression runs over all rows."
+  >
+    <text x={x0} y="26" class="f-label"
+      >The sample, shuffled into {K} folds</text
+    >
+
+    {/* Frame 0 and the last frame: plain folds. */}
+    <g data-show={`0,${lastFrame}`} data-final>
+      {
+        folds.map(fold => (
+          <g>
+            <rect
+              x={fold.x}
+              y={foldY}
+              width={foldW}
+              height={boxH}
+              rx="10"
+              class="f-line f-fill-bg"
+            />
+            <text
+              x={fold.cx}
+              y={foldY + boxH / 2}
+              text-anchor="middle"
+              dominant-baseline="central"
+              class="f-label"
+            >
+              Fold {fold.n}
+            </text>
+          </g>
+        ))
+      }
+    </g>
+    <text
+      x="320"
+      y="156"
+      text-anchor="middle"
+      class="f-small f-text-muted"
+      data-show="0"
+    >
+      Each fold takes one turn as the held-out set
+    </text>
+
+    {/* Frames 1 to K: one held-out fold each. */}
+    {
+      steps.map(step => (
+        <g data-show={step.frame}>
+          {step.folds.map(fold => (
+            <g>
+              <rect
+                x={fold.x}
+                y={foldY}
+                width={foldW}
+                height={boxH}
+                rx="10"
+                class={
+                  fold.isHeld ? "f-alt f-fill-alt-soft" : "f-accent f-fill-soft"
+                }
+              />
+              <text
+                x={fold.cx}
+                y={foldY + 20}
+                text-anchor="middle"
+                class="f-label"
+              >
+                Fold {fold.n}
+              </text>
+              <text
+                x={fold.cx}
+                y={foldY + 37}
+                text-anchor="middle"
+                class:list={[
+                  "f-small",
+                  fold.isHeld ? "f-text-alt" : "f-text-accent",
+                ]}
+              >
+                {fold.isHeld ? "held out" : "train"}
+              </text>
+            </g>
+          ))}
+          {step.feeds.map(feed => (
+            <g>
+              <path d={feed.shaft} class="f-accent" />
+              <polygon points={feed.head} class="f-fill-accent" />
+            </g>
+          ))}
+          <rect
+            x={x0}
+            y={fitY}
+            width={spanEnd - x0}
+            height={fitH}
+            rx="12"
+            class="f-accent f-fill-bg"
+          />
+          <text x="320" y={fitY + 21} text-anchor="middle" class="f-label">
+            Fit the outcome model and the treatment model on folds{" "}
+            {step.trainList}
+          </text>
+          <text
+            x="320"
+            y={fitY + 39}
+            text-anchor="middle"
+            class="f-small f-text-muted"
+          >
+            Neither model sees fold {step.held.n}
+          </text>
+          <path d={step.out.shaft} class="f-alt" />
+          <polygon points={step.out.head} class="f-fill-alt" />
+          <text
+            x={step.noteX}
+            y="200"
+            text-anchor={step.noteAnchor}
+            class="f-small f-text-alt"
+          >
+            predict fold {step.held.n}, subtract
+          </text>
+          <text
+            x="320"
+            y="292"
+            text-anchor="middle"
+            class="f-small f-text-muted f-num"
+          >
+            {step.held.n} of {K} folds scored out of fold
+          </text>
+        </g>
+      ))
+    }
+
+    {/* Residual slots: empty until their fold has been held out. */}
+    {
+      slots.map(slot => (
+        <g>
+          <rect
+            x={slot.x}
+            y={slotY}
+            width={foldW}
+            height={boxH}
+            rx="10"
+            class="f-muted f-dash"
+            data-show={slot.emptyOn}
+          />
+          <g data-from={slot.n}>
+            <rect
+              x={slot.x}
+              y={slotY}
+              width={foldW}
+              height={boxH}
+              rx="10"
+              class="f-alt f-fill-alt-soft"
+            />
+            <text
+              x={slot.cx}
+              y={slotY + 20}
+              text-anchor="middle"
+              class="f-label"
+            >
+              Fold {slot.n}
+            </text>
+            <text
+              x={slot.cx}
+              y={slotY + 37}
+              text-anchor="middle"
+              class="f-small f-text-alt"
+            >
+              residuals
+            </text>
+          </g>
+        </g>
+      ))
+    }
+
+    {/* Last frame: one regression over every row. */}
+    <g data-show={lastFrame} data-final>
+      <text x="320" y="147" text-anchor="middle" class="f-label">
+        Every row trained models
+      </text>
+      <text x="320" y="166" text-anchor="middle" class="f-small f-text-muted">
+        and every row was scored by models that never saw it
+      </text>
+      <path
+        d={`M${x0} ${slotY + boxH + 6} V${slotY + boxH + 14} H${spanEnd} V${slotY + boxH + 6}`}
+        class="f-accent"></path>
+      <path d={finalArrow.shaft} class="f-accent"></path>
+      <polygon points={finalArrow.head} class="f-fill-accent"></polygon>
+      <text x="320" y="324" text-anchor="middle" class="f-label f-text-accent">
+        Regress outcome residuals on treatment residuals: one slope from all
+        rows
+      </text>
+    </g>
+  </svg>
+</Figure>

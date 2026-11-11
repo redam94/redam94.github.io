@@ -1,0 +1,274 @@
+---
+/**
+ * Bayesian quadrature on the post's saturating response curve, stepped
+ * through n = 5, 7, 9 equally spaced nodes on [-3, 3]. Everything is
+ * computed here with the post's kernel and settings (lambda = 1, measure
+ * N(0, 1), maximum-likelihood scale), so the labels match its printed output.
+ */
+import Figure from "../Figure.astro";
+import {
+  areaPath,
+  f1,
+  linePath,
+  linspace,
+  normalPdf,
+  scale,
+  type Point,
+} from "../lib";
+import { bayesianQuadrature, referenceExpectation, response } from "./bq";
+
+const left = 48;
+const right = 624;
+const top = 56;
+const bottom = 250;
+const xAt = scale(-3.6, 3.6, left, right);
+const yAt = scale(-0.6, 1.4, bottom, top);
+const grid = linspace(-3.6, 3.6, 181);
+
+const truthPath = linePath(grid.map(x => [xAt(x), yAt(response(x))] as Point));
+const weightPath = areaPath(
+  grid.map(x => [xAt(x), yAt(normalPdf(x))] as Point),
+  grid.map(x => [xAt(x), yAt(0)] as Point)
+);
+
+// The integral strip under the plot.
+const stripLeft = 110;
+const stripRight = 470;
+const fAt = scale(0.28, 0.42, stripLeft, stripRight);
+const stripTop = 300;
+const stripAxis = 384;
+const reference = referenceExpectation(response);
+
+const counts = [5, 7, 9];
+const steps = counts.map((count, i) => {
+  const fit = bayesianQuadrature(response, linspace(-3, 3, count));
+  const posterior = grid.map(x => ({ x, ...fit.at(x) }));
+  return {
+    count,
+    frame: i + 1,
+    isLast: i === counts.length - 1,
+    heading: `${count} evaluations`,
+    meanPath: linePath(posterior.map(p => [xAt(p.x), yAt(p.mean)] as Point)),
+    bandPath: areaPath(
+      posterior.map(p => [xAt(p.x), yAt(p.mean + 2 * p.sd)] as Point),
+      posterior.map(p => [xAt(p.x), yAt(p.mean - 2 * p.sd)] as Point)
+    ),
+    nodes: fit.nodes.map((x, j) => ({
+      cx: f1(xAt(x)),
+      cy: f1(yAt(fit.values[j])),
+    })),
+    rowY: 326 + i * 22,
+    barLeft: f1(fAt(fit.mean - 2 * fit.sd)),
+    barRight: f1(fAt(fit.mean + 2 * fit.sd)),
+    dotX: f1(fAt(fit.mean)),
+    label: `${fit.mean.toFixed(4)} ± ${fit.sd.toFixed(4)}`,
+  };
+});
+
+const legend = [
+  { kind: "line", tone: "f-line", text: "integrand f", from: 0 },
+  { kind: "swatch", tone: "f-fill-alt-soft", text: "weight N(0, 1)", from: 0 },
+  {
+    kind: "line",
+    tone: "f-accent f-thick",
+    text: "posterior mean of f",
+    from: 1,
+  },
+  { kind: "swatch", tone: "f-fill-mid", text: "± 2 sd", from: 1 },
+].map((item, i) => ({
+  ...item,
+  x: i < 2 ? 330 : 468,
+  y: 22 + (i % 2) * 19,
+  isLine: item.kind === "line",
+}));
+---
+
+<Figure
+  frames={4}
+  interval={2600}
+  frameLabels={[
+    "The integrand and its weight",
+    "5 evaluations",
+    "7 evaluations",
+    "9 evaluations",
+  ]}
+  caption="Computed at build time with the same integrand, kernel and nodes as the code above, so the labels match its printed output. Bands and error bars show two posterior standard deviations, and beyond the outer nodes the fit falls back to its zero prior mean."
+>
+  <svg
+    viewBox="0 0 640 410"
+    role="img"
+    aria-label="A saturating response curve with a Gaussian-process fit through 5, then 7, then 9 evaluations. The uncertainty band shrinks onto the curve, and the estimate of the integral moves from 0.3453 plus or minus 0.0246 to 0.3522 plus or minus 0.0001, next to the reference value."
+  >
+    <text x={left} y="26" class="f-title" data-show="0">
+      Before any evaluation
+    </text>
+    {
+      steps.map(step => (
+        <text
+          x={left}
+          y="26"
+          class="f-title"
+          data-show={step.frame}
+          data-final={step.isLast}
+        >
+          {step.heading}
+        </text>
+      ))
+    }
+
+    <path d={weightPath} class="f-fill-alt-soft"></path>
+    {
+      [0, 1].map(tick => (
+        <line
+          x1={left}
+          x2={right}
+          y1={yAt(tick)}
+          y2={yAt(tick)}
+          class="f-grid"
+        />
+      ))
+    }
+    <line x1={left} x2={right} y1={bottom} y2={bottom} class="f-axis"></line>
+    {
+      [0, 0.5, 1].map(tick => (
+        <text
+          x={left - 8}
+          y={yAt(tick) + 4}
+          text-anchor="end"
+          class="f-small f-text-muted f-num"
+        >
+          {tick}
+        </text>
+      ))
+    }
+    {
+      [-3, -2, -1, 0, 1, 2, 3].map(tick => (
+        <text
+          x={xAt(tick)}
+          y={bottom + 18}
+          text-anchor="middle"
+          class="f-small f-text-muted f-num"
+        >
+          {tick}
+        </text>
+      ))
+    }
+    <text
+      x={right}
+      y={bottom + 18}
+      text-anchor="end"
+      class="f-small f-text-muted"
+    >
+      x
+    </text>
+
+    {
+      steps.map(step => (
+        <g data-show={step.frame} data-final={step.isLast}>
+          <path d={step.bandPath} class="f-fill-mid" />
+          <path d={step.meanPath} class="f-accent f-thick" />
+        </g>
+      ))
+    }
+    <path d={truthPath} class="f-line"></path>
+    {
+      steps.map(step => (
+        <g data-show={step.frame} data-final={step.isLast}>
+          {step.nodes.map(node => (
+            <circle cx={node.cx} cy={node.cy} r="4" class="f-fill-bg f-line" />
+          ))}
+        </g>
+      ))
+    }
+
+    {
+      legend.map(item => (
+        <g data-from={item.from}>
+          {item.isLine ? (
+            <line
+              x1={item.x}
+              x2={item.x + 24}
+              y1={item.y - 4}
+              y2={item.y - 4}
+              class={item.tone}
+            />
+          ) : (
+            <rect
+              x={item.x}
+              y={item.y - 10}
+              width="24"
+              height="12"
+              rx="2"
+              class={item.tone}
+            />
+          )}
+          <text x={item.x + 32} y={item.y} class="f-small">
+            {item.text}
+          </text>
+        </g>
+      ))
+    }
+
+    <text x={left} y="292" class="f-label">Posterior on the integral F</text>
+    <line
+      x1={fAt(reference)}
+      x2={fAt(reference)}
+      y1={stripTop}
+      y2={stripAxis}
+      class="f-line f-dash"></line>
+    <text x={fAt(reference) + 7} y={stripTop + 8} class="f-small f-text-muted">
+      reference value
+    </text>
+    <line
+      x1={stripLeft}
+      x2={stripRight}
+      y1={stripAxis}
+      y2={stripAxis}
+      class="f-axis"></line>
+    {
+      [0.3, 0.35, 0.4].map(tick => (
+        <g>
+          <line
+            x1={fAt(tick)}
+            x2={fAt(tick)}
+            y1={stripAxis}
+            y2={stripAxis + 5}
+            class="f-axis"
+          />
+          <text
+            x={fAt(tick)}
+            y={stripAxis + 20}
+            text-anchor="middle"
+            class="f-small f-text-muted f-num"
+          >
+            {tick.toFixed(2)}
+          </text>
+        </g>
+      ))
+    }
+    {
+      steps.map(step => (
+        <g data-from={step.frame}>
+          <text x={left} y={step.rowY + 4} class="f-small f-num">
+            n = {step.count}
+          </text>
+          <line
+            x1={step.barLeft}
+            x2={step.barRight}
+            y1={step.rowY}
+            y2={step.rowY}
+            class="f-accent f-thick"
+          />
+          <circle cx={step.dotX} cy={step.rowY} r="3.5" class="f-fill-accent" />
+          <text
+            x={stripRight + 16}
+            y={step.rowY + 4}
+            class="f-small f-num f-text-accent"
+          >
+            {step.label}
+          </text>
+        </g>
+      ))
+    }
+  </svg>
+</Figure>

@@ -1,0 +1,213 @@
+---
+/**
+ * Chain and fork with identical observational clouds of (A, C), then the
+ * same intervention do(A = 2) applied to each. Simulated at build time with
+ * the post's coefficients (b = 0.8, noise scale 0.6).
+ */
+import Figure from "../Figure.astro";
+import { f1, gaussian, rng, scale, type Point } from "../lib";
+
+const b = 0.8;
+const s = 0.6;
+const doA = 2;
+const draw = gaussian(rng(7));
+
+function chain(count: number, setA?: number): Point[] {
+  return Array.from({ length: count }, () => {
+    const A = setA ?? draw();
+    const B = b * A + s * draw();
+    const C = b * B + s * draw();
+    return [A, C] as Point;
+  });
+}
+
+function fork(count: number, setA?: number): Point[] {
+  return Array.from({ length: count }, () => {
+    const B = draw();
+    const A = setA ?? b * B + s * draw();
+    const C = b * B + s * draw();
+    return [A, C] as Point;
+  });
+}
+
+const lim = 3.3;
+const top = 62;
+const bottom = 306;
+const yAt = scale(-lim, lim, bottom, top);
+
+const panels = [
+  {
+    title: "Chain: A → B → C",
+    tone: "accent",
+    left: 44,
+    observed: chain(240),
+    intervened: chain(110, doA),
+    expected: b * b * doA,
+  },
+  {
+    title: "Fork: A ← B → C",
+    tone: "alt",
+    left: 360,
+    observed: fork(240),
+    intervened: fork(110, doA),
+    expected: 0,
+  },
+].map(panel => {
+  const xAt = scale(-lim, lim, panel.left, panel.left + 244);
+  return {
+    ...panel,
+    xAt,
+    jitter: panel.intervened.map((_, i) => ((i * 7) % 11) - 5),
+  };
+});
+---
+
+<Figure
+  frames={3}
+  frameLabels={[
+    "Observe: the two clouds are the same distribution",
+    "Intervene: set A to 2 in both",
+    "Compare where C lands",
+  ]}
+  caption="Simulated with the code above. Before the intervention nothing distinguishes the two graphs. After it, C follows A in the chain and ignores it in the fork."
+>
+  <svg
+    viewBox="0 0 640 348"
+    role="img"
+    aria-label="Two scatter plots of A against C. Observationally they match. Under do(A = 2) the chain's C centres near 1.28 and the fork's stays near 0."
+  >
+    {
+      panels.map(panel => (
+        <g>
+          <text x={panel.left} y="26" class="f-title">
+            {panel.title}
+          </text>
+          <text
+            x={panel.left}
+            y="46"
+            class:list={["f-label f-num", `f-text-${panel.tone}`]}
+            data-from="2"
+          >
+            Mean of C after do(A = 2): {panel.expected.toFixed(2)}
+          </text>
+
+          <line
+            x1={panel.left}
+            x2={panel.left + 244}
+            y1={yAt(0)}
+            y2={yAt(0)}
+            class="f-grid"
+          />
+          <line
+            x1={panel.xAt(0)}
+            x2={panel.xAt(0)}
+            y1={top}
+            y2={bottom}
+            class="f-grid"
+          />
+          <line
+            x1={panel.left}
+            x2={panel.left + 244}
+            y1={bottom}
+            y2={bottom}
+            class="f-axis"
+          />
+          <line
+            x1={panel.left}
+            x2={panel.left}
+            y1={top}
+            y2={bottom}
+            class="f-axis"
+          />
+          <text
+            x={panel.left + 244}
+            y={bottom + 20}
+            text-anchor="end"
+            class="f-small f-text-muted"
+          >
+            A
+          </text>
+          <text x={panel.left - 16} y={top + 6} class="f-small f-text-muted">
+            C
+          </text>
+          {[-2, 0, 2].map(tick => (
+            <text
+              x={panel.xAt(tick)}
+              y={bottom + 20}
+              text-anchor="middle"
+              class="f-small f-text-muted f-num"
+            >
+              {tick}
+            </text>
+          ))}
+          {[-2, 0, 2].map(tick => (
+            <text
+              x={panel.left - 8}
+              y={yAt(tick) + 4}
+              text-anchor="end"
+              class="f-small f-text-muted f-num"
+            >
+              {tick}
+            </text>
+          ))}
+
+          <g data-until="0" data-from="0">
+            {panel.observed.map(([A, C]) => (
+              <circle
+                cx={f1(panel.xAt(A))}
+                cy={f1(yAt(C))}
+                r="2.2"
+                class="f-fill-line"
+                fill-opacity="0.55"
+              />
+            ))}
+          </g>
+          <g data-from="1">
+            {panel.observed.map(([A, C]) => (
+              <circle
+                cx={f1(panel.xAt(A))}
+                cy={f1(yAt(C))}
+                r="2.2"
+                class="f-fill-muted"
+                fill-opacity="0.55"
+              />
+            ))}
+            <line
+              x1={panel.xAt(doA)}
+              x2={panel.xAt(doA)}
+              y1={top}
+              y2={bottom}
+              class="f-line f-dash"
+            />
+            <text
+              x={panel.xAt(doA) - 8}
+              y={top + 6}
+              text-anchor="end"
+              class="f-small f-label"
+            >
+              do(A = 2)
+            </text>
+            {panel.intervened.map(([A, C], i) => (
+              <circle
+                cx={f1(panel.xAt(A) + panel.jitter[i])}
+                cy={f1(yAt(C))}
+                r="2.6"
+                class={`f-fill-${panel.tone}`}
+                fill-opacity="0.8"
+              />
+            ))}
+          </g>
+          <g data-from="2">
+            <line
+              x1={panel.xAt(doA) - 22}
+              x2={panel.xAt(doA) + 22}
+              y1={yAt(panel.expected)}
+              y2={yAt(panel.expected)}
+              class="f-line f-thick"
+            />
+          </g>
+        </g>
+      ))
+    }
+  </svg>
+</Figure>

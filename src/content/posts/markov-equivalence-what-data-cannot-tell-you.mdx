@@ -1,0 +1,144 @@
+---
+title: "Markov Equivalence: What Your Data Cannot Tell You About Direction"
+author: Matthew Reda
+pubDatetime: 2026-11-11T13:30:00Z
+slug: markov-equivalence-what-data-cannot-tell-you
+draft: false
+tags:
+  - causal-inference
+  - causal-discovery
+  - dags
+  - simulation
+description: Different causal graphs can imply exactly the same conditional independences, so observational data identifies a class of graphs rather than a single one. What the class shares, what it leaves open, and what it takes to break the tie.
+---
+
+import EquivalenceClass from "@/components/figures/markov/EquivalenceClass.astro";
+import InterventionScatter from "@/components/figures/markov/InterventionScatter.astro";
+import InterventionSplit from "@/components/figures/markov/InterventionSplit.astro";
+
+Run a causal discovery algorithm on observational data and the graph that comes back usually has two kinds of edges: some with arrowheads and some without. The temptation is to treat the plain lines as unfinished business. Pick the direction that matches the story everyone already believes, redraw the diagram, and present it.
+
+Those plain lines are the most honest part of the output. Several different causal graphs can imply exactly the same set of conditional independences. They form a **Markov equivalence class**, and observational data can identify the class and go no further. The members still disagree about what happens when you intervene, which is the only thing a decision cares about. This is Chapter 8 of my interactive guide, [Seeing vs. Doing](https://redam94.github.io/causal-vs-predictive-modeling/#mec), where you can click through the classes. Here I want to show the problem in a few lines of simulation, then get to what breaks the tie.
+
+## Three graphs, one statement
+
+Take three variables with two edges, $A - B$ and $B - C$. There are four ways to point the arrows:
+
+| Graph          | Structure                       | Independences implied                   |
+| -------------- | ------------------------------- | --------------------------------------- |
+| Chain          | $A \rightarrow B \rightarrow C$ | $A \not\perp C$, and $A \perp C \mid B$ |
+| Reversed chain | $A \leftarrow B \leftarrow C$   | $A \not\perp C$, and $A \perp C \mid B$ |
+| Fork           | $A \leftarrow B \rightarrow C$  | $A \not\perp C$, and $A \perp C \mid B$ |
+| Collider       | $A \rightarrow B \leftarrow C$  | $A \perp C$, and $A \not\perp C \mid B$ |
+
+The first three say the same thing and nothing more: $A$ and $C$ are related until you hold $B$ fixed. The collider says the reverse, and it is the only graph that does.
+
+<EquivalenceClass />
+
+The general rule is due to Verma and Pearl (1990). Two DAGs are Markov equivalent exactly when they share
+
+1. the same **skeleton**, meaning the same pairs joined by an edge once direction is ignored, and
+2. the same **v-structures**, meaning colliders $A \rightarrow B \leftarrow C$ whose two parents are not themselves adjacent.
+
+That second condition is why discovery algorithms look for colliders first. A collider leaves a signature no other orientation can produce, so it is where direction first shows through in observational data.
+
+## Same distribution, different interventions
+
+Here is a chain and a fork, both linear with Gaussian noise. The noise scale is chosen so every variable has unit variance.
+
+```python
+import numpy as np
+
+rng = np.random.default_rng(7)
+n = 200_000
+b, s = 0.8, 0.6  # s**2 == 1 - b**2
+
+
+def chain(n, do_a=None):
+    A = rng.normal(size=n) if do_a is None else np.full(n, do_a)
+    B = b * A + s * rng.normal(size=n)
+    C = b * B + s * rng.normal(size=n)
+    return A, B, C
+
+
+def fork(n, do_a=None):
+    B = rng.normal(size=n)
+    A = b * B + s * rng.normal(size=n) if do_a is None else np.full(n, do_a)
+    C = b * B + s * rng.normal(size=n)
+    return A, B, C
+
+
+def partial_corr(x, y, z):
+    rx = x - np.polyval(np.polyfit(z, x, 1), z)
+    ry = y - np.polyval(np.polyfit(z, y, 1), z)
+    return np.corrcoef(rx, ry)[0, 1]
+
+
+for name, gen in [("chain", chain), ("fork", fork)]:
+    A, B, C = gen(n)
+    print(name, np.round(np.cov([A, B, C]), 2).tolist())
+    print("  corr(A, C | B) =", round(partial_corr(A, C, B), 2))
+```
+
+Both graphs print the same numbers:
+
+| Quantity                   | Chain | Fork |
+| -------------------------- | ----- | ---- |
+| $\text{cov}(A, B)$         | 0.80  | 0.80 |
+| $\text{cov}(B, C)$         | 0.80  | 0.80 |
+| $\text{cov}(A, C)$         | 0.64  | 0.64 |
+| $\text{corr}(A, C \mid B)$ | 0.00  | 0.00 |
+
+This is stronger than matching independences. Both models are mean-zero Gaussians with the same covariance matrix, so they are the same joint distribution. No independence test, likelihood, or fit score can prefer one over the other at any sample size, because there is nothing in the observational distribution to prefer.
+
+Now intervene. The `do_a` argument overwrites $A$ instead of letting it be generated, which is what an experiment does:
+
+```python
+for name, gen in [("chain", chain), ("fork", fork)]:
+    _, _, C = gen(n, do_a=2.0)
+    print(name, "E[C | do(A=2)] =", round(C.mean(), 2))
+```
+
+The chain returns 1.28, which is $0.8 \times 0.8 \times 2$. The fork returns 0.00. Two models that agree on every observational quantity disagree completely about what happens to $C$ when I push on $A$.
+
+<InterventionScatter />
+
+The guide puts the stakes in marketing terms: does awareness drive search interest, or does search interest drive awareness? If both orientations sit in the same class, the two diagrams fit your data identically and recommend different interventions.
+
+## What breaks the tie
+
+Anything that orients an edge inside a class has to come from outside the independence pattern. There are four sources.
+
+**Interventions.** Randomizing a variable cuts its incoming arrows, so whatever responds is downstream of it. Which variable you intervene on matters. In the three-member class above, intervening on $A$ separates the chain (where $B$ and $C$ respond) from the other two (where nothing responds), and leaves the reversed chain and the fork tied. Intervening on $B$ separates all three: only $C$ responds in the chain, only $A$ in the reversed chain, both in the fork.
+
+<InterventionSplit />
+
+**Time order.** If $A$ is fixed before $B$ happens, then $B$ does not cause $A$. That removes orientations for free. Two cautions: the time something was measured is not always the time it happened, and time order orients an edge without ruling out a hidden common cause behind it.
+
+**Domain knowledge.** A required or forbidden edge supplied by someone who knows the system can orient more than itself. In the class $A - B - C$, knowing $A \rightarrow B$ forces $B \rightarrow C$, because the alternative would create a collider at $B$ that the data already ruled out. This propagation is formalized in Meek's orientation rules.
+
+**Stronger assumptions about how the data were generated.** LiNGAM assumes linear effects, non-Gaussian noise, and no hidden confounders. Under those assumptions the direction is identified, because regressing in the wrong direction leaves residuals that depend on the predictor. My simulation above is the case where this buys nothing: with Gaussian noise both directions leave clean residuals. The direction comes from the assumption, and if the assumed form is wrong the answer can mislead with no warning.
+
+## Reading discovery output
+
+Independence-based and score-based methods such as PC and GES return the class, drawn as a CPDAG. Arrows appear where every member agrees, and plain lines appear where members disagree. A plain line is not a weak relationship, and it is not a relationship that runs both ways. It is a direction the data on hand does not identify.
+
+Counting plain lines does not give the size of the class by doubling. $A - B - C$ has two undirected edges and three members, not four, because the fourth orientation is the collider.
+
+A method that hands back one fully directed graph, as [NOTEARS](/posts/notears-smooth-acyclicity/) does, deserves a question: where did the directions come from? Either an extra assumption supplied them, or the method chose among members the independence pattern cannot rank.
+
+The class itself is a best case. It rests on the Markov and faithfulness conditions, usually on no unmeasured common causes, and on the independence tests getting every answer right. An edge that is stable under bootstrapping can still be wrong.
+
+## What to do in practice
+
+1. **Report the class, not a member.** Show the CPDAG with its plain lines. Replacing one with an arrow by hand is an assumption, so write it down as one.
+2. **Compute the effect under each member.** If every orientation gives a similar estimate, the ambiguity does not matter for this question. If the estimates differ, as 0.64 per unit and zero do in the simulation, you have found the assumption the conclusion hangs on.
+3. **Spend the cheap information first.** Timing and required or forbidden edges cost a conversation, and each can orient several edges through propagation.
+4. **Aim experiments at disputed edges.** Pick the intervention target that splits the most remaining members, as $B$ does above.
+5. **Report functional-form results with their conditions attached.** "Under linearity and non-Gaussian noise, the direction is $X \rightarrow Y$" is a fair sentence only with its first clause.
+
+Observational data can tell you a great deal about which variables are connected. It tells you about direction only where colliders, and the orientations they force, show it. For the rest, the honest output is a set of graphs. The interactive version, with clickable classes and residual plots for the noise-based escape, is in [Seeing vs. Doing](https://redam94.github.io/causal-vs-predictive-modeling/).
+
+---
+
+_The skeleton plus v-structures characterization is from Verma and Pearl (1990), "Equivalence and Synthesis of Causal Models." The discovery material follows Glymour, Zhang and Spirtes (2019), "Review of Causal Discovery Methods Based on Graphical Models," Frontiers in Genetics. LiNGAM is from Shimizu et al. (2006), "A Linear Non-Gaussian Acyclic Model for Causal Discovery." The simulation is my own._

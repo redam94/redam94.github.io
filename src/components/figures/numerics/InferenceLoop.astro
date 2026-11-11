@@ -1,0 +1,207 @@
+---
+/**
+ * Schematic of the probabilistic-numerics recipe: a prior and a finite set
+ * of evaluations go in, a posterior over the answer comes out, and it both
+ * steers the next evaluation and travels on to the decision. Illustrative
+ * glyphs only, no data.
+ */
+import Figure from "../Figure.astro";
+import {
+  areaPath,
+  arrowGeom,
+  f1,
+  linePath,
+  linspace,
+  normalPdf,
+  rng,
+  scale,
+  type Point,
+} from "../lib";
+import { response } from "./bq";
+
+const card = { prior: 20, data: 136, left: 16, width: 196, height: 92 };
+
+// Prior glyph: three smooth random curves.
+const uniform = rng(23);
+const glyphX = scale(0, 1, card.left + 14, card.left + card.width - 14);
+const samples = [0, 1, 2].map(() => {
+  const waves = [0, 1].map(k => ({
+    amp: (0.6 + 0.6 * uniform()) / (k + 1),
+    freq: (0.9 + 1.2 * uniform()) * (k + 1),
+    phase: 2 * Math.PI * uniform(),
+  }));
+  return linePath(
+    linspace(0, 1, 60).map(t => {
+      const value = waves.reduce(
+        (sum, w) => sum + w.amp * Math.sin(w.freq * Math.PI * t + w.phase),
+        0
+      );
+      return [glyphX(t), card.prior + 62 - 15 * value] as Point;
+    })
+  );
+});
+
+// Data glyph: five evaluations of the post's response curve.
+const dataBase = card.data + 80;
+const dataX = scale(-3, 3, card.left + 22, card.left + card.width - 22);
+const evaluations = linspace(-3, 3, 5).map(x => ({
+  cx: f1(dataX(x)),
+  cy: f1(dataBase - 6 - 34 * response(x)),
+}));
+
+// Posterior glyph: a bell with its mean and one-sd bar.
+const bellCx = 350;
+const bellBase = 158;
+const bellSd = 24;
+const bellHeight = 50;
+const bellXs = linspace(-3, 3, 61);
+const bellTop = bellXs.map(
+  z =>
+    [
+      bellCx + z * bellSd,
+      bellBase - (bellHeight * normalPdf(z)) / normalPdf(0),
+    ] as Point
+);
+const bellLine = linePath(bellTop);
+const bellFill = areaPath(
+  bellTop,
+  bellXs.map(z => [bellCx + z * bellSd, bellBase] as Point)
+);
+
+const arrows = [
+  arrowGeom([212, 70], [262, 106], 3, 3),
+  arrowGeom([212, 174], [262, 140], 3, 3),
+];
+const handoff = arrowGeom([438, 122], [488, 122], 3, 3);
+---
+
+<Figure
+  replay
+  caption="Schematic of the recipe. A prior and a finite set of evaluations go in, a distribution over the answer comes out, and that distribution both steers the next evaluation and travels on to whatever uses the result."
+>
+  <svg
+    viewBox="0 0 640 248"
+    role="img"
+    aria-label="Diagram: a prior on the unknown and a set of evaluations feed a posterior over the answer. The posterior feeds a decision, and an arrow loops back from it to the evaluations to choose the next one."
+  >
+    <g class="fx-rise">
+      <rect
+        x={card.left}
+        y={card.prior}
+        width={card.width}
+        height={card.height}
+        rx="14"
+        class="f-fill-bg f-axis"></rect>
+      <text x={card.left + 14} y={card.prior + 24} class="f-label">
+        Prior on the unknown
+      </text>
+      {samples.map(d => <path d={d} class="f-muted" />)}
+    </g>
+
+    <g class="fx-rise" style="--d: 300ms">
+      <rect
+        x={card.left}
+        y={card.data}
+        width={card.width}
+        height={card.height}
+        rx="14"
+        class="f-fill-bg f-axis"></rect>
+      <text x={card.left + 14} y={card.data + 24} class="f-label">
+        Evaluations as data
+      </text>
+      <line
+        x1={card.left + 14}
+        x2={card.left + card.width - 14}
+        y1={dataBase}
+        y2={dataBase}
+        class="f-axis"></line>
+      {
+        evaluations.map(point => (
+          <g>
+            <line
+              x1={point.cx}
+              x2={point.cx}
+              y1={dataBase}
+              y2={point.cy}
+              class="f-grid"
+            />
+            <circle
+              cx={point.cx}
+              cy={point.cy}
+              r="3.5"
+              class="f-fill-bg f-line"
+            />
+          </g>
+        ))
+      }
+    </g>
+
+    <g class="fx-fade" style="--d: 800ms">
+      {
+        arrows.map(arrow => (
+          <g>
+            <path d={arrow.shaft} class="f-line" />
+            <polygon points={arrow.head} class="f-fill-line" />
+          </g>
+        ))
+      }
+    </g>
+
+    <g class="fx-rise" style="--d: 1100ms">
+      <rect x="262" y="64" width="176" height="116" rx="14" class="f-fill-soft"
+      ></rect>
+      <text x="350" y="88" text-anchor="middle" class="f-label">
+        Posterior over the answer
+      </text>
+      <path d={bellFill} class="f-fill-mid"></path>
+      <path d={bellLine} class="f-accent f-thick"></path>
+      <line
+        x1={bellCx - 60}
+        x2={bellCx + 60}
+        y1={bellBase}
+        y2={bellBase}
+        class="f-axis"></line>
+      <line
+        x1={bellCx - bellSd}
+        x2={bellCx + bellSd}
+        y1={bellBase + 11}
+        y2={bellBase + 11}
+        class="f-accent f-thick"></line>
+      <circle cx={bellCx} cy={bellBase + 11} r="3.5" class="f-fill-accent"
+      ></circle>
+    </g>
+
+    <g class="fx-fade" style="--d: 1700ms">
+      <path d={handoff.shaft} class="f-line"></path>
+      <polygon points={handoff.head} class="f-fill-line"></polygon>
+    </g>
+
+    <g class="fx-rise" style="--d: 1900ms">
+      <rect
+        x="488"
+        y="64"
+        width="136"
+        height="116"
+        rx="14"
+        class="f-fill-bg f-axis"></rect>
+      <text x="556" y="88" text-anchor="middle" class="f-label">Decision</text>
+      <line x1="532" x2="580" y1="116" y2="116" class="f-accent f-thick"></line>
+      <circle cx="556" cy="116" r="3.5" class="f-fill-accent"></circle>
+      <text x="556" y="144" text-anchor="middle" class="f-small f-text-muted">
+        takes the estimate
+      </text>
+      <text x="556" y="161" text-anchor="middle" class="f-small f-text-muted">
+        and its error bar
+      </text>
+    </g>
+
+    <g class="fx-fade" style="--d: 2500ms">
+      <path d="M350 184 Q350 206 328 206 L226 206" class="f-accent"></path>
+      <polygon points="216,206 226,201.5 226,210.5" class="f-fill-accent"
+      ></polygon>
+      <text x="232" y="228" class="f-small f-text-accent">
+        tells the solver where to evaluate next and when to stop
+      </text>
+    </g>
+  </svg>
+</Figure>
