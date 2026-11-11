@@ -45,15 +45,8 @@ const rssHref = getRelativeLocaleUrl(
     <link rel="canonical" href={canonicalURL} />
     <meta name="generator" content={Astro.generator} />
 
-    <!-- Fonts — Augur: IBM Plex Sans (body), Fraunces (display), JetBrains Mono -->
-    <Font
-      cssVariable="--font-plex"
-      preload={[{ subset: "latin", weight: 400, style: "normal" }]}
-    />
-    <Font
-      cssVariable="--font-fraunces"
-      preload={[{ subset: "latin", weight: 600, style: "normal" }]}
-    />
+    <!-- Fonts: system UI type first; Inter and JetBrains Mono are fallbacks -->
+    <Font cssVariable="--font-inter" />
     <Font cssVariable="--font-jetbrains" />
 
     <!-- Primary meta -->
@@ -107,7 +100,7 @@ const rssHref = getRelativeLocaleUrl(
     -->
     <script is:inline>
       (function () {
-        // Augur is a light-only, warm-paper identity. Pin the theme to light.
+        // The site has a single light theme. Pin it.
         const theme = "light";
         const root = document.firstElementChild;
         root?.setAttribute("data-theme", theme);

@@ -1,5 +1,5 @@
-// Augur is a light-only, warm-paper identity. There is no theme toggle; this
-// script only keeps <meta name="theme-color"> in sync with the cream background.
+// The site has a single light theme. There is no theme toggle; this
+// script only keeps <meta name="theme-color"> in sync with the page background.
 const LIGHT = "light";
 
 function reflect(): void {

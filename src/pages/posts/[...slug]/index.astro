@@ -113,12 +113,12 @@ const ogImage = ogImageUrl
   >
     <h1
       style={{ viewTransitionName: toTransitionName(title) }}
-      class="text-accent inline-block text-2xl font-bold sm:text-3xl"
+      class="text-foreground inline-block text-3xl leading-[1.1] sm:text-5xl sm:leading-[1.07]"
     >
       {title}
     </h1>
 
-    <div class="my-2 flex items-center gap-2">
+    <div class="mt-4 mb-2 flex items-center gap-2">
       <Datetime {pubDatetime} {modDatetime} {timezone} size="lg" />
       <span
         aria-hidden="true"
@@ -143,7 +143,7 @@ const ogImage = ogImageUrl
       <Content />
     </article>
 
-    <hr class="my-8 border-dashed" />
+    <hr class="my-8" />
 
     <EditPost class="sm:hidden" {hideEditPost} {post} />
 
@@ -155,7 +155,7 @@ const ogImage = ogImageUrl
 
     <ShareLinks />
 
-    <hr class="my-8 border-dashed" />
+    <hr class="my-8" />
 
     <AdjacentPostNav {prevPost} {nextPost} />
   </main>
@@ -166,10 +166,10 @@ const ogImage = ogImageUrl
   function createProgressBar() {
     const progressContainer = document.createElement("div");
     progressContainer.className =
-      "progress-container fixed top-0 z-10 h-1 w-full bg-background";
+      "progress-container pointer-events-none fixed top-0 z-40 h-0.5 w-full bg-transparent";
 
     const progressBar = document.createElement("div");
-    progressBar.className = "progress-bar h-1 w-0 bg-accent";
+    progressBar.className = "progress-bar h-0.5 w-0 bg-olive-bright";
     progressBar.id = "myBar";
 
     progressContainer.appendChild(progressBar);
