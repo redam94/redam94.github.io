@@ -1,0 +1,223 @@
+---
+/**
+ * Stick-breaking as a stepped schematic. Every break takes the prior mean
+ * fraction 1 / (1 + alpha) of what is left, with alpha = 2, so the pieces
+ * are 1/3, 2/9, 4/27, 8/81. The last frame truncates at T = 5 and hands the
+ * remainder, (2/3)^4, to the last weight. No data is involved.
+ */
+import Figure from "../Figure.astro";
+import { f1, range, scale } from "../lib";
+import { stickWeights } from "./model";
+
+const alpha = 2;
+const breaks = 4;
+const fraction = 1 / (1 + alpha);
+const weights = stickWeights(range(breaks).map(() => fraction));
+const subscripts = ["₁", "₂", "₃", "₄", "₅"];
+
+const stickLeft = 150;
+const stickRight = 610;
+const xAt = scale(0, 1, stickLeft, stickRight);
+const rowTop = 56;
+const rowStep = 38;
+const rowH = 20;
+
+/** Cumulative position of the start of each weight, then 1. */
+const edges = weights.reduce(
+  (positions, weight) => [
+    ...positions,
+    positions[positions.length - 1] + weight,
+  ],
+  [0]
+);
+
+const rows = range(breaks).map(i => {
+  const y = rowTop + (i + 1) * rowStep;
+  const start = xAt(edges[i]);
+  const end = xAt(edges[i + 1]);
+  const remaining = 1 - edges[i + 1];
+  return {
+    frame: i + 1,
+    y,
+    pieceX: f1(start),
+    pieceW: f1(end - start),
+    restX: f1(end),
+    restW: f1(stickRight - end),
+    restMid: f1((end + stickRight) / 2),
+    label: `w${subscripts[i]} = ${weights[i].toFixed(2)}`,
+    restLabel: `${remaining.toFixed(2)} left`,
+  };
+});
+
+const finalY = 258;
+const finalH = 24;
+const pieces = weights.map((weight, i) => {
+  const start = xAt(edges[i]);
+  const end = xAt(edges[i + 1]);
+  const isLast = i === weights.length - 1;
+  return {
+    x: f1(start),
+    w: f1(end - start),
+    mid: f1((start + end) / 2),
+    isLast,
+    shade: i % 2 === 0 ? "f-fill-mid" : "f-fill-soft",
+    label: isLast
+      ? `w${subscripts[i]} = ${weight.toFixed(2)}`
+      : `w${subscripts[i]}`,
+  };
+});
+
+const axisY = 296;
+const ticks = [0, 0.25, 0.5, 0.75, 1].map(value => ({
+  value,
+  x: f1(xAt(value)),
+}));
+const lastFrame = breaks + 1;
+const leftover = weights[weights.length - 1].toFixed(2);
+---
+
+<Figure
+  frames={lastFrame + 1}
+  interval={2100}
+  frameLabels={[
+    "A stick of length 1",
+    "Break off a fraction v₁ of it: that piece is w₁",
+    "Break a fraction v₂ off what is left: w₂",
+    "And again: w₃",
+    "And again: w₄",
+    "Truncate at T = 5: the last weight takes the rest",
+  ]}
+  caption={`A schematic of stick-breaking, not a fit. Every break is drawn at its prior mean, 1/(1 + α) = 1/3 for α = 2; in the model each fraction is a random Beta(1, α) draw. Stopping after four breaks leaves (2/3)⁴, about ${leftover}, for the last weight. The worked example truncates at T = 20, where the same formula leaves about 4 × 10⁻⁴.`}
+>
+  <svg
+    viewBox="0 0 640 342"
+    role="img"
+    aria-label={`A stick of length 1 is broken four times. Each break takes one third of what is left, giving weights 0.33, 0.22, 0.15 and 0.10. Truncating at five components gives the remaining ${leftover} to the fifth weight.`}
+  >
+    <text x="16" y="22" class="f-label">Stick-breaking with α = 2</text>
+    <text x="16" y="40" class="f-small f-text-muted">
+      Each break takes a fraction v of what is left, drawn here at its prior
+      mean of 1/3
+    </text>
+
+    <text x="16" y={rowTop + 14} class="f-small f-label">Whole stick</text>
+    <rect
+      x={stickLeft}
+      y={rowTop}
+      width={stickRight - stickLeft}
+      height={rowH}
+      rx="4"
+      class="f-line f-fill-bg"></rect>
+    <text
+      x={(stickLeft + stickRight) / 2}
+      y={rowTop + 14}
+      text-anchor="middle"
+      class="f-small f-text-muted"
+    >
+      length 1
+    </text>
+
+    {
+      rows.map(row => (
+        <g data-from={row.frame}>
+          <text x="16" y={row.y + 14} class="f-small f-label f-num">
+            {row.label}
+          </text>
+          <rect
+            x={row.restX}
+            y={row.y}
+            width={row.restW}
+            height={rowH}
+            rx="4"
+            class="f-muted f-dash"
+          />
+          <rect
+            x={row.pieceX}
+            y={row.y}
+            width={row.pieceW}
+            height={rowH}
+            rx="4"
+            class="f-accent f-fill-mid"
+          />
+          <text
+            x={row.restMid}
+            y={row.y + 14}
+            text-anchor="middle"
+            class="f-small f-text-muted f-num"
+          >
+            {row.restLabel}
+          </text>
+        </g>
+      ))
+    }
+
+    <g data-from={lastFrame}>
+      <text x={stickLeft} y={finalY - 9} class="f-small f-text-warn">
+        Truncated at T = 5, the last weight takes whatever is left: (2/3)⁴ ≈
+        {leftover}
+      </text>
+      <text x="16" y={finalY + 16} class="f-small f-label">All 5 weights</text>
+      {
+        pieces.map(piece => (
+          <g>
+            <rect
+              x={piece.x}
+              y={finalY}
+              width={piece.w}
+              height={finalH}
+              rx="4"
+              class={
+                piece.isLast
+                  ? "f-warn f-fill-warn-soft"
+                  : `f-accent ${piece.shade}`
+              }
+            />
+            <text
+              x={piece.mid}
+              y={finalY + 16}
+              text-anchor="middle"
+              class:list={[
+                "f-small f-label f-num",
+                piece.isLast && "f-text-warn",
+              ]}
+            >
+              {piece.label}
+            </text>
+          </g>
+        ))
+      }
+    </g>
+
+    <line x1={stickLeft} x2={stickRight} y1={axisY} y2={axisY} class="f-axis"
+    ></line>
+    {
+      ticks.map(tick => (
+        <g>
+          <line
+            x1={tick.x}
+            x2={tick.x}
+            y1={axisY}
+            y2={axisY + 5}
+            class="f-axis"
+          />
+          <text
+            x={tick.x}
+            y={axisY + 19}
+            text-anchor="middle"
+            class="f-small f-text-muted f-num"
+          >
+            {tick.value}
+          </text>
+        </g>
+      ))
+    }
+    <text
+      x={(stickLeft + stickRight) / 2}
+      y={axisY + 38}
+      text-anchor="middle"
+      class="f-small f-text-muted"
+    >
+      Share of the total weight (the whole stick is 1)
+    </text>
+  </svg>
+</Figure>

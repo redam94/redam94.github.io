@@ -1,0 +1,176 @@
+---
+/**
+ * The time-domain version of whitening as three matrices: a stationary noise
+ * covariance, the inverse of its Cholesky factor, and the covariance after
+ * whitening. A schematic: the 12-sample autocovariance is made up, and every
+ * cell is computed from it at build time.
+ */
+import Figure from "../Figure.astro";
+import { arrowGeom, f1, range } from "../lib";
+import { covarianceDemo } from "./sim";
+
+const demo = covarianceDemo(12);
+const size = demo.size;
+
+const top = 62;
+const side = 150;
+const cell = side / size;
+
+type Cell = { x: number; y: number; opacity: number };
+
+/** Cells of a matrix, shaded by absolute value relative to its largest entry. */
+function cells(matrix: number[][], originX: number): Cell[] {
+  const largest = Math.max(...matrix.flat().map(Math.abs));
+  return matrix.flatMap((row, i) =>
+    row
+      .map((value, j) => ({
+        x: f1(originX + j * cell),
+        y: f1(top + i * cell),
+        opacity: Math.round(Math.sqrt(Math.abs(value) / largest) * 100) / 100,
+      }))
+      .filter(entry => entry.opacity > 0.01)
+  );
+}
+
+const panels = [
+  {
+    x: 44,
+    title: "Noise covariance C",
+    notes: ["equal along each diagonal:", "the noise is stationary"],
+    fill: "f-fill-line",
+    cells: cells(demo.covariance, 44),
+    delay: 0,
+  },
+  {
+    x: 246,
+    title: "Whitening matrix L⁻¹",
+    notes: ["zero above the diagonal:", "row i uses samples 1 to i only"],
+    fill: "f-fill-alt",
+    cells: cells(demo.whitener, 246),
+    delay: 700,
+  },
+  {
+    x: 448,
+    title: "Covariance after L⁻¹",
+    notes: ["ones on the diagonal:", "independent, unit variance"],
+    fill: "f-fill-accent",
+    cells: cells(demo.whitened, 448),
+    delay: 1400,
+  },
+];
+
+const arrowY = top + side / 2;
+const arrows = [
+  { ...arrowGeom([198, arrowY], [242, arrowY]), delay: 500 },
+  { ...arrowGeom([400, arrowY], [444, arrowY]), delay: 1200 },
+];
+
+const firstCentre = f1(cell / 2);
+const lastCentre = f1(side - cell / 2);
+const rowTicks = range(size)
+  .filter(i => i === 0 || i === size - 1)
+  .map(i => ({ label: i + 1, y: f1(top + (i + 0.5) * cell + 4) }));
+---
+
+<Figure
+  replay
+  caption="A schematic computed at build time from a made-up autocovariance for 12 samples, not from detector noise. Darker cells are larger in absolute value, scaled within each matrix. The worked example builds the same three objects from the measured autocovariance of each detector for a 102-sample window."
+>
+  <svg
+    viewBox="0 0 640 262"
+    role="img"
+    aria-label="Three 12 by 12 matrices in a row. The noise covariance has the same value along each diagonal. The whitening matrix, the inverse of its Cholesky factor, is zero above the diagonal. The covariance after whitening is the identity matrix."
+  >
+    <text
+      x="14"
+      y={top + side / 2}
+      text-anchor="middle"
+      transform={`rotate(-90 14 ${top + side / 2})`}
+      class="f-small f-text-muted"
+    >
+      row: sample i
+    </text>
+    {
+      rowTicks.map(tick => (
+        <text
+          x="38"
+          y={tick.y}
+          text-anchor="end"
+          class="f-small f-text-muted f-num"
+        >
+          {tick.label}
+        </text>
+      ))
+    }
+
+    {
+      panels.map(panel => (
+        <g class="fx-fade" style={`--d: ${panel.delay}ms`}>
+          <text x={panel.x} y="20" class="f-label">
+            {panel.title}
+          </text>
+          <text
+            x={panel.x + firstCentre}
+            y={top - 8}
+            text-anchor="middle"
+            class="f-small f-text-muted f-num"
+          >
+            1
+          </text>
+          <text
+            x={panel.x + side / 2}
+            y={top - 8}
+            text-anchor="middle"
+            class="f-small f-text-muted"
+          >
+            column: sample j
+          </text>
+          <text
+            x={panel.x + lastCentre}
+            y={top - 8}
+            text-anchor="middle"
+            class="f-small f-text-muted f-num"
+          >
+            {size}
+          </text>
+          <rect
+            x={panel.x}
+            y={top}
+            width={side}
+            height={side}
+            class="f-fill-bg"
+          />
+          {panel.cells.map(entry => (
+            <rect
+              x={entry.x}
+              y={entry.y}
+              width={f1(cell)}
+              height={f1(cell)}
+              fill-opacity={entry.opacity}
+              class={panel.fill}
+            />
+          ))}
+          <rect x={panel.x} y={top} width={side} height={side} class="f-axis" />
+          {panel.notes.map((note, i) => (
+            <text
+              x={panel.x}
+              y={top + side + 20 + i * 17}
+              class:list={["f-small", { "f-text-muted": i === 1 }]}
+            >
+              {note}
+            </text>
+          ))}
+        </g>
+      ))
+    }
+
+    {
+      arrows.map(arrow => (
+        <g class="fx-fade" style={`--d: ${arrow.delay}ms`}>
+          <path d={arrow.shaft} class="f-line" />
+          <polygon points={arrow.head} class="f-fill-line" />
+        </g>
+      ))
+    }
+  </svg>
+</Figure>

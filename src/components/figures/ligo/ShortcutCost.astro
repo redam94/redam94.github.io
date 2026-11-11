@@ -1,0 +1,200 @@
+---
+/**
+ * What the whitening shortcut cost on the real ringdown: posterior mean and
+ * one standard deviation of three parameters under three likelihoods. Every
+ * number is from the comparison table in section 2.8 of the worked example.
+ */
+import Figure from "../Figure.astro";
+import { f1, scale } from "../lib";
+import { likelihoodFits, type LikelihoodFit } from "./data";
+
+type Quantity = "f" | "tau" | "ampH1";
+
+const columns: {
+  key: Quantity;
+  title: string;
+  x: number;
+  domain: [number, number];
+  ticks: number[];
+  digits: number;
+}[] = [
+  {
+    key: "f",
+    title: "Frequency f (Hz)",
+    x: 190,
+    domain: [222, 268],
+    ticks: [230, 245, 260],
+    digits: 2,
+  },
+  {
+    key: "tau",
+    title: "Damping time τ (ms)",
+    x: 340,
+    domain: [1.4, 6.6],
+    ticks: [2, 4, 6],
+    digits: 2,
+  },
+  {
+    key: "ampH1",
+    title: "H1 amplitude (10⁻²¹)",
+    x: 490,
+    domain: [0.5, 2.9],
+    ticks: [1, 2],
+    digits: 2,
+  },
+];
+
+const width = 130;
+const top = 62;
+const bottom = 252;
+const rowY = [100, 160, 220];
+/** The reference line is broken where the numbers sit, so it never crosses text. */
+const referenceSpans = rowY.map((y, i) => ({
+  y1: y - 8,
+  y2: i === rowY.length - 1 ? bottom : y + 32,
+}));
+
+const tones: Record<
+  LikelihoodFit["key"],
+  { stroke: string; fill: string; text: string }
+> = {
+  exact: { stroke: "f-accent", fill: "f-fill-accent", text: "f-text-accent" },
+  sigma1: { stroke: "f-alt", fill: "f-fill-alt", text: "f-text-alt" },
+  sigma037: { stroke: "f-warn", fill: "f-fill-warn", text: "f-text-warn" },
+};
+
+const panels = columns.map(column => {
+  const xAt = scale(
+    column.domain[0],
+    column.domain[1],
+    column.x,
+    column.x + width
+  );
+  return {
+    ...column,
+    ticks: column.ticks.map(tick => ({ tick, x: f1(xAt(tick)) })),
+    reference: f1(xAt(likelihoodFits[0][column.key][0])),
+    marks: likelihoodFits.map(fit => {
+      const [mean, sd] = fit[column.key];
+      const centre = xAt(mean);
+      return {
+        key: fit.key,
+        x: f1(centre),
+        x0: f1(xAt(mean - sd)),
+        x1: f1(xAt(mean + sd)),
+        // Keep the number inside its own panel.
+        labelX: f1(
+          Math.min(Math.max(centre, column.x + 48), column.x + width - 48)
+        ),
+        text: `${mean.toFixed(column.digits)} ± ${sd.toFixed(column.digits)}`,
+      };
+    }),
+  };
+});
+
+const rows = likelihoodFits.map((fit, i) => ({
+  ...fit,
+  y: rowY[i],
+  tone: tones[fit.key],
+  delay: i * 500,
+  marks: panels.map(panel => panel.marks[i]),
+}));
+---
+
+<Figure
+  replay
+  caption="Numbers from the worked example's comparison table (section 2.8): posterior mean and one standard deviation for the ringdown frequency, damping time and Hanford amplitude, fitted from the same start time under three likelihoods. The dashed line marks the exact fit's mean. The Livingston amplitude, not drawn, moves the same way: 1.00 ± 0.25, 1.85 ± 0.46 and 1.69 ± 0.16."
+>
+  <svg
+    viewBox="0 0 640 286"
+    role="img"
+    aria-label="Dot and interval plot of three ringdown fits. The exact time-domain fit gives a frequency of 246.97 plus or minus 12.46 hertz, a damping time of 4.50 plus or minus 1.19 milliseconds and a Hanford amplitude of 1.23 plus or minus 0.26. The shortcut with sigma 1 gives 244.30 plus or minus 13.73, 2.85 plus or minus 0.71 and 2.00 plus or minus 0.44. The shortcut with sigma 0.37 gives 243.34 plus or minus 3.75, 3.13 plus or minus 0.31 and 1.83 plus or minus 0.15."
+  >
+    <text x="16" y="22" class="f-label">
+      Posterior mean ± 1 sd under three likelihoods
+    </text>
+
+    {
+      panels.map(panel => (
+        <g>
+          <text x={panel.x} y="50" class="f-small f-text-muted">
+            {panel.title}
+          </text>
+          <rect
+            x={panel.x}
+            y={top}
+            width={width}
+            height={bottom - top}
+            class="f-fill-bg"
+          />
+          {referenceSpans.map(span => (
+            <line
+              x1={panel.reference}
+              x2={panel.reference}
+              y1={span.y1}
+              y2={span.y2}
+              class="f-muted f-dash"
+            />
+          ))}
+          <line
+            x1={panel.x}
+            x2={panel.x + width}
+            y1={bottom}
+            y2={bottom}
+            class="f-axis"
+          />
+          {panel.ticks.map(({ tick, x }) => (
+            <g>
+              <line x1={x} x2={x} y1={bottom} y2={bottom + 5} class="f-axis" />
+              <text
+                x={x}
+                y={bottom + 20}
+                text-anchor="middle"
+                class="f-small f-text-muted f-num"
+              >
+                {tick}
+              </text>
+            </g>
+          ))}
+        </g>
+      ))
+    }
+
+    {
+      rows.map(row => (
+        <g class="fx-rise" style={`--d: ${row.delay}ms`}>
+          <text
+            x="16"
+            y={row.y - 2}
+            class:list={["f-small f-label", row.tone.text]}
+          >
+            {row.label}
+          </text>
+          <text x="16" y={row.y + 14} class="f-small f-text-muted">
+            {row.note}
+          </text>
+          {row.marks.map(mark => (
+            <g>
+              <text
+                x={mark.labelX}
+                y={row.y - 12}
+                text-anchor="middle"
+                class="f-small f-num"
+              >
+                {mark.text}
+              </text>
+              <line
+                x1={mark.x0}
+                x2={mark.x1}
+                y1={row.y}
+                y2={row.y}
+                class:list={["f-thick", row.tone.stroke]}
+              />
+              <circle cx={mark.x} cy={row.y} r="5" class={row.tone.fill} />
+            </g>
+          ))}
+        </g>
+      ))
+    }
+  </svg>
+</Figure>

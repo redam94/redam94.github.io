@@ -1,0 +1,194 @@
+---
+/**
+ * Three things that can be called "the number of clusters", on one axis.
+ * The three distributions are the rows of the worked example's section 4
+ * table (data.ts). The two vertical markers are the truncation T = 20 and
+ * the two biological groups.
+ */
+import Figure from "../Figure.astro";
+import { f1, scale, type Point } from "../lib";
+import {
+  T_MAIN,
+  countValues,
+  fivePeopleProb,
+  occupiedProb,
+  weightyProb,
+} from "./data";
+
+const left = 56;
+const right = 610;
+const top = 58;
+const bottom = 270;
+const xAt = scale(0.5, 20.5, left, right);
+const yAt = scale(0, 0.4, bottom, top);
+const barW = 18;
+
+const bars = countValues
+  .map((count, i) => ({ count, p: weightyProb[i] }))
+  .filter(bar => bar.p > 0)
+  .map((bar, i) => ({
+    x: f1(xAt(bar.count) - barW / 2),
+    y: f1(yAt(bar.p)),
+    h: f1(bottom - yAt(bar.p)),
+    delay: i * 70,
+  }));
+
+const dots = countValues
+  .map((count, i) => ({ count, p: fivePeopleProb[i] }))
+  .filter(dot => dot.p > 0)
+  .map(dot => ({ x: f1(xAt(dot.count)), y: f1(yAt(dot.p)) }));
+
+/** Step outline of the occupied-cluster distribution. */
+const firstCount = countValues[0];
+const lastCount = countValues[countValues.length - 1];
+const stepPoints: Point[] = [
+  [xAt(firstCount - 0.5), bottom],
+  ...countValues.flatMap((count, i): Point[] => [
+    [xAt(count - 0.5), yAt(occupiedProb[i])],
+    [xAt(count + 0.5), yAt(occupiedProb[i])],
+  ]),
+  [xAt(lastCount + 0.5), bottom],
+];
+const stepPath = stepPoints
+  .map(([x, y], i) => `${i === 0 ? "M" : "L"}${f1(x)} ${f1(y)}`)
+  .join(" ");
+
+const xTicks = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20].map(value => ({
+  value,
+  x: f1(xAt(value)),
+}));
+const yTicks = [0, 0.1, 0.2, 0.3, 0.4].map(value => ({
+  value,
+  y: f1(yAt(value)),
+}));
+
+const groupsX = f1(xAt(2));
+const truncationX = f1(xAt(T_MAIN));
+const weightyLabelX = f1(xAt(5.5) + 10);
+const occupiedLabelX = f1(xAt(8.5) + 10);
+---
+
+<Figure
+  replay
+  caption="One fit, three counts. The outline, the bars and the dots are the three rows of the worked example's table of posterior probabilities for counts 2 to 16; the dashed lines mark the two biological groups and the 20 components the model was given."
+>
+  <svg
+    viewBox="0 0 640 326"
+    role="img"
+    aria-label="Posterior distributions of three cluster counts from one fit. The number of occupied clusters peaks at 6 with probability 0.20 and has a tail out to 15. The number of components with more than 2% of the weight puts 0.36 on 4 and 0.33 on 5, and the number of clusters holding at least 5 people is almost the same. The model has 20 components and the biology has 2 groups."
+  >
+    <text x="16" y="22" class="f-label">
+      Posterior probability of each count
+    </text>
+
+    {
+      yTicks.map(tick => (
+        <g>
+          <line x1={left} x2={right} y1={tick.y} y2={tick.y} class="f-grid" />
+          <text
+            x={left - 8}
+            y={tick.y + 4}
+            text-anchor="end"
+            class="f-small f-text-muted f-num"
+          >
+            {tick.value.toFixed(1)}
+          </text>
+        </g>
+      ))
+    }
+    <line x1={left} x2={right} y1={bottom} y2={bottom} class="f-axis"></line>
+    {
+      xTicks.map(tick => (
+        <g>
+          <line
+            x1={tick.x}
+            x2={tick.x}
+            y1={bottom}
+            y2={bottom + 5}
+            class="f-axis"
+          />
+          <text
+            x={tick.x}
+            y={bottom + 20}
+            text-anchor="middle"
+            class="f-small f-text-muted f-num"
+          >
+            {tick.value}
+          </text>
+        </g>
+      ))
+    }
+    <text
+      x={(left + right) / 2}
+      y={bottom + 42}
+      text-anchor="middle"
+      class="f-small f-text-muted"
+    >
+      Number of clusters
+    </text>
+
+    <line
+      x1={groupsX}
+      x2={groupsX}
+      y1={top - 6}
+      y2={bottom}
+      class="f-line f-dash"></line>
+    <text x={groupsX - 34} y={top - 12} class="f-small f-label">
+      2 biological groups
+    </text>
+    <line
+      x1={truncationX}
+      x2={truncationX}
+      y1={top - 6}
+      y2={bottom}
+      class="f-line f-dash"></line>
+    <text
+      x={truncationX + 12}
+      y={top - 12}
+      text-anchor="end"
+      class="f-small f-label"
+    >
+      T = 20 components
+    </text>
+
+    {
+      bars.map(bar => (
+        <rect
+          x={bar.x}
+          y={bar.y}
+          width={barW}
+          height={bar.h}
+          class="f-alt f-fill-alt-soft fx-fade"
+          style={`--d: ${bar.delay}ms`}
+        />
+      ))
+    }
+    <g class="fx-fade" style="--d: 600ms">
+      {
+        dots.map(dot => (
+          <circle cx={dot.x} cy={dot.y} r="3.5" class="f-fill-alt" />
+        ))
+      }
+      <text x={weightyLabelX} y="86" class="f-label f-text-alt">
+        More than 2% of the weight: 4 or 5
+      </text>
+      <text x={weightyLabelX} y="103" class="f-small f-text-muted">
+        bars: components by weight; dots: clusters of at least 5 people
+      </text>
+    </g>
+
+    <path
+      d={stepPath}
+      pathLength="1"
+      class="f-accent f-thick fx-draw"
+      style="--d: 900ms"></path>
+    <g class="fx-fade" style="--d: 1800ms">
+      <text x={occupiedLabelX} y="150" class="f-label f-text-accent">
+        Occupied clusters: median 7
+      </text>
+      <text x={occupiedLabelX} y="167" class="f-small f-text-muted">
+        outline; long tail of tiny clusters
+      </text>
+    </g>
+  </svg>
+</Figure>

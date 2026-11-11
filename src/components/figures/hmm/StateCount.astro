@@ -1,0 +1,136 @@
+---
+/**
+ * Posterior means and 94% HDIs of the Poisson rates in the two-state and
+ * four-state earthquake models, with the divergence counts of each fit. All
+ * numbers are printed in the worked example.
+ */
+import Figure from "../Figure.astro";
+import { f1, range, scale } from "../lib";
+import { divergences, fourStateRates, twoStateRates } from "./model";
+
+const left = 96;
+const right = 600;
+const xAt = scale(6, 20, left, right);
+const ticks = range(8).map(i => 6 + 2 * i);
+const axisY = 250;
+
+const rows = (rates: typeof twoStateRates, firstY: number) =>
+  rates.map((rate, k) => {
+    const y = firstY + k * 22;
+    return {
+      k,
+      y,
+      mean: rate.mean.toFixed(2),
+      x: f1(xAt(rate.mean)),
+      bar: `M${f1(xAt(rate.lo))} ${y} H${f1(xAt(rate.hi))}`,
+      labelX: f1(xAt(rate.hi) + 10),
+    };
+  });
+
+const two = rows(twoStateRates, 74);
+const four = rows(fourStateRates, 160);
+---
+
+<Figure
+  replay
+  caption={`Numbers from the worked example: posterior mean and 94% HDI of each rate. With two states the intervals are separate. With four, each interval shares about half its length with the next one, and the fit reports ${divergences.four} divergent transitions against ${divergences.two}.`}
+>
+  <svg
+    viewBox="0 0 640 298"
+    role="img"
+    aria-label={`Interval plot of earthquake rates. Two-state model: ${twoStateRates.map(rate => `${rate.mean} from ${rate.lo} to ${rate.hi}`).join(", ")}, with ${divergences.two} divergences. Four-state model: ${fourStateRates.map(rate => `${rate.mean} from ${rate.lo} to ${rate.hi}`).join(", ")}, with ${divergences.four} divergences. The four-state intervals overlap heavily.`}
+  >
+    <text x="16" y="22" class="f-title">
+      More states, the same range of rates
+    </text>
+
+    <text x="16" y="54" class="f-label f-text-accent f-num">
+      Two states: {divergences.two} divergences
+    </text>
+    {
+      two.map((row, i) => (
+        <g>
+          <text x="16" y={row.y + 4} class="f-small f-text-muted f-num">
+            λ[{row.k}]
+          </text>
+          <path
+            d={row.bar}
+            pathLength="1"
+            class="f-accent f-thick fx-draw"
+            style={`--d: ${i * 200}ms`}
+          />
+          <g class="fx-fade" style={`--d: ${i * 200 + 500}ms`}>
+            <circle cx={row.x} cy={row.y} r="5" class="f-fill-accent" />
+            <text
+              x={row.labelX}
+              y={row.y + 4}
+              class="f-small f-text-accent f-num"
+            >
+              {row.mean}
+            </text>
+          </g>
+        </g>
+      ))
+    }
+
+    <text x="16" y="140" class="f-label f-text-warn f-num">
+      Four states: {divergences.four} divergences
+    </text>
+    {
+      four.map((row, i) => (
+        <g>
+          <text x="16" y={row.y + 4} class="f-small f-text-muted f-num">
+            λ[{row.k}]
+          </text>
+          <path
+            d={row.bar}
+            pathLength="1"
+            class="f-warn f-thick fx-draw"
+            style={`--d: ${900 + i * 200}ms`}
+          />
+          <g class="fx-fade" style={`--d: ${1400 + i * 200}ms`}>
+            <circle cx={row.x} cy={row.y} r="5" class="f-fill-warn" />
+            <text
+              x={row.labelX}
+              y={row.y + 4}
+              class="f-small f-text-warn f-num"
+            >
+              {row.mean}
+            </text>
+          </g>
+        </g>
+      ))
+    }
+
+    <line x1={left} x2={right} y1={axisY} y2={axisY} class="f-axis"></line>
+    {
+      ticks.map(tick => (
+        <g>
+          <line
+            x1={xAt(tick)}
+            x2={xAt(tick)}
+            y1={axisY}
+            y2={axisY + 5}
+            class="f-axis"
+          />
+          <text
+            x={xAt(tick)}
+            y={axisY + 20}
+            text-anchor="middle"
+            class="f-small f-text-muted f-num"
+          >
+            {tick}
+          </text>
+        </g>
+      ))
+    }
+    <text
+      x={(left + right) / 2}
+      y={axisY + 40}
+      text-anchor="middle"
+      class="f-small f-text-muted"
+    >
+      Rate λ (magnitude 7+ earthquakes per year)
+    </text>
+  </svg>
+</Figure>

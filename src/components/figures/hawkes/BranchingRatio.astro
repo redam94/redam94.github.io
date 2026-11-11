@@ -1,0 +1,202 @@
+---
+/**
+ * Mean family size 1 / (1 - n) against the branching ratio n, computed from
+ * the geometric series in the post. The strip underneath shows the posterior
+ * of n that the worked example prints for Ridgecrest (median, 90% interval
+ * and the share of draws at or above one).
+ */
+import Figure from "../Figure.astro";
+import { f1, linePath, linspace, scale, type Point } from "../lib";
+import { branchingPosterior, demo } from "./model";
+
+const left = 64;
+const right = 600;
+const top = 44;
+const bottom = 236;
+const nMax = 1.3;
+const sizeMax = 12;
+const xAt = scale(0, nMax, left, right);
+const yAt = scale(0, sizeMax, bottom, top);
+const familySize = (n: number) => 1 / (1 - n);
+
+const curve = linePath(
+  linspace(0, 1 - 1 / sizeMax, 120).map(
+    n => [xAt(n), yAt(familySize(n))] as Point
+  )
+);
+
+const xTicks = [0, 0.2, 0.4, 0.6, 0.8, 1, 1.2];
+const yTicks = [0, 2, 4, 6, 8, 10, 12];
+const oneX = f1(xAt(1));
+
+const demoPoint = {
+  x: f1(xAt(demo.branching)),
+  y: f1(yAt(familySize(demo.branching))),
+  size: Math.round(familySize(demo.branching)),
+};
+
+const stripY = 306;
+const post = branchingPosterior;
+const loX = f1(xAt(post.lo));
+const hiX = f1(xAt(post.hi));
+const medianX = f1(xAt(post.median));
+---
+
+<Figure
+  replay
+  caption="The curve is the geometric series 1 + n + n² + …, the mean number of events that one background event leads to; it has no finite value once n reaches one. The bar underneath is the posterior of the branching ratio printed in the worked example for the Ridgecrest fit, and its upper end crosses the line."
+>
+  <svg
+    viewBox="0 0 640 346"
+    role="img"
+    aria-label={`Curve of one over one minus n against the branching ratio n. It passes through ${demoPoint.size} at n equal to ${demo.branching} and rises without bound as n approaches one. Below the axis, the Ridgecrest posterior for n has median ${post.median.toFixed(2)} and a 90% interval from ${post.lo} to ${post.hi}, with probability ${post.shareAtOrAboveOne} of being one or more.`}
+  >
+    <text x={left} y="20" class="f-label">
+      Mean events per background event, 1 / (1 − n)
+    </text>
+
+    <rect
+      x={oneX}
+      y={top}
+      width={right - oneX}
+      height={stripY + 14 - top}
+      class="f-fill-warn-soft fx-fade"></rect>
+
+    {
+      yTicks.map(tick => (
+        <g>
+          <line
+            x1={left}
+            x2={right}
+            y1={yAt(tick)}
+            y2={yAt(tick)}
+            class="f-grid"
+          />
+          <text
+            x={left - 8}
+            y={yAt(tick) + 4}
+            text-anchor="end"
+            class="f-small f-text-muted f-num"
+          >
+            {tick}
+          </text>
+        </g>
+      ))
+    }
+    <line x1={left} x2={right} y1={bottom} y2={bottom} class="f-axis"></line>
+    <line x1={left} x2={left} y1={top} y2={bottom} class="f-axis"></line>
+    {
+      xTicks.map(tick => (
+        <text
+          x={xAt(tick)}
+          y={bottom + 18}
+          text-anchor="middle"
+          class="f-small f-text-muted f-num"
+        >
+          {tick}
+        </text>
+      ))
+    }
+    <text
+      x={(left + oneX) / 2}
+      y={bottom + 38}
+      text-anchor="middle"
+      class="f-small f-text-muted"
+    >
+      Branching ratio n (expected direct children per event)
+    </text>
+
+    {/* The dashed line pauses around the tick label at n = 1. */}
+    <line x1={oneX} x2={oneX} y1={top} y2={bottom} class="f-warn f-dash"></line>
+    <line
+      x1={oneX}
+      x2={oneX}
+      y1={bottom + 26}
+      y2={stripY + 14}
+      class="f-warn f-dash"></line>
+    <text x={oneX + 10} y={top + 20} class="f-small f-label f-text-warn">
+      n ≥ 1
+    </text>
+    <text x={oneX + 10} y={top + 38} class="f-small f-text-warn">
+      not stationary:
+    </text>
+    <text x={oneX + 10} y={top + 54} class="f-small f-text-warn">
+      a cascade can
+    </text>
+    <text x={oneX + 10} y={top + 70} class="f-small f-text-warn">
+      run forever
+    </text>
+
+    <path d={curve} pathLength="1" class="f-line f-thick fx-draw"></path>
+
+    <g class="fx-fade" style="--d: 900ms">
+      <line
+        x1={demoPoint.x}
+        x2={demoPoint.x}
+        y1={demoPoint.y}
+        y2={bottom}
+        class="f-line f-dash"></line>
+      <circle cx={demoPoint.x} cy={demoPoint.y} r="5.5" class="f-fill-line"
+      ></circle>
+      <text
+        x={demoPoint.x - 12}
+        y={demoPoint.y - 22}
+        text-anchor="end"
+        class="f-small f-label f-num"
+      >
+        n = {demo.branching}: {demoPoint.size} events per background event
+      </text>
+      <text
+        x={demoPoint.x - 12}
+        y={demoPoint.y - 6}
+        text-anchor="end"
+        class="f-small f-text-muted"
+      >
+        so one event in five is spontaneous
+      </text>
+    </g>
+
+    <g class="fx-rise" style="--d: 1500ms">
+      <text
+        x={loX - 12}
+        y={stripY + 4}
+        text-anchor="end"
+        class="f-small f-label f-text-accent"
+      >
+        Ridgecrest posterior for n
+      </text>
+      <line x1={loX} x2={oneX} y1={stripY} y2={stripY} class="f-accent f-thick"
+      ></line>
+      <line x1={oneX} x2={hiX} y1={stripY} y2={stripY} class="f-warn f-thick"
+      ></line>
+      <line
+        x1={loX}
+        x2={loX}
+        y1={stripY - 6}
+        y2={stripY + 6}
+        class="f-accent f-thick"></line>
+      <line
+        x1={hiX}
+        x2={hiX}
+        y1={stripY - 6}
+        y2={stripY + 6}
+        class="f-warn f-thick"></line>
+      <circle cx={medianX} cy={stripY} r="5.5" class="f-fill-accent"></circle>
+      <text
+        x={medianX}
+        y={stripY + 26}
+        text-anchor="middle"
+        class="f-small f-text-accent f-num"
+      >
+        median {post.median.toFixed(2)}, 90% interval {post.lo} to {post.hi}
+      </text>
+      <text
+        x={oneX + 8}
+        y={stripY - 12}
+        class="f-small f-label f-text-warn f-num"
+      >
+        P(n ≥ 1) = {post.shareAtOrAboveOne}
+      </text>
+    </g>
+  </svg>
+</Figure>

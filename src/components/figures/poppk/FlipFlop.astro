@@ -1,0 +1,238 @@
+---
+/**
+ * Flip-flop: two parameter sets for subject 5 that draw the same curve.
+ *
+ * The rates, volumes and residual sums of squares are the values the worked
+ * example prints for subject 5. Both curves are computed here from the
+ * closed-form solution. The mirror curve uses the exact identity
+ * V' = V ke / ka, which the example prints rounded to 0.030 L/kg.
+ */
+import Figure from "../Figure.astro";
+import { linePath, linspace, scale, type Point } from "../lib";
+import { concentration, plasmaVolume, subject5 } from "./model";
+
+const { dose, ka, ke, v, mirrorV, rss } = subject5;
+
+const left = 52;
+const right = 392;
+const top = 62;
+const bottom = 300;
+const xAt = scale(0, 25, left, right);
+const yAt = scale(0, 12, bottom, top);
+const times = linspace(0, 25, 201);
+
+// Usual body: absorb at ka, eliminate at ke, volume v.
+const usual = linePath(
+  times.map(t => [xAt(t), yAt(concentration(ke * v, v, ka, t, dose))] as Point)
+);
+// Mirror body: the two rates swapped and the volume shrunk to v ke / ka.
+const shrunk = (v * ke) / ka;
+const mirror = linePath(
+  times.map(
+    t => [xAt(t), yAt(concentration(ka * shrunk, shrunk, ke, t, dose))] as Point
+  )
+);
+
+const xTicks = [0, 5, 10, 15, 20, 25];
+const yTicks = [0, 4, 8, 12];
+
+// The first curve is a wide pale band so that the dashed mirror curve, which
+// lies exactly on top of it, stays visible.
+const band = "stroke-width: 9; opacity: 0.5";
+
+/** Row label with the rate symbol's subscript, as SVG markup. */
+const rowLabel = (row: { name: string; sub: string }) =>
+  row.sub
+    ? `${row.name} k<tspan dy="3" font-size="10">${row.sub}</tspan>`
+    : row.name;
+
+const cardX = 412;
+const cardW = 212;
+const cardH = 104;
+const cards = [
+  {
+    y: 62,
+    title: "Fast absorption",
+    fill: "f-fill-soft",
+    stroke: "f-accent",
+    style: band,
+    from: 0,
+    rows: [
+      { sub: "a", name: "absorption", value: `${ka.toFixed(2)} / h` },
+      { sub: "e", name: "elimination", value: `${ke.toFixed(3)} / h` },
+      { sub: "", name: "volume V", value: `${v.toFixed(2)} L/kg` },
+    ],
+  },
+  {
+    y: 178,
+    title: "Mirror: slow absorption",
+    fill: "f-fill-alt-soft",
+    stroke: "f-alt f-thick f-dash",
+    style: "",
+    from: 1,
+    rows: [
+      { sub: "a", name: "absorption", value: `${ke.toFixed(3)} / h` },
+      { sub: "e", name: "elimination", value: `${ka.toFixed(2)} / h` },
+      { sub: "", name: "volume V", value: `${mirrorV} L/kg` },
+    ],
+  },
+];
+const rowY = (cardY: number, row: number) => cardY + 52 + row * 20;
+const mirrorVolumeY = rowY(cards[1].y, 2);
+---
+
+<Figure
+  frames={3}
+  interval={3000}
+  frameLabels={[
+    "One best fit: fast absorption, slow elimination",
+    "Swap the two rates and shrink the volume",
+    "The data cannot choose, but physiology can",
+  ]}
+  caption="Both curves are computed from the closed-form solution with the values the worked example prints for subject 5 (5.86 mg/kg dose). The mirror parameters swap the two rates and shrink the volume by their ratio, and the curve does not change. The subject's measured points are not drawn."
+>
+  <svg
+    viewBox="0 0 640 352"
+    role="img"
+    aria-label={`Concentration curve for subject 5 over 25 hours, drawn twice. The first parameter set absorbs at ${ka} per hour, eliminates at ${ke} per hour and has a volume of ${v} litres per kilogram. The mirror set absorbs at ${ke} per hour, eliminates at ${ka} per hour and has a volume of ${mirrorV} litres per kilogram. The two curves coincide at every time, and both have a residual sum of squares of ${rss}. The mirror volume is below plasma volume, about ${plasmaVolume} litres per kilogram.`}
+  >
+    <text x={left} y="22" class="f-title">
+      Subject 5: two bodies, one curve
+    </text>
+    <text x={left} y={top - 14} class="f-label">Concentration (mg/L)</text>
+
+    {
+      yTicks.map(tick => (
+        <g>
+          <line
+            x1={left}
+            x2={right}
+            y1={yAt(tick)}
+            y2={yAt(tick)}
+            class="f-grid"
+          />
+          <text
+            x={left - 8}
+            y={yAt(tick) + 4}
+            text-anchor="end"
+            class="f-small f-text-muted f-num"
+          >
+            {tick}
+          </text>
+        </g>
+      ))
+    }
+    <line x1={left} x2={right} y1={bottom} y2={bottom} class="f-axis"></line>
+    <line x1={left} x2={left} y1={top} y2={bottom} class="f-axis"></line>
+    {
+      xTicks.map(tick => (
+        <text
+          x={xAt(tick)}
+          y={bottom + 20}
+          text-anchor="middle"
+          class="f-small f-text-muted f-num"
+        >
+          {tick}
+        </text>
+      ))
+    }
+    <text
+      x={(left + right) / 2}
+      y={bottom + 42}
+      text-anchor="middle"
+      class="f-small f-text-muted"
+    >
+      Hours after the dose
+    </text>
+
+    <path d={usual} class="f-accent" style={band}></path>
+    <path d={mirror} class="f-alt f-thick f-dash" data-from="1"></path>
+
+    <text
+      x={right - 4}
+      y={top + 16}
+      text-anchor="end"
+      class="f-small f-label"
+      data-from="1"
+    >
+      the same curve at every time
+    </text>
+    <text
+      x={right - 4}
+      y={top + 36}
+      text-anchor="end"
+      class="f-small f-text-muted f-num"
+      data-from="2"
+    >
+      residual sum of squares {rss} for both
+    </text>
+
+    {
+      cards.map(card => (
+        <g data-from={card.from}>
+          <rect
+            x={cardX}
+            y={card.y}
+            width={cardW}
+            height={cardH}
+            rx="12"
+            class={card.fill}
+          />
+          <line
+            x1={cardX + 12}
+            x2={cardX + 40}
+            y1={card.y + 22}
+            y2={card.y + 22}
+            class={card.stroke}
+            style={card.style}
+          />
+          <text x={cardX + 48} y={card.y + 27} class="f-label">
+            {card.title}
+          </text>
+          {card.rows.map((row, i) => (
+            <g>
+              <text
+                x={cardX + 12}
+                y={rowY(card.y, i)}
+                class="f-small f-text-muted"
+                set:html={rowLabel(row)}
+              />
+              <text
+                x={cardX + cardW - 12}
+                y={rowY(card.y, i)}
+                text-anchor="end"
+                class="f-small f-label f-num"
+              >
+                {row.value}
+              </text>
+            </g>
+          ))}
+        </g>
+      ))
+    }
+
+    <g data-from="2">
+      <rect
+        x={cardX + 6}
+        y={mirrorVolumeY - 15}
+        width={cardW - 12}
+        height="22"
+        rx="6"
+        class="f-warn"></rect>
+      <text
+        x={cardX + 12}
+        y={cards[1].y + cardH + 22}
+        class="f-small f-label f-text-warn"
+      >
+        Less than plasma volume,
+      </text>
+      <text
+        x={cardX + 12}
+        y={cards[1].y + cardH + 40}
+        class="f-small f-label f-text-warn"
+      >
+        about {plasmaVolume} L/kg
+      </text>
+    </g>
+  </svg>
+</Figure>

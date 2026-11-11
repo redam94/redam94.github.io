@@ -1,0 +1,260 @@
+---
+/**
+ * Prior against posterior for the number of occupied clusters, one row per
+ * fit of the worked example. Posterior medians, 90% intervals and last
+ * weights are the example's printed numbers (data.ts). The prior interval for
+ * a fixed alpha is computed exactly from the Chinese-restaurant rule; the
+ * Gamma(2, 1) prior interval is the example's simulated one.
+ */
+import Figure from "../Figure.astro";
+import { f1, scale } from "../lib";
+import { N_PEOPLE, fits, gammaPrior } from "./data";
+import { occupiedPrior, quantile } from "./model";
+
+const plotLeft = 160;
+const plotRight = 430;
+const xAt = scale(0, 30, plotLeft, plotRight);
+const rowTop = 86;
+const rowStep = 52;
+const postCol = 444;
+const lastCol = 540;
+
+function priorOf(alpha: number | null) {
+  if (alpha === null) return gammaPrior;
+  const pmf = occupiedPrior(alpha, N_PEOPLE);
+  return {
+    median: quantile(pmf, 0.5),
+    low: quantile(pmf, 0.05),
+    high: quantile(pmf, 0.95),
+  };
+}
+
+const rows = fits.map((fit, i) => {
+  const y = rowTop + i * rowStep;
+  const prior = priorOf(fit.alpha);
+  return {
+    ...fit,
+    y,
+    priorY: y - 10,
+    postY: y + 9,
+    px0: f1(xAt(prior.low)),
+    px1: f1(xAt(prior.high)),
+    pxm: f1(xAt(prior.median)),
+    qx0: f1(xAt(fit.low)),
+    qx1: f1(xAt(fit.high)),
+    qxm: f1(xAt(fit.median)),
+    postText: `${fit.median} (${fit.low} to ${fit.high})`,
+  };
+});
+
+const axisY = rowTop + (rows.length - 1) * rowStep + 34;
+const ticks = [0, 5, 10, 15, 20, 25, 30].map(value => ({
+  value,
+  x: f1(xAt(value)),
+}));
+
+/** The first three fits share T = 20; the last one is cut to T = 5. */
+const wideCeilingX = f1(xAt(20));
+const wideCeilingTop = rows[0].y - 26;
+const wideCeilingBottom = rows[2].y + 24;
+const narrow = rows[3];
+const narrowCeilingX = f1(xAt(narrow.truncation));
+---
+
+<Figure
+  frames={3}
+  interval={2800}
+  frameLabels={[
+    "Before any data: what each prior says about the count",
+    "After 245 people: the posterior count follows the prior",
+    "The last weight shows where the truncation bites",
+  ]}
+  caption="Four fits of the same model to the same 245 people. Posterior medians, 90% intervals and last weights are the worked example's printed numbers. The prior bar for a fixed α is computed from the Chinese-restaurant rule for n = 245 and the Gamma(2, 1) prior bar is the example's simulated one; both describe the untruncated process."
+>
+  <svg
+    viewBox="0 0 640 352"
+    role="img"
+    aria-label="Prior and posterior intervals for the number of occupied clusters in four fits. With alpha fixed at 0.2 the posterior median is 4 with a 90% interval of 2 to 6. With alpha learned under a Gamma(2, 1) prior it is 7, 4 to 12. With alpha fixed at 5 it is 14, 10 to 18, and the last of 20 weights averages 0.017. With the truncation cut to 5 it is 5, 4 to 5, and the last weight averages 0.23."
+  >
+    <text x="16" y="22" class="f-label">
+      Occupied clusters: prior against posterior
+    </text>
+
+    <g data-from="1">
+      <text x={postCol} y="44" class="f-small f-label">Posterior</text>
+      <text x={postCol} y="59" class="f-small f-text-muted">median (90%)</text>
+    </g>
+    <g data-from="2">
+      <text x={lastCol} y="44" class="f-small f-label">Last weight</text>
+      <text x={lastCol} y="59" class="f-small f-text-muted">posterior mean</text
+      >
+    </g>
+
+    <line x1={plotLeft} x2={plotRight} y1={axisY} y2={axisY} class="f-axis"
+    ></line>
+    {
+      ticks.map(tick => (
+        <g>
+          <line
+            x1={tick.x}
+            x2={tick.x}
+            y1={axisY}
+            y2={axisY + 5}
+            class="f-axis"
+          />
+          <text
+            x={tick.x}
+            y={axisY + 19}
+            text-anchor="middle"
+            class="f-small f-text-muted f-num"
+          >
+            {tick.value}
+          </text>
+        </g>
+      ))
+    }
+    <text
+      x={(plotLeft + plotRight) / 2}
+      y={axisY + 38}
+      text-anchor="middle"
+      class="f-small f-text-muted"
+    >
+      Occupied clusters among the {N_PEOPLE} people
+    </text>
+
+    <g data-from="2">
+      <line
+        x1={wideCeilingX}
+        x2={wideCeilingX}
+        y1={wideCeilingTop}
+        y2={wideCeilingBottom}
+        class="f-warn f-dash"></line>
+      <text
+        x={wideCeilingX + 6}
+        y={wideCeilingTop + 10}
+        class="f-small f-text-warn"
+      >
+        ceiling, T = 20
+      </text>
+      <line
+        x1={narrowCeilingX}
+        x2={narrowCeilingX}
+        y1={narrow.y - 30}
+        y2={narrow.y + 24}
+        class="f-warn f-dash"></line>
+      <text
+        x={narrowCeilingX + 6}
+        y={narrow.y - 19}
+        class="f-small f-text-warn"
+      >
+        ceiling, T = 5
+      </text>
+    </g>
+
+    {
+      rows.map((row, i) => (
+        <g>
+          <text x="16" y={row.y - 2} class="f-small f-label">
+            {row.label}
+          </text>
+          <text x="16" y={row.y + 14} class="f-small f-text-muted">
+            {row.sub}
+          </text>
+
+          <line
+            x1={row.px0}
+            x2={row.px1}
+            y1={row.priorY}
+            y2={row.priorY}
+            class="f-muted f-thick"
+          />
+          <line
+            x1={row.px0}
+            x2={row.px0}
+            y1={row.priorY - 5}
+            y2={row.priorY + 5}
+            class="f-muted f-thick"
+          />
+          <line
+            x1={row.px1}
+            x2={row.px1}
+            y1={row.priorY - 5}
+            y2={row.priorY + 5}
+            class="f-muted f-thick"
+          />
+          <circle cx={row.pxm} cy={row.priorY} r="4.5" class="f-fill-muted" />
+          {i === 0 && (
+            <text
+              x={row.px1 + 9}
+              y={row.priorY + 4}
+              class="f-small f-text-muted"
+            >
+              prior
+            </text>
+          )}
+
+          <g data-from="1">
+            <line
+              x1={row.qx0}
+              x2={row.qx1}
+              y1={row.postY}
+              y2={row.postY}
+              class="f-accent f-thick"
+            />
+            <line
+              x1={row.qx0}
+              x2={row.qx0}
+              y1={row.postY - 5}
+              y2={row.postY + 5}
+              class="f-accent f-thick"
+            />
+            <line
+              x1={row.qx1}
+              x2={row.qx1}
+              y1={row.postY - 5}
+              y2={row.postY + 5}
+              class="f-accent f-thick"
+            />
+            <circle cx={row.qxm} cy={row.postY} r="5" class="f-fill-accent" />
+            {i === 0 && (
+              <text
+                x={row.qx1 + 9}
+                y={row.postY + 4}
+                class="f-small f-text-accent"
+              >
+                posterior
+              </text>
+            )}
+            <text x={postCol} y={row.y + 4} class="f-small f-num">
+              {row.postText}
+            </text>
+          </g>
+
+          <g data-from="2">
+            <text
+              x={lastCol}
+              y={row.y - 2}
+              class:list={["f-small f-label f-num", row.bites && "f-text-warn"]}
+            >
+              {row.lastWeight}
+            </text>
+            <text
+              x={lastCol}
+              y={row.y + 14}
+              class:list={[
+                "f-small",
+                row.bites ? "f-text-warn" : "f-text-muted",
+              ]}
+            >
+              {row.verdict}
+            </text>
+          </g>
+        </g>
+      ))
+    }
+
+    <text x="16" y="340" class="f-small f-text-muted">
+      Bars span the 90% interval and the dot marks the median.
+    </text>
+  </svg>
+</Figure>
