@@ -6,29 +6,1243 @@
     <title>Matthew Reda · Bayesian measurement systems</title>
     <meta
       name="description"
-      content="Matthew Reda — Bayesian measurement scientist. Honest measurement, applied carefully, in service of better business decisions."
+      content="Matthew Reda builds Bayesian measurement systems for marketing and finance decisions. Fifteen repositories from May to November 2026: what each one does, what it is built with, and where to find it."
     />
+    <meta name="theme-color" content="#000000" />
     <link rel="icon" href="assets/favicon.svg" />
-    <link rel="stylesheet" href="tokens.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
+    />
     <link rel="stylesheet" href="site.css" />
   </head>
-  <body data-shade="forest" data-accent="clay">
-    <div id="app"></div>
+  <body>
+    <a class="skip" href="#work">Skip to the work</a>
 
-    <script
-      src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"
-      crossorigin="anonymous"
-    ></script>
-    <script
-      src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"
-      crossorigin="anonymous"
-    ></script>
-    <script
-      src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"
-      crossorigin="anonymous"
-    ></script>
+    <svg width="0" height="0" class="sprite" aria-hidden="true">
+      <symbol id="lock" viewBox="0 0 16 16">
+        <path
+          d="M4.5 7V5a3.5 3.5 0 0 1 7 0v2h.5a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h.5Zm1.5 0h4V5a2 2 0 0 0-4 0v2Z"
+          fill="currentColor"
+        />
+      </symbol>
+    </svg>
 
-    <script type="text/babel" src="posterior-figure.jsx"></script>
-    <script type="text/babel" src="app.jsx"></script>
+    <header class="nav">
+      <nav class="nav-inner" aria-label="Primary">
+        <a class="nav-brand" href="#top">Matthew Reda</a>
+        <ul class="nav-links">
+          <li><a href="#work">Work</a></li>
+          <li><a href="#all">All repositories</a></li>
+          <li class="nav-wide"><a href="#method">Method</a></li>
+          <li class="nav-wide"><a href="#experience">Experience</a></li>
+          <li class="nav-wide"><a href="#engage">Engage</a></li>
+          <li><a href="/">Blog</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main id="top">
+      <!-- Hero -->
+      <section class="hero on-dark bg-black">
+        <div class="wrap hero-copy">
+          <h1>Honest measurement, shipped as code.</h1>
+          <p class="hero-lede">
+            I'm Matthew Reda. I build Bayesian measurement systems for marketing
+            and finance decisions. These are the fifteen repositories I worked
+            on between May and November 2026.
+          </p>
+          <p class="actions">
+            <a class="btn" href="#work">See the work</a>
+            <a
+              class="link"
+              href="https://github.com/redam94"
+              target="_blank"
+              rel="noreferrer"
+              >redam94 on GitHub</a
+            >
+          </p>
+        </div>
+        <figure class="wrap ridges" data-ridgeline>
+          <p class="ridges-readout" data-readout>
+            2,287 commits across 15 repositories
+          </p>
+          <div class="ridges-plot" data-ridges></div>
+          <figcaption>
+            Weekly commits to each repository, 11 May to 11 November 2026, on a
+            log scale and smoothed. Select a row to jump to that project.
+          </figcaption>
+        </figure>
+      </section>
+
+      <!-- Flagship: MMM Framework -->
+      <section
+        class="flagship bg-mist on-light"
+        id="work"
+        aria-labelledby="mmm-framework-title"
+      >
+        <div class="wrap" id="mmm-framework">
+          <h2 id="mmm-framework-title">MMM Framework</h2>
+          <p class="flagship-tag">
+            Marketing mix modeling that commits to its assumptions before it
+            sees the fit.
+          </p>
+          <p class="actions">
+            <a
+              class="btn"
+              href="https://redam94.github.io/mmm-framework/"
+              target="_blank"
+              rel="noreferrer"
+              >Read the documentation</a
+            >
+            <a
+              class="link"
+              href="https://mmm-framework.readthedocs.io/"
+              target="_blank"
+              rel="noreferrer"
+              >API reference</a
+            >
+          </p>
+          <svg
+            class="fig flagship-fig"
+            data-fig="posterior"
+            viewBox="0 0 720 300"
+            role="img"
+            aria-label="A wide prior distribution narrowing to a posterior, with its 50 and 94 percent intervals shaded."
+          ></svg>
+          <div class="features">
+            <div>
+              <h3>Pre-specified by design</h3>
+              <p>
+                The likelihood, priors and identification strategy are fixed
+                before the fit, which removes the room to shop for a result.
+              </p>
+            </div>
+            <div>
+              <h3>Pooled where it helps</h3>
+              <p>
+                Hierarchical effects share strength across geographies and
+                products without flattening the differences between them.
+              </p>
+            </div>
+            <div>
+              <h3>More than one outcome</h3>
+              <p>
+                Mediated pathways such as media to awareness to sales, joint
+                KPIs with correlated errors, and halo and cannibalization
+                between products.
+              </p>
+            </div>
+          </div>
+          <p class="meta meta-center">
+            <span>PyMC 6, FastAPI, React, TypeScript</span>
+            <span>423 commits since May</span>
+            <span class="private"
+              ><svg aria-hidden="true"><use href="#lock" /></svg>Private
+              repository</span
+            >
+          </p>
+          <p class="footnote">
+            A standalone Bayesian engine with a FastAPI service and a React
+            studio. Versions up to 1.5.0 remain on PyPI under Apache-2.0; later
+            versions are not publicly distributed.
+          </p>
+        </div>
+      </section>
+
+      <!-- Flagship: modeling-api -->
+      <section
+        class="flagship on-light bg-white"
+        aria-labelledby="modeling-api-title"
+      >
+        <div class="wrap" id="modeling-api">
+          <h2 id="modeling-api-title">modeling-api</h2>
+          <p class="flagship-tag">
+            Fit, score and share labelled multi-dimensional models, safely.
+          </p>
+          <p class="actions">
+            <a
+              class="btn"
+              href="https://redam94.github.io/modeling-api/"
+              target="_blank"
+              rel="noreferrer"
+              >Open the docs</a
+            >
+            <a
+              class="link"
+              href="https://github.com/redam94/modeling-api"
+              target="_blank"
+              rel="noreferrer"
+              >Source on GitHub</a
+            >
+          </p>
+          <svg
+            class="fig flagship-fig"
+            data-fig="cube"
+            viewBox="0 0 720 320"
+            role="img"
+            aria-label="Three stacked grids standing for data with named dimensions: geography by channel by week."
+          ></svg>
+          <div class="features">
+            <div>
+              <h3>Described, not hand-wired</h3>
+              <p>
+                A model is a declarative YAML spec or a small Python plugin.
+                Data is validated against an xarray schema, and the fitted
+                preprocessing is replayed exactly at score time.
+              </p>
+            </div>
+            <div>
+              <h3>Every job in a sandbox</h3>
+              <p>
+                Fits and scores run in isolation. Whole analyses run as
+                versioned workflows, from unit-root tests to rolling-origin
+                backtests against naive forecasts.
+              </p>
+            </div>
+            <div>
+              <h3>Checked before anyone uses it</h3>
+              <p>
+                A governance policy requires a model to beat itself fitted on
+                shuffled data and to give no credit to fake noise drivers. A
+                second person signs off.
+              </p>
+            </div>
+          </div>
+          <p class="meta meta-center">
+            <span
+              >Python, xarray, PyMC, statsmodels, TypeScript, Vega-Lite</span
+            >
+            <span>1,215 commits since May</span>
+            <span>Public, v0.9.1</span>
+          </p>
+        </div>
+      </section>
+
+      <!-- Research and standards -->
+      <section class="group bg-mist on-light" aria-labelledby="g-research">
+        <div class="wrap">
+          <h2 class="group-title" id="g-research">Research and standards</h2>
+          <div class="tiles">
+            <article class="tile on-dark bg-black" id="axiom">
+              <div class="tile-copy">
+                <h3>axiom</h3>
+                <p class="tile-tag">
+                  Declare what you want to know. Find out whether the data can
+                  tell you.
+                </p>
+                <p class="tile-desc">
+                  Bayesian causal decision science in one vocabulary:
+                  identification, experimental design, calibration against
+                  randomized results, response surfaces and meta-analysis.
+                  Checked against 21 published numbers from four real datasets,
+                  with twelve narrated examples from agronomy to product
+                  analytics.
+                </p>
+                <p class="meta">
+                  <span>Python, NumPyro, JAX, Pydantic</span>
+                  <span>172 commits since May</span>
+                  <span>Public</span>
+                </p>
+                <p class="actions">
+                  <a
+                    class="btn"
+                    href="https://redam94.github.io/axiom/"
+                    target="_blank"
+                    rel="noreferrer"
+                    >See it working</a
+                  >
+                  <a
+                    class="link"
+                    href="https://github.com/redam94/axiom"
+                    target="_blank"
+                    rel="noreferrer"
+                    >Source</a
+                  >
+                </p>
+              </div>
+              <svg
+                class="fig"
+                data-fig="dag"
+                viewBox="0 0 480 260"
+                role="img"
+                aria-label="A causal graph: a confounder Z points to treatment T and outcome Y, the effect of T on Y is highlighted, and an unobserved variable U is drawn dashed."
+              ></svg>
+            </article>
+
+            <article class="tile on-light bg-white" id="ump">
+              <div class="tile-copy">
+                <h3>Universal Model Protocol</h3>
+                <p class="tile-tag">
+                  Pass a model between tools without losing what the numbers
+                  mean.
+                </p>
+                <p class="tile-desc">
+                  A draft standard for exchanging models, test results, budget
+                  scenarios and decisions. Every exchanged number carries its
+                  estimand, gates degrade before they block, and records land in
+                  an append-only log.
+                </p>
+                <p class="meta">
+                  <span>JSON Schema, Pydantic, FastAPI, TypeScript</span>
+                  <span>167 commits since May</span>
+                  <span class="private"
+                    ><svg aria-hidden="true"><use href="#lock" /></svg>Private
+                    repository, public draft</span
+                  >
+                </p>
+                <p class="actions">
+                  <a
+                    class="btn"
+                    href="https://redam94.github.io/ump/"
+                    target="_blank"
+                    rel="noreferrer"
+                    >Read the draft</a
+                  >
+                </p>
+              </div>
+              <div
+                class="record"
+                role="img"
+                aria-label="Illustration of a record that carries an estimate together with its estimand, interval, gate result and log entry."
+              >
+                <p class="record-head">Illustrative record</p>
+                <dl>
+                  <div>
+                    <dt>Estimand</dt>
+                    <dd>Incremental sales per dollar, paid search, weekly</dd>
+                  </div>
+                  <div>
+                    <dt>Estimate</dt>
+                    <dd>1.42</dd>
+                  </div>
+                  <div>
+                    <dt>Interval</dt>
+                    <dd>0.91 to 2.08, 94%</dd>
+                  </div>
+                  <div>
+                    <dt>Gate</dt>
+                    <dd><span class="chip">Passed with a warning</span></dd>
+                  </div>
+                  <div>
+                    <dt>Log</dt>
+                    <dd>Appended, never rewritten</dd>
+                  </div>
+                </dl>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- Explainers and teaching -->
+      <section class="group on-light bg-white" aria-labelledby="g-teaching">
+        <div class="wrap">
+          <h2 class="group-title" id="g-teaching">Explainers and teaching</h2>
+          <div class="tiles">
+            <article class="tile on-dark bg-black" id="pymc-challenges">
+              <div class="tile-copy">
+                <h3>PyMC Challenges</h3>
+                <p class="tile-tag">
+                  Real data, a real decision, and a first model that breaks.
+                </p>
+                <p class="tile-desc">
+                  Fifteen challenges and more than a hundred worked examples on
+                  PyMC 6, ArviZ 1 and PyTensor 3. Every challenge ends in a
+                  decision someone has to make, and the obvious first model
+                  fails in a way you have to diagnose. Hints are tiered, opt-in
+                  and tracked.
+                </p>
+                <p class="meta">
+                  <span>PyMC 6, ArviZ 1, nutpie, Jupyter</span>
+                  <span>79 commits since May</span>
+                  <span>Public</span>
+                </p>
+                <p class="actions">
+                  <a
+                    class="btn"
+                    href="https://redam94.github.io/pymc-challenges/"
+                    target="_blank"
+                    rel="noreferrer"
+                    >Start a challenge</a
+                  >
+                  <a
+                    class="link"
+                    href="https://github.com/redam94/pymc-challenges"
+                    target="_blank"
+                    rel="noreferrer"
+                    >Source</a
+                  >
+                </p>
+              </div>
+              <svg
+                class="fig"
+                data-fig="funnel"
+                viewBox="0 0 480 260"
+                role="img"
+                aria-label="Posterior samples in a funnel shape, with divergent transitions highlighted in the narrow neck."
+              ></svg>
+            </article>
+
+            <article class="tile bg-mist on-light" id="double-ml-explainer">
+              <div class="tile-copy">
+                <h3>Double Machine Learning, explained</h3>
+                <p class="tile-tag">
+                  Every chart computes in your browser, from data with a known
+                  truth.
+                </p>
+                <p class="tile-desc">
+                  A scroll-driven explainer of causal identification, double
+                  machine learning and doubly robust ad-lift estimation. It is
+                  one self-contained page, and the Monte Carlo simulations run
+                  in a Web Worker.
+                </p>
+                <p class="meta">
+                  <span>HTML, JavaScript, Web Workers</span>
+                  <span>15 commits since May</span>
+                  <span>Public</span>
+                </p>
+                <p class="actions">
+                  <a
+                    class="btn"
+                    href="https://redam94.github.io/double-ml-explainer/"
+                    target="_blank"
+                    rel="noreferrer"
+                    >Open the explainer</a
+                  >
+                  <a
+                    class="link"
+                    href="https://github.com/redam94/double-ml-explainer"
+                    target="_blank"
+                    rel="noreferrer"
+                    >Source</a
+                  >
+                </p>
+              </div>
+              <svg
+                class="fig"
+                data-fig="dml"
+                viewBox="0 0 480 260"
+                role="img"
+                aria-label="Two scatter plots: the raw relationship with a steep confounded slope, and the residualized relationship with the shallower true slope."
+              ></svg>
+            </article>
+
+            <article
+              class="tile bg-mist on-light"
+              id="causal-vs-predictive-modeling"
+            >
+              <div class="tile-copy">
+                <h3>Seeing vs. Doing</h3>
+                <p class="tile-tag">
+                  Why a model that predicts well can still mislead you about
+                  what to do.
+                </p>
+                <p class="tile-desc">
+                  An interactive guide to causal identification: a nine-stage
+                  practitioner workflow, a design router, a geo-test sizing
+                  calculator and a field guide to twelve graph types. A
+                  companion page answers 51 practitioner questions with sources.
+                </p>
+                <p class="meta">
+                  <span>HTML, JavaScript</span>
+                  <span>7 commits since May</span>
+                  <span>Public</span>
+                </p>
+                <p class="actions">
+                  <a
+                    class="btn"
+                    href="https://redam94.github.io/causal-vs-predictive-modeling/"
+                    target="_blank"
+                    rel="noreferrer"
+                    >Open the guide</a
+                  >
+                  <a
+                    class="link"
+                    href="https://github.com/redam94/causal-vs-predictive-modeling"
+                    target="_blank"
+                    rel="noreferrer"
+                    >Source</a
+                  >
+                </p>
+              </div>
+              <svg
+                class="fig"
+                data-fig="seeingdoing"
+                viewBox="0 0 480 260"
+                role="img"
+                aria-label="Two causal graphs. In the first, a confounder influences the treatment. In the second, intervening on the treatment cuts that arrow."
+              ></svg>
+            </article>
+
+            <article class="tile on-dark bg-black" id="second-brain">
+              <div class="tile-copy">
+                <h3>Second Brain</h3>
+                <p class="tile-tag">
+                  The reading behind the work, kept in the open.
+                </p>
+                <p class="tile-desc">
+                  A research vault of more than 200 notes on Bayesian
+                  statistics, econometrics, causal inference and discovery,
+                  agent-based modeling and market response models. The
+                  explainers on this page cite it note by note.
+                </p>
+                <p class="meta">
+                  <span>Markdown, Obsidian, Python</span>
+                  <span>41 commits since May</span>
+                  <span>Public</span>
+                </p>
+                <p class="actions">
+                  <a
+                    class="btn"
+                    href="https://redam94.github.io/second-brain/"
+                    target="_blank"
+                    rel="noreferrer"
+                    >Browse the vault</a
+                  >
+                  <a
+                    class="link"
+                    href="https://github.com/redam94/second-brain"
+                    target="_blank"
+                    rel="noreferrer"
+                    >Source</a
+                  >
+                </p>
+              </div>
+              <svg
+                class="fig"
+                data-fig="graph"
+                viewBox="0 0 480 260"
+                role="img"
+                aria-label="A network of linked notes grouped into four topic clusters."
+              ></svg>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- Measurement tools -->
+      <section class="group bg-mist on-light" aria-labelledby="g-tools">
+        <div class="wrap">
+          <h2 class="group-title" id="g-tools">Measurement tools</h2>
+          <div class="tiles">
+            <article class="tile on-light bg-white" id="propensity-modeling">
+              <div class="tile-copy">
+                <h3>Brand Lift Analyzer</h3>
+                <p class="tile-tag">
+                  Upload a survey. See how exposed respondents compare with
+                  comparable controls.
+                </p>
+                <p class="tile-desc">
+                  Fits a propensity-score model, adjusts the control group by
+                  matching or weighting, and reports lift for each brand KPI
+                  with bootstrapped uncertainty. It also shows where the two
+                  groups overlap and where they do not, feature by feature.
+                </p>
+                <p class="meta">
+                  <span>Python, FastAPI, React, TypeScript</span>
+                  <span>4 commits since May</span>
+                  <span>Public</span>
+                </p>
+                <p class="actions">
+                  <a
+                    class="btn"
+                    href="https://github.com/redam94/propensity-modeling"
+                    target="_blank"
+                    rel="noreferrer"
+                    >View the source</a
+                  >
+                </p>
+              </div>
+              <svg
+                class="fig"
+                data-fig="overlap"
+                viewBox="0 0 480 260"
+                role="img"
+                aria-label="Mirrored histograms of propensity scores for exposed and control respondents, overlapping in the middle of the range."
+              ></svg>
+            </article>
+
+            <article
+              class="tile on-dark bg-black"
+              id="media-effectiveness-index"
+            >
+              <div class="tile-copy">
+                <h3>Media Effectiveness Index</h3>
+                <p class="tile-tag">
+                  A weekly early read on whether media is still working.
+                </p>
+                <p class="tile-desc">
+                  A leading indicator built from a marketing mix model's
+                  prediction errors, with a tracker app for planners, data
+                  scientists and the analysts who build it. A KPI-only mode fits
+                  its own model when there is no MMM. Tested with a simulation
+                  study and a robustness battery.
+                </p>
+                <p class="meta">
+                  <span>Python, JavaScript, Jupyter</span>
+                  <span>4 commits since May</span>
+                  <span class="private"
+                    ><svg aria-hidden="true"><use href="#lock" /></svg>Private
+                    repository</span
+                  >
+                </p>
+              </div>
+              <svg
+                class="fig"
+                data-fig="index"
+                viewBox="0 0 480 260"
+                role="img"
+                aria-label="A weekly index moving inside its expected band, then drifting above it over the most recent weeks."
+              ></svg>
+            </article>
+
+            <article class="tile on-dark bg-black" id="brand_voi_sim">
+              <div class="tile-copy">
+                <h3>Brand VOI simulation</h3>
+                <p class="tile-tag">What is one more brand study worth?</p>
+                <p class="tile-desc">
+                  A value-of-information simulation for brand measurement. It
+                  simulates worlds with long-memory awareness, geo surveys, a
+                  national tracker, brand-lift reads, platform experiments and a
+                  TV geo holdout, fits a joint model at each rung of evidence,
+                  and scores the result by budget-reallocation regret.
+                </p>
+                <p class="meta">
+                  <span>Python, NumPyro, JavaScript</span>
+                  <span>1 commit since May</span>
+                  <span class="private"
+                    ><svg aria-hidden="true"><use href="#lock" /></svg>Private
+                    repository</span
+                  >
+                </p>
+              </div>
+              <svg
+                class="fig"
+                data-fig="ladder"
+                viewBox="0 0 480 260"
+                role="img"
+                aria-label="Five interval estimates stacked as a ladder. Each rung adds a source of evidence and the interval tightens around the true value."
+              ></svg>
+            </article>
+
+            <article class="tile on-light bg-white" id="latent_var">
+              <div class="tile-copy">
+                <h3>Brand tracker latent variables</h3>
+                <p class="tile-tag">Survey noise, treated as survey noise.</p>
+                <p class="tile-desc">
+                  State-space models for brand-tracker proportions with sampling
+                  error, linking media spend to latent brand to sales. The app
+                  runs the naive analyses on the same simulated data and shows
+                  what they get wrong.
+                </p>
+                <p class="meta">
+                  <span>PyMC, NumPyro, statsmodels, Streamlit</span>
+                  <span>1 commit since May</span>
+                  <span>Public</span>
+                </p>
+                <p class="actions">
+                  <a
+                    class="btn"
+                    href="https://github.com/redam94/latent_var"
+                    target="_blank"
+                    rel="noreferrer"
+                    >View the source</a
+                  >
+                </p>
+              </div>
+              <svg
+                class="fig"
+                data-fig="latent"
+                viewBox="0 0 480 260"
+                role="img"
+                aria-label="Noisy survey readings scattered around a smooth latent brand trend with an uncertainty band."
+              ></svg>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- Client work and side projects -->
+      <section class="group on-light bg-white" aria-labelledby="g-other">
+        <div class="wrap">
+          <h2 class="group-title" id="g-other">
+            Client work and side projects
+          </h2>
+          <div class="tiles tiles-3">
+            <article class="tile bg-mist on-light" id="admin-dashboard">
+              <div class="tile-copy">
+                <h3>Epoch Lag admin dashboard</h3>
+                <p class="tile-tag">Operator tools for a social media app.</p>
+                <p class="tile-desc">
+                  Client work for Epoch Lag, where I build the ML pipelines, the
+                  admin dashboard and the infrastructure underneath them.
+                </p>
+                <p class="meta">
+                  <span>Python, FastAPI, TypeScript, Terraform</span>
+                  <span>36 commits since May</span>
+                  <span class="private"
+                    ><svg aria-hidden="true"><use href="#lock" /></svg>Private
+                    repository</span
+                  >
+                </p>
+                <p class="actions">
+                  <a
+                    class="btn"
+                    href="https://www.epochlag.com/"
+                    target="_blank"
+                    rel="noreferrer"
+                    >Visit Epoch Lag</a
+                  >
+                </p>
+              </div>
+              <svg
+                class="fig"
+                data-fig="console"
+                viewBox="0 0 480 260"
+                role="img"
+                aria-label="An abstract dashboard: a trend chart, two bar summaries and a grid of image thumbnails."
+              ></svg>
+            </article>
+
+            <article class="tile on-dark bg-black" id="printing">
+              <div class="tile-copy">
+                <h3>printing</h3>
+                <p class="tile-tag">
+                  Parametric parts from a versioned component library.
+                </p>
+                <p class="tile-desc">
+                  build123d models that share a library of patterns, mechanisms
+                  and fasteners. One command builds a part, checks printability,
+                  exports STL, STEP and 3MF, renders it and compares its metrics
+                  with a golden record.
+                </p>
+                <p class="meta">
+                  <span>Python, build123d</span>
+                  <span>56 commits since May</span>
+                  <span>Public</span>
+                </p>
+                <p class="actions">
+                  <a
+                    class="btn"
+                    href="https://redam94.github.io/printing/"
+                    target="_blank"
+                    rel="noreferrer"
+                    >See the parts</a
+                  >
+                  <a
+                    class="link"
+                    href="https://github.com/redam94/printing"
+                    target="_blank"
+                    rel="noreferrer"
+                    >Source</a
+                  >
+                </p>
+              </div>
+              <svg
+                class="fig"
+                data-fig="part"
+                viewBox="0 0 480 260"
+                role="img"
+                aria-label="An isometric drawing of an open enclosure with four screw bosses and its lid lifted above it."
+              ></svg>
+            </article>
+
+            <article class="tile bg-mist on-light" id="redam94.github.io">
+              <div class="tile-copy">
+                <h3>redam94.github.io</h3>
+                <p class="tile-tag">This site.</p>
+                <p class="tile-desc">
+                  An Astro blog with 29 essays on measurement, from adstock
+                  identification to sequential stopping, and the page you are
+                  reading.
+                </p>
+                <p class="meta">
+                  <span>Astro, TypeScript, Tailwind</span>
+                  <span>66 commits since May</span>
+                  <span>Public</span>
+                </p>
+                <p class="actions">
+                  <a class="btn" href="/">Read the blog</a>
+                  <a
+                    class="link"
+                    href="https://github.com/redam94/redam94.github.io"
+                    target="_blank"
+                    rel="noreferrer"
+                    >Source</a
+                  >
+                </p>
+              </div>
+              <svg
+                class="fig"
+                data-fig="essay"
+                viewBox="0 0 480 260"
+                role="img"
+                aria-label="An abstract page of text with one equation set off in the middle."
+              ></svg>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- Compare -->
+      <section class="group bg-mist on-light" id="all" aria-labelledby="all-t">
+        <div class="wrap">
+          <h2 class="group-title" id="all-t">All fifteen, side by side</h2>
+          <p class="group-lede">
+            Every repository with a commit between 11 May and 11 November 2026,
+            ordered by activity.
+          </p>
+          <table class="specs">
+            <thead>
+              <tr>
+                <th scope="col">Repository</th>
+                <th scope="col">What it is</th>
+                <th scope="col">Built with</th>
+                <th scope="col" class="num">Commits</th>
+                <th scope="col">Last commit</th>
+                <th scope="col">Visibility</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row"><a href="#modeling-api">modeling-api</a></th>
+                <td>Platform for labelled multi-dimensional models</td>
+                <td>Python, xarray, PyMC, TypeScript</td>
+                <td class="num" data-label="Commits">1,215</td>
+                <td data-label="Last commit">19 Oct</td>
+                <td>Public</td>
+              </tr>
+              <tr>
+                <th scope="row"><a href="#mmm-framework">mmm-framework</a></th>
+                <td>Bayesian marketing mix modeling toolkit</td>
+                <td>PyMC 6, FastAPI, React</td>
+                <td class="num" data-label="Commits">423</td>
+                <td data-label="Last commit">11 Nov</td>
+                <td>Private</td>
+              </tr>
+              <tr>
+                <th scope="row"><a href="#axiom">axiom</a></th>
+                <td>Bayesian causal decision science library</td>
+                <td>Python, NumPyro, JAX</td>
+                <td class="num" data-label="Commits">172</td>
+                <td data-label="Last commit">28 Aug</td>
+                <td>Public</td>
+              </tr>
+              <tr>
+                <th scope="row"><a href="#ump">ump</a></th>
+                <td>Draft standard for exchanging models and decisions</td>
+                <td>JSON Schema, Pydantic, TypeScript</td>
+                <td class="num" data-label="Commits">167</td>
+                <td data-label="Last commit">1 Nov</td>
+                <td>Private</td>
+              </tr>
+              <tr>
+                <th scope="row">
+                  <a href="#pymc-challenges">pymc-challenges</a>
+                </th>
+                <td>Real-data Bayesian modeling challenges</td>
+                <td>PyMC 6, ArviZ 1, Jupyter</td>
+                <td class="num" data-label="Commits">79</td>
+                <td data-label="Last commit">6 Nov</td>
+                <td>Public</td>
+              </tr>
+              <tr>
+                <th scope="row">
+                  <a href="#redam94.github.io">redam94.github.io</a>
+                </th>
+                <td>Blog and portfolio</td>
+                <td>Astro, TypeScript</td>
+                <td class="num" data-label="Commits">66</td>
+                <td data-label="Last commit">10 Nov</td>
+                <td>Public</td>
+              </tr>
+              <tr>
+                <th scope="row"><a href="#printing">printing</a></th>
+                <td>Parametric 3D-printable parts</td>
+                <td>Python, build123d</td>
+                <td class="num" data-label="Commits">56</td>
+                <td data-label="Last commit">7 Oct</td>
+                <td>Public</td>
+              </tr>
+              <tr>
+                <th scope="row"><a href="#second-brain">second-brain</a></th>
+                <td>Public research vault</td>
+                <td>Markdown, Python</td>
+                <td class="num" data-label="Commits">41</td>
+                <td data-label="Last commit">9 Nov</td>
+                <td>Public</td>
+              </tr>
+              <tr>
+                <th scope="row">
+                  <a href="#admin-dashboard">admin-dashboard</a>
+                </th>
+                <td>Admin dashboard and ML pipelines for a client app</td>
+                <td>Python, TypeScript, Terraform</td>
+                <td class="num" data-label="Commits">36</td>
+                <td data-label="Last commit">21 Oct</td>
+                <td>Private</td>
+              </tr>
+              <tr>
+                <th scope="row">
+                  <a href="#double-ml-explainer">double-ml-explainer</a>
+                </th>
+                <td>Interactive explainer of double machine learning</td>
+                <td>HTML, JavaScript</td>
+                <td class="num" data-label="Commits">15</td>
+                <td data-label="Last commit">10 Nov</td>
+                <td>Public</td>
+              </tr>
+              <tr>
+                <th scope="row">
+                  <a href="#causal-vs-predictive-modeling"
+                    >causal-vs-predictive-modeling</a
+                  >
+                </th>
+                <td>Interactive guide to causal identification</td>
+                <td>HTML, JavaScript</td>
+                <td class="num" data-label="Commits">7</td>
+                <td data-label="Last commit">10 Nov</td>
+                <td>Public</td>
+              </tr>
+              <tr>
+                <th scope="row">
+                  <a href="#propensity-modeling">propensity-modeling</a>
+                </th>
+                <td>Propensity scoring and brand lift analyzer</td>
+                <td>Python, FastAPI, React</td>
+                <td class="num" data-label="Commits">4</td>
+                <td data-label="Last commit">5 Nov</td>
+                <td>Public</td>
+              </tr>
+              <tr>
+                <th scope="row">
+                  <a href="#media-effectiveness-index"
+                    >media-effectiveness-index</a
+                  >
+                </th>
+                <td>Weekly leading indicator of media effectiveness</td>
+                <td>Python, JavaScript</td>
+                <td class="num" data-label="Commits">4</td>
+                <td data-label="Last commit">26 Oct</td>
+                <td>Private</td>
+              </tr>
+              <tr>
+                <th scope="row"><a href="#brand_voi_sim">brand_voi_sim</a></th>
+                <td>Value-of-information simulation for brand studies</td>
+                <td>Python, NumPyro</td>
+                <td class="num" data-label="Commits">1</td>
+                <td data-label="Last commit">31 Oct</td>
+                <td>Private</td>
+              </tr>
+              <tr>
+                <th scope="row"><a href="#latent_var">latent_var</a></th>
+                <td>State-space models for brand-tracker surveys</td>
+                <td>PyMC, NumPyro, Streamlit</td>
+                <td class="num" data-label="Commits">1</td>
+                <td data-label="Last commit">16 Oct</td>
+                <td>Public</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3 class="earlier-title">Earlier work</h3>
+          <p class="group-lede">Projects from before May 2026.</p>
+          <ul class="earlier">
+            <li>
+              <a
+                href="https://atlas.mattreda.pro/"
+                target="_blank"
+                rel="noreferrer"
+                >Atlas</a
+              >
+              <span
+                >Budget optimization over any predictive model, with multi-KPI
+                objectives and business-rule constraints.</span
+              >
+            </li>
+            <li>
+              <a
+                href="https://github.com/redam94/haruspex"
+                target="_blank"
+                rel="noreferrer"
+                >Haruspex</a
+              >
+              <span
+                >Diagnostics-first wrapper around posterior fits, with
+                convergence reports and prior-pushforward checks.</span
+              >
+            </li>
+            <li>
+              <a
+                href="https://github.com/redam94/BayesInsight"
+                target="_blank"
+                rel="noreferrer"
+                >BayesInsight</a
+              >
+              <span
+                >Hierarchical Bayesian models defined as JSON configuration
+                instead of model code.</span
+              >
+            </li>
+            <li>
+              <a
+                href="https://github.com/redam94/BayesianBrandTracker"
+                target="_blank"
+                rel="noreferrer"
+                >Bayesian Brand Tracker</a
+              >
+              <span
+                >Hierarchical state-space model that pools weak weekly survey
+                signal across geographies.</span
+              >
+            </li>
+            <li>
+              <a
+                href="https://github.com/redam94/mmm-agent"
+                target="_blank"
+                rel="noreferrer"
+                >MMM Workflows</a
+              >
+              <span
+                >Four agents for research, data preparation, Bayesian fitting
+                and what-if scenarios.</span
+              >
+            </li>
+            <li>
+              <a
+                href="https://redam94.github.io/common_regression_issues/"
+                target="_blank"
+                rel="noreferrer"
+                >Common Regression Issues</a
+              >
+              <span
+                >A tour of the regression failure modes that show up most in
+                marketing measurement.</span
+              >
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Statement -->
+      <section class="statement on-dark bg-black">
+        <div class="wrap">
+          <blockquote>
+            The model exists to support a decision. If there's no decision,
+            there's no model, only homework.
+          </blockquote>
+        </div>
+      </section>
+
+      <!-- Method -->
+      <section
+        class="group on-light bg-white"
+        id="method"
+        aria-labelledby="method-t"
+      >
+        <div class="wrap">
+          <h2 class="group-title" id="method-t">How I work</h2>
+          <p class="group-lede">
+            The work doesn't start with a model. It starts with a half-hour
+            conversation about what the business is actually trying to decide.
+            Everything after that follows the same six steps.
+          </p>
+          <ol class="steps">
+            <li>
+              <h3>Start with the decision, not the data.</h3>
+              <p>
+                Before any modeling, get clear on what's actually being decided:
+                the budget that'll move, the threshold someone has to cross, the
+                trade-off on the table. The model exists to support that.
+              </p>
+            </li>
+            <li>
+              <h3>Pre-specify the model. Then commit.</h3>
+              <p>
+                Pick a likelihood, priors and identification strategy before you
+                see the fit. Specification shopping is the fastest way to get an
+                answer that flatters the brief and survives nothing.
+              </p>
+            </li>
+            <li>
+              <h3>Validate the data first.</h3>
+              <p>
+                Schema, coverage, zero-spend stretches, collinearity. Most
+                modeling problems are upstream data problems. Most overconfident
+                answers are too.
+              </p>
+            </li>
+            <li>
+              <h3>Diagnose before reporting.</h3>
+              <p>
+                R̂ below 1.01, ESS above 400, no divergent transitions. If
+                diagnostics fail, the summary statistic is fiction, and a
+                fiction shipped to a CFO is worse than no answer.
+              </p>
+            </li>
+            <li>
+              <h3>Report what the data supports.</h3>
+              <p>
+                Intervals, not point estimates. Sign uncertainty visible. "We
+                don't know yet" is a complete sentence. Stakeholders adjust
+                faster to honest ranges than to numbers that quietly move every
+                quarter.
+              </p>
+            </li>
+            <li>
+              <h3>Tie every number to a decision, or cut it.</h3>
+              <p>
+                Posterior draws turn into expected ROI, the regret of cutting a
+                channel, the probability a budget shift beats the status quo. If
+                a chart doesn't change anyone's behavior, it's decoration.
+              </p>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- Experience -->
+      <section
+        class="group bg-mist on-light"
+        id="experience"
+        aria-labelledby="exp-t"
+      >
+        <div class="wrap wrap-narrow">
+          <h2 class="group-title" id="exp-t">Experience</h2>
+          <p class="group-lede">
+            MIT physics, then half a decade in measurement science. The
+            throughline: take uncertainty seriously, write the model down first,
+            ship code.
+          </p>
+          <dl class="cv">
+            <div>
+              <dt>2024 to present</dt>
+              <dd>
+                <h3>
+                  Senior Measurement Scientist, Choreograph (now WPP Media)
+                </h3>
+                <p>
+                  Built MMM and incrementality systems for portfolios in the
+                  high-eight-figure media-spend range. Owned methodology and
+                  fitting infrastructure.
+                </p>
+              </dd>
+            </div>
+            <div>
+              <dt>2022 to 2024</dt>
+              <dd>
+                <h3>Measurement and Modeling, EssenceMediacom</h3>
+                <p>
+                  Hierarchical regression for brand health. Started the
+                  migration from frequentist regressions to fully Bayesian
+                  posteriors.
+                </p>
+              </dd>
+            </div>
+            <div>
+              <dt>2012 to 2016</dt>
+              <dd>
+                <h3>S.B. Physics, Massachusetts Institute of Technology</h3>
+                <p>
+                  Undergraduate research on Stochastic Optical Reconstruction
+                  Microscopy: single-molecule localization,
+                  point-spread-function fitting and Bayesian deconvolution.
+                </p>
+              </dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+
+      <!-- Engage -->
+      <section
+        class="group on-light bg-white"
+        id="engage"
+        aria-labelledby="engage-t"
+      >
+        <div class="wrap">
+          <h2 class="group-title" id="engage-t">Three ways to work together</h2>
+          <p class="group-lede">
+            I take a small number of engagements at a time. Each one starts with
+            the same question: what is the business trying to decide, and what
+            would honest measurement of it look like? The conversation is free.
+          </p>
+          <div class="features features-left">
+            <div>
+              <h3>Decision framing</h3>
+              <p>
+                Two weeks. I sit with your marketing, finance and analytics
+                leaders, map the decisions on the table, and write the
+                measurement plan that would credibly support each one. Often the
+                most valuable output is the model we agree not to build.
+              </p>
+            </div>
+            <div>
+              <h3>Build a measurement system</h3>
+              <p>
+                Six to twelve weeks: schema, ingest, Bayesian model, decision
+                layer. You get the repository, the service and an analyst
+                trained to run it. Every output ties back to a decision the
+                business made up front.
+              </p>
+            </div>
+            <div>
+              <h3>Embedded statistician</h3>
+              <p>
+                A quarterly retainer alongside your in-house analytics team:
+                methodology calls, code review, and the difficult conversations
+                with stakeholders about what the posterior says and what it
+                doesn't.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Contact -->
+      <section class="contact on-dark bg-black" id="contact">
+        <div class="wrap">
+          <h2>Tell me what you're trying to decide.</h2>
+          <p class="contact-lede">
+            Send a short note about the decision on the table and what currently
+            supports it. I'll tell you whether honest measurement can move it,
+            or whether you should save the budget and buy your team lunch
+            instead.
+          </p>
+          <p class="actions">
+            <a class="btn" href="mailto:mattreda@mattreda.pro"
+              >mattreda@mattreda.pro</a
+            >
+            <a
+              class="link"
+              href="https://github.com/redam94"
+              target="_blank"
+              rel="noreferrer"
+              >GitHub</a
+            >
+            <a
+              class="link"
+              href="https://www.linkedin.com/in/matthew-reda"
+              target="_blank"
+              rel="noreferrer"
+              >LinkedIn</a
+            >
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer on-dark bg-black">
+      <div class="wrap">
+        <p>© 2026 Matthew Reda. Remote, US East.</p>
+        <p>Repository activity as of 11 November 2026.</p>
+      </div>
+    </footer>
+
+    <script src="figures.js" defer></script>
   </body>
 </html>
