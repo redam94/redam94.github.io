@@ -1,0 +1,102 @@
+---
+/**
+ * A small causal diagram, drawn as an SVG group. Place it inside the <svg>
+ * of a Figure. Extra attributes (transform, data-show, data-from, class…)
+ * are passed to the group.
+ */
+import { arrowGeom, type Point } from "./lib";
+
+export type DagNode = {
+  id: string;
+  label: string;
+  x: number;
+  y: number;
+  /** plain: outlined. accent/warn/alt: filled. do: intervened on. ghost: unobserved. */
+  state?: "plain" | "accent" | "warn" | "alt" | "do" | "ghost";
+};
+
+export type DagEdge = {
+  from: string;
+  to: string;
+  /** arrow: directed. line: undirected. cut: an arrow removed by an intervention. */
+  kind?: "arrow" | "line" | "cut";
+  tone?: "line" | "accent" | "warn" | "alt" | "muted";
+  dashed?: boolean;
+};
+
+type Props = {
+  nodes: DagNode[];
+  edges: DagEdge[];
+  r?: number;
+  [attribute: string]: unknown;
+};
+
+const { nodes, edges, r = 16, ...attrs } = Astro.props;
+
+const byId = new Map(nodes.map(node => [node.id, node]));
+const drawn = edges.flatMap(edge => {
+  const from = byId.get(edge.from);
+  const to = byId.get(edge.to);
+  if (!from || !to) return [];
+  const a: Point = [from.x, from.y];
+  const b: Point = [to.x, to.y];
+  const kind = edge.kind ?? "arrow";
+  const tone = kind === "cut" ? "muted" : (edge.tone ?? "line");
+  const geom = arrowGeom(a, b, r + 3, r + 3, kind === "line" ? 0 : 9);
+  return [{ kind, tone, geom, dashed: edge.dashed || kind === "cut" }];
+});
+
+const fillFor = {
+  plain: "f-fill-bg",
+  ghost: "f-fill-bg",
+  accent: "f-fill-accent",
+  warn: "f-fill-warn",
+  alt: "f-fill-alt",
+  do: "f-fill-line",
+} as const;
+---
+
+<g {...attrs}>
+  {
+    drawn.map(({ kind, tone, geom, dashed }) => (
+      <g>
+        <path d={geom.shaft} class:list={[`f-${tone}`, { "f-dash": dashed }]} />
+        {kind !== "line" && (
+          <polygon points={geom.head} class={`f-fill-${tone}`} />
+        )}
+      </g>
+    ))
+  }
+  {
+    nodes.map(node => {
+      const state = node.state ?? "plain";
+      const filled = state !== "plain" && state !== "ghost";
+      return (
+        <g>
+          <circle
+            cx={node.x}
+            cy={node.y}
+            r={r}
+            class:list={[
+              fillFor[state],
+              state === "ghost" ? "f-muted f-dash" : "f-line",
+            ]}
+            style="fill-opacity:1"
+          />
+          <text
+            x={node.x}
+            y={node.y}
+            text-anchor="middle"
+            dominant-baseline="central"
+            class:list={[
+              "f-label",
+              { "f-text-inverse": filled, "f-text-muted": state === "ghost" },
+            ]}
+          >
+            {node.label}
+          </text>
+        </g>
+      );
+    })
+  }
+</g>
