@@ -1,0 +1,230 @@
+---
+/**
+ * The contrast as covariate blocks are added, then the other terms of the
+ * full model on the same axis (E118, section 5): sponsor lean, partisan lean,
+ * incumbency, the opponent proxies and the sixteen pooled party-support
+ * coefficients. Medians with 5% to 95% intervals, all printed by the
+ * notebook; see data.ts for the cells.
+ */
+import Figure from "../Figure.astro";
+import { f1, scale } from "../lib";
+import { money, moneyScale, signed, steps, terms, type Estimate } from "./data";
+
+const xAt = scale(-4, 7.5, 318, 622);
+const zeroX = f1(xAt(0));
+const LABEL_X = 236;
+const VALUE_X = 304;
+
+const place = (estimate: Estimate) => ({
+  x: f1(xAt(estimate.mid)),
+  x0: f1(xAt(estimate.lo)),
+  x1: f1(xAt(estimate.hi)),
+  clear: estimate.lo > 0 || estimate.hi < 0,
+});
+
+const stepRows = steps.map((step, i) => ({
+  ...step,
+  ...place(step.estimate),
+  y: 48 + i * 21,
+  value: signed(step.estimate.mid, 2),
+  full: i === steps.length - 1,
+  delay: `--d: ${i * 110}ms`,
+}));
+
+const termTop = 166;
+const termRows = terms.map((term, i) => ({
+  ...term,
+  ...place(term.estimate),
+  y: termTop + i * 21,
+  value: signed(term.estimate.mid, 2),
+  delay: `--d: ${500 + i * 110}ms`,
+}));
+
+const moneyTop = termTop + terms.length * 21 + 34;
+const moneyGap = 5.6;
+const moneyRows = money.map((estimate, i) => ({
+  ...place(estimate),
+  y: f1(moneyTop + i * moneyGap),
+  delay: `--d: ${1500 + i * 40}ms`,
+}));
+const moneyMid = f1(moneyTop + ((money.length - 1) * moneyGap) / 2);
+const moneyClear = moneyRows.filter(row => row.clear).length;
+
+const axisY = f1(moneyTop + money.length * moneyGap + 6);
+const ticks = [-4, -2, 0, 2, 4, 6];
+const clearTerms = termRows.filter(row => row.clear);
+---
+
+<Figure
+  replay
+  caption={`Medians and 90% intervals. Green marks an interval that excludes zero. The money coefficients are per standard deviation of log dollars within a cycle and share one scale, estimated at ${moneyScale.mid} (${moneyScale.lo} to ${moneyScale.hi}). The opponent rows are proxies for the kind of race the Democrat was in. All rows are associations with poll error, not effects of incumbency or of money.`}
+>
+  <svg
+    viewBox={`0 0 640 ${axisY + 46}`}
+    role="img"
+    aria-label={`Forest plot in points of poll error. The contrast, centre list minus left list, as covariates are added: ${stepRows
+      .map(
+        row =>
+          `${row.label.replace("+ ", "adding ")}, ${row.value} (${signed(row.estimate.lo)} to ${signed(row.estimate.hi)})`
+      )
+      .join("; ")}. Other terms of the full model: ${termRows
+      .map(
+        row =>
+          `${row.label}, ${row.value} (${signed(row.estimate.lo, 2)} to ${signed(row.estimate.hi, 2)})`
+      )
+      .join(
+        "; "
+      )}. The ${money.length} party-support coefficients all lie between ${signed(Math.min(...money.map(item => item.lo)), 2)} and ${signed(Math.max(...money.map(item => item.hi)), 2)}, and ${moneyClear === 0 ? "none" : moneyClear} has an interval that excludes zero.`}
+  >
+    {
+      ticks.map(tick => (
+        <g>
+          <line
+            x1={xAt(tick)}
+            x2={xAt(tick)}
+            y1="34"
+            y2={axisY}
+            class={tick === 0 ? "f-axis" : "f-grid"}
+          />
+          <text
+            x={xAt(tick)}
+            y={axisY + 18}
+            text-anchor="middle"
+            class="f-small f-text-muted f-num"
+          >
+            {tick === 0 ? "0" : signed(tick, 0)}
+          </text>
+        </g>
+      ))
+    }
+    <line x1={xAt(-4)} x2={xAt(7.5)} y1={axisY} y2={axisY} class="f-axis"
+    ></line>
+    <text
+      x={zeroX}
+      y={axisY + 38}
+      text-anchor="middle"
+      class="f-small f-text-muted"
+    >
+      Points of poll error
+    </text>
+
+    <text x="16" y="24" class="f-label">
+      The contrast, centre list minus left list
+    </text>
+    {
+      stepRows.map(row => (
+        <g class="fx-rise" style={row.delay}>
+          <text
+            x={LABEL_X}
+            y={row.y + 4}
+            text-anchor="end"
+            class:list={["f-small", row.full ? "f-label" : undefined]}
+          >
+            {row.label}
+          </text>
+          <text
+            x={VALUE_X}
+            y={row.y + 4}
+            text-anchor="end"
+            class="f-small f-text-muted f-num"
+          >
+            {row.value}
+          </text>
+          <line
+            x1={row.x0}
+            x2={row.x1}
+            y1={row.y}
+            y2={row.y}
+            class:list={["f-line", row.full ? "f-thick" : undefined]}
+          />
+          <circle
+            cx={row.x}
+            cy={row.y}
+            r="4"
+            class={row.full ? "f-fill-line" : "f-line f-fill-bg"}
+          />
+        </g>
+      ))
+    }
+
+    <text x="16" y={termTop - 24} class="f-label">
+      Other terms of the full model
+    </text>
+    {
+      termRows.map(row => (
+        <g class="fx-rise" style={row.delay}>
+          <text x={LABEL_X} y={row.y + 4} text-anchor="end" class="f-small">
+            {row.label}
+          </text>
+          <text
+            x={VALUE_X}
+            y={row.y + 4}
+            text-anchor="end"
+            class:list={[
+              "f-small f-num",
+              row.clear ? "f-label f-text-accent" : "f-text-muted",
+            ]}
+          >
+            {row.value}
+          </text>
+          <line
+            x1={row.x0}
+            x2={row.x1}
+            y1={row.y}
+            y2={row.y}
+            class={row.clear ? "f-accent f-thick" : "f-line"}
+          />
+          <circle
+            cx={row.x}
+            cy={row.y}
+            r="4"
+            class={row.clear ? "f-fill-accent" : "f-fill-line"}
+          />
+        </g>
+      ))
+    }
+
+    <text x="16" y={moneyTop - 16} class="f-label">
+      Party support: {money.length} coefficients, one shared scale
+    </text>
+    <text x={LABEL_X} y={moneyMid - 22} text-anchor="end" class="f-small">
+      Receipts, Red to Blue,
+    </text>
+    <text x={LABEL_X} y={moneyMid - 6} text-anchor="end" class="f-small">
+      party direct spending,
+    </text>
+    <text x={LABEL_X} y={moneyMid + 10} text-anchor="end" class="f-small">
+      independent expenditures
+    </text>
+    <text x={LABEL_X} y={moneyMid + 26} text-anchor="end" class="f-small">
+      by spender, side and purpose
+    </text>
+    {
+      moneyRows.map(row => (
+        <g class="fx-fade" style={row.delay}>
+          <line x1={row.x0} x2={row.x1} y1={row.y} y2={row.y} class="f-alt" />
+          <circle cx={row.x} cy={row.y} r="2" class="f-fill-alt" />
+        </g>
+      ))
+    }
+    {
+      moneyClear === 0 && (
+        <text x={xAt(1)} y={moneyMid + 4} class="f-small f-text-alt">
+          none distinguishable from zero
+        </text>
+      )
+    }
+    {
+      clearTerms.length > 0 && (
+        <text
+          x="622"
+          y="24"
+          text-anchor="end"
+          class="f-small f-text-accent f-label"
+        >
+          green: the interval excludes zero
+        </text>
+      )
+    }
+  </svg>
+</Figure>
