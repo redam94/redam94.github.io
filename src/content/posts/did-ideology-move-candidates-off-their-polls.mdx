@@ -25,6 +25,8 @@ So I [tested the claim](https://redam94.github.io/pymc-challenges/examples/E118_
 
 The claim is about poll error, the gap between a result and the final polls. There is good evidence that ideologically extreme nominees win fewer votes (Canes-Wrone, Brady and Cogan 2002; Hall 2015). But a penalty that voters apply is a penalty that pollsters can measure: if a nominee is too far from a district, the polls should already say so. For ideology to move a candidate off the polls, something about that candidate's support has to stay invisible to pollsters until the votes are counted.
 
+That also limits what this post can say. It asks whether centre-list and left-list nominees beat their polls by different amounts. It does not ask whether a more centrist or a more progressive nominee would have won more votes in the same race, and its results do not answer that. Answering it means comparing a nominee with the candidate the party could have chosen instead, in the same district and the same year. Parties do not pick nominees at random: a progressive nominee in a safe seat and a centrist in a swing seat face different electorates, so their margins cannot be compared directly. A null result on poll error is consistent with ideology costing votes, costing none, or winning some. A [companion notebook](https://redam94.github.io/pymc-challenges/examples/E119_would_a_different_nominee_have_won.html) takes that question on and finds the available data cannot answer it: there are no primary results or losing candidates to compare against, and it sets out what data would be needed.
+
 For race $i$ the outcome is
 
 $$y_i = \text{certified two-party margin}_i - \text{final poll average}_i$$
@@ -115,7 +117,7 @@ What the provisional counts can show is the shared error. In the 32 races the De
 4. **Show every reasonable definition.** If the sign changes with the definition, report that.
 5. **Simulate the claim with no effect in it.** The gap that noise and relabelling produce on their own is the bar a real effect has to clear.
 
-In these two cycles, with labels fixed in advance, the commentators' pattern does not appear, and the intervals leave room for a small effect in either direction. What the data do show is how little relabelling it takes to produce the pattern.
+In these two cycles, with labels fixed in advance, the commentators' pattern does not appear, and the intervals leave room for a small effect in either direction. What the data do show is how little relabelling it takes to produce the pattern. Whether a different nominee would have won is a separate question, and these data cannot answer it.
 
 ---
 
