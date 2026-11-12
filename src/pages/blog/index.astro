@@ -28,7 +28,7 @@ const posts = await getCollection("posts");
 const sortedPosts = getSortedPosts(posts);
 const featuredPosts = sortedPosts.filter(({ data }) => data.featured);
 const recentPosts = sortedPosts.filter(({ data }) => !data.featured);
-const homePath = getRelativeLocaleUrl(locale, "");
+const homePath = getRelativeLocaleUrl(locale, "blog");
 const rssPath = `${import.meta.env.BASE_URL.replace(/\/?$/, "/")}rss.xml`;
 
 // Long-form project sites that the posts draw on (see src/data/githubPages.ts).
@@ -87,7 +87,7 @@ const deeperSites = deeperRepos.flatMap(repo => {
             Read the posts
           </a>
           <a
-            href="/portfolio/"
+            href="/"
             data-astro-reload
             class="text-olive-bright hover:underline hover:underline-offset-4"
           >
