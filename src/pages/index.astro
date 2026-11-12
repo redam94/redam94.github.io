@@ -1,7 +1,13 @@
 ---
+import { Image } from "astro:assets";
 import { getCollection } from "astro:content";
 import { getRelativeLocaleUrl } from "astro:i18n";
 import IconArrowRight from "@/assets/icons/IconArrowRight.svg";
+import heroArt from "@/assets/images/backdrops/graph-paper.jpg";
+import galtonArt from "@/assets/images/backdrops/galton.jpg";
+import cardsArt from "@/assets/images/backdrops/cards.jpg";
+import billiardsArt from "@/assets/images/backdrops/billiards.jpg";
+import balanceArt from "@/assets/images/backdrops/balance.jpg";
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
@@ -32,6 +38,13 @@ const deeperRepos = [
   "causal-vs-predictive-modeling",
   "double-ml-explainer",
 ];
+// Decorative photograph for each tile, keyed by repository.
+const deeperArt: Record<string, ImageMetadata> = {
+  "pymc-challenges": galtonArt,
+  "second-brain": cardsArt,
+  "causal-vs-predictive-modeling": billiardsArt,
+  "double-ml-explainer": balanceArt,
+};
 const deeperSites = deeperRepos.flatMap(repo => {
   const page = githubPages.find(entry => entry.repo === repo);
   return page ? [page] : [];
@@ -41,7 +54,16 @@ const deeperSites = deeperRepos.flatMap(repo => {
 <Layout>
   <Header />
   <main id="main-content" data-layout="index" data-home-path={homePath}>
-    <section id="hero" class="on-dark bg-black">
+    <section id="hero" class="on-dark relative isolate bg-black">
+      <Image
+        src={heroArt}
+        alt=""
+        widths={[800, 1400, 2000]}
+        sizes="100vw"
+        quality={90}
+        loading="eager"
+        class="surface-art surface-art-hero"
+      />
       <div class="wide-layout py-20 text-center sm:py-28">
         <h1
           class="mx-auto max-w-[12em] text-[clamp(2.75rem,7.6vw,5.5rem)] leading-[1.05] tracking-[-0.03em] text-balance"
@@ -154,7 +176,18 @@ const deeperSites = deeperRepos.flatMap(repo => {
             </p>
             <ul class="mt-8 grid gap-5 sm:mt-12 md:grid-cols-2">
               {deeperSites.map(site => (
-                <li class="tile on-dark flex bg-black">
+                <li class="tile on-dark relative isolate flex bg-black">
+                  {deeperArt[site.repo] && (
+                    <Image
+                      src={deeperArt[site.repo]}
+                      alt=""
+                      widths={[640, 1100]}
+                      sizes="(min-width: 768px) 540px, 100vw"
+                      quality={90}
+                      loading="lazy"
+                      class="surface-art surface-art-tile"
+                    />
+                  )}
                   <a
                     href={githubPageUrl(site)}
                     class="group flex flex-1 flex-col p-7 sm:p-10"
@@ -162,7 +195,7 @@ const deeperSites = deeperRepos.flatMap(repo => {
                     <h3 class="text-2xl leading-tight sm:text-[1.75rem]">
                       {site.title}
                     </h3>
-                    <p class="text-on-dark-muted mt-3 mb-6">
+                    <p class="text-on-dark-muted mt-3 mb-32 sm:mb-36">
                       {site.description}
                     </p>
                     <span class="text-olive-bright mt-auto group-hover:underline group-hover:underline-offset-4">
