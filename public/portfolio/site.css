@@ -284,6 +284,63 @@ a {
   flex: none;
 }
 
+/* ---------- Backdrops ----------
+   Generated photographs behind the three black sections: ridgelines at night
+   under the hero, a steel rule under the statement, first light under the
+   contact block. Each is masked into the section's own black, so there is no
+   visible edge and the plain black shows if an image fails to load. */
+
+.hero,
+.statement,
+.contact {
+  position: relative;
+  isolation: isolate;
+}
+
+.hero::before,
+.statement::before,
+.contact::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
+
+/* Sits behind the headline and is gone before the commit ridgeline starts. */
+.hero::before {
+  bottom: auto;
+  height: clamp(480px, 46vw, 760px);
+  background-image: url("assets/backdrop-ridges-2000.webp");
+  background-position: center;
+  background-size: cover;
+  opacity: 0.62;
+  -webkit-mask-image: linear-gradient(to bottom, #000 30%, transparent);
+  mask-image: linear-gradient(to bottom, #000 30%, transparent);
+}
+
+/* Only the band below the quote, so the rule's edge never runs under it. */
+.statement::before {
+  top: 66%;
+  background-image: url("assets/backdrop-rule-2000.webp");
+  background-position: center 60%;
+  background-size: max(100%, 1100px) auto;
+  opacity: 0.85;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 35%);
+  mask-image: linear-gradient(to bottom, transparent, #000 35%);
+}
+
+/* The horizon is pushed down to sit just above the footer. */
+.contact::before {
+  background-image: url("assets/backdrop-dawn-2000.webp");
+  background-position: center bottom calc(-0.105 * max(100vw, 1100px));
+  background-size: max(100%, 1100px) auto;
+  opacity: 0.8;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 10%, #000 60%);
+  mask-image: linear-gradient(to bottom, transparent 10%, #000 60%);
+}
+
 /* ---------- Hero ---------- */
 
 .hero {
@@ -983,6 +1040,18 @@ a {
 }
 
 @media (max-width: 800px) {
+  .hero::before {
+    background-image: url("assets/backdrop-ridges-1100.webp");
+  }
+
+  .statement::before {
+    background-image: url("assets/backdrop-rule-1100.webp");
+  }
+
+  .contact::before {
+    background-image: url("assets/backdrop-dawn-1100.webp");
+  }
+
   .tiles,
   .tiles-3,
   .features,
