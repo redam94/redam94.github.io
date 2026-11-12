@@ -1,0 +1,266 @@
+---
+/**
+ * Labels given after the result (E118, sections 7.2 and 7.3). A growing share
+ * of the 124 nominees on no list (or on both) is given a bucket by the rule
+ * "beat the polls: centre, fell short: left", and the difference in means is
+ * recomputed. Left: 2018 and 2022 as they happened, with the full model
+ * refitted on the same relabelled buckets. Right: 400 simulated pairs of
+ * elections in which both list effects are zero. Every plotted value is in
+ * the notebook's printed tables; see data.ts for the cells.
+ */
+import Figure from "../Figure.astro";
+import { areaPath, f1, linePath, scale, type Point } from "../lib";
+import {
+  openNominees,
+  relabelledModel,
+  relabelling,
+  signed,
+  type Estimate,
+  type RelabelStep,
+} from "./data";
+
+const TOP = 78;
+const BOTTOM = 296;
+const yAt = scale(-4, 8.5, BOTTOM, TOP);
+const twoY = f1(yAt(2));
+const last = relabelling.length - 1;
+
+function panel(x0: number, x1: number, pick: (step: RelabelStep) => Estimate) {
+  const xAt = scale(0, 100, x0, x1);
+  const mid = (step: RelabelStep): Point => [
+    xAt(step.share),
+    yAt(pick(step).mid),
+  ];
+  const hi = (step: RelabelStep): Point => [
+    xAt(step.share),
+    yAt(pick(step).hi),
+  ];
+  const lo = (step: RelabelStep): Point => [
+    xAt(step.share),
+    yAt(pick(step).lo),
+  ];
+  return {
+    x0,
+    x1,
+    xAt,
+    start: mid(relabelling[0]),
+    segments: relabelling.slice(1).map((step, i) => {
+      const pair = [relabelling[i], step];
+      return {
+        frame: i + 1,
+        line: linePath(pair.map(mid)),
+        band: areaPath(pair.map(hi), pair.map(lo)),
+      };
+    }),
+    marks: relabelling.map((step, frame) => ({
+      frame,
+      x: f1(xAt(step.share)),
+      y: f1(yAt(pick(step).mid)),
+      yLo: f1(yAt(pick(step).lo)),
+      yHi: f1(yAt(pick(step).hi)),
+    })),
+  };
+}
+
+const real = panel(56, 300, step => step.real);
+const simulated = panel(372, 616, step => step.simulated);
+const panels = [real, simulated];
+
+const interval = (estimate: Estimate) =>
+  estimate.lo === estimate.hi
+    ? signed(estimate.mid)
+    : `${signed(estimate.mid)} (${signed(estimate.lo)} to ${signed(estimate.hi)})`;
+
+const readouts = relabelling.map((step, frame) => ({
+  frame,
+  real: interval(step.real),
+  simulated: interval(step.simulated),
+  above: `above +2 points in ${Math.round(step.above2 * 100)}% of worlds`,
+}));
+
+/** The full model appears once the curve has reached its share. */
+const modelMarks = relabelledModel.map(item => ({
+  frame: relabelling.findIndex(step => step.share >= item.share),
+  x: f1(real.xAt(item.share)),
+  y: f1(yAt(item.estimate.mid)),
+  yLo: f1(yAt(item.estimate.lo)),
+  yHi: f1(yAt(item.estimate.hi)),
+}));
+
+const yTicks = [-4, -2, 0, 2, 4, 6, 8];
+const xTicks = [0, 25, 50, 75, 100];
+
+const frameLabels = relabelling.map(step =>
+  step.nominees === 0
+    ? "Dated labels only: nobody is relabelled"
+    : step.nominees === openNominees
+      ? `All ${openNominees} open nominees labelled after the result`
+      : `${step.nominees} of the ${openNominees} open nominees labelled after the result`
+);
+
+const at = (nominees: number) =>
+  relabelling.find(step => step.nominees === nominees)!;
+---
+
+<Figure
+  frames={relabelling.length}
+  interval={1900}
+  frameLabels={frameLabels}
+  caption={`The rule is the one that makes the story: a relabelled nominee who beat the polls is called centre, one who fell short is called left. Nominees with a dated label keep it. Lines are medians and bands are 90% ranges, over 1,000 random choices of whom to relabel on the left and over 400 simulated worlds on the right. The black marks are the full model refitted on one such relabelling. The simulated elections come from the fitted model with both list effects set to zero.`}
+>
+  <svg
+    viewBox="0 0 640 356"
+    role="img"
+    aria-label={`Two line charts of centre minus left, in points of poll error, against the share of the ${openNominees} open nominees who are given a bucket after the result. In 2018 and 2022 as they happened the difference in means goes from ${signed(at(0).real.mid)} with nobody relabelled to ${signed(at(12).real.mid)} with 12 relabelled, ${signed(at(25).real.mid)} with 25, ${signed(at(62).real.mid)} with 62 and ${signed(at(124).real.mid)} with all ${openNominees}; the full model on the same buckets rises from ${signed(relabelledModel[0].estimate.mid, 2)} to ${signed(relabelledModel[4].estimate.mid, 2)}. In 400 simulated pairs of elections with no ideology effect the median goes from ${signed(at(0).simulated.mid)} (90% range ${signed(at(0).simulated.lo)} to ${signed(at(0).simulated.hi)}) to ${signed(at(12).simulated.mid)} with 12 relabelled, ${signed(at(25).simulated.mid)} with 25 and ${signed(at(124).simulated.mid)} with all of them. The two charts have nearly the same shape.`}
+  >
+    <text x={real.x0} y="20" class="f-label">As it happened</text>
+    <text x={real.x0} y="37" class="f-small f-text-muted">
+      2018 and 2022, 184 races
+    </text>
+    <text x={simulated.x0} y="20" class="f-label">No ideology effect</text>
+    <text x={simulated.x0} y="37" class="f-small f-text-muted">
+      400 simulated pairs of elections
+    </text>
+
+    {
+      panels.map((item, index) => (
+        <g>
+          {yTicks.map(tick => (
+            <g>
+              <line
+                x1={item.x0}
+                x2={item.x1}
+                y1={yAt(tick)}
+                y2={yAt(tick)}
+                class={tick === 0 ? "f-axis" : "f-grid"}
+              />
+              {index === 0 && (
+                <text
+                  x={item.x0 - 8}
+                  y={yAt(tick) + 4}
+                  text-anchor="end"
+                  class="f-small f-text-muted f-num"
+                >
+                  {tick === 0 ? "0" : signed(tick, 0)}
+                </text>
+              )}
+            </g>
+          ))}
+          <line
+            x1={item.x0}
+            x2={item.x1}
+            y1={twoY}
+            y2={twoY}
+            class="f-line f-dash"
+          />
+          <line
+            x1={item.x0}
+            x2={item.x1}
+            y1={BOTTOM}
+            y2={BOTTOM}
+            class="f-axis"
+          />
+          {xTicks.map(tick => (
+            <text
+              x={item.xAt(tick)}
+              y={BOTTOM + 18}
+              text-anchor="middle"
+              class="f-small f-text-muted f-num"
+            >
+              {tick}%
+            </text>
+          ))}
+
+          {item.segments.map(segment => (
+            <g data-from={segment.frame}>
+              <path d={segment.band} class="f-fill-soft" />
+              <path d={segment.line} class="f-accent f-thick" />
+            </g>
+          ))}
+          {item.marks.map(mark => (
+            <g data-show={mark.frame} data-final={mark.frame === last}>
+              <line
+                x1={mark.x}
+                x2={mark.x}
+                y1={mark.yLo}
+                y2={mark.yHi}
+                class="f-accent f-thick"
+              />
+              <circle cx={mark.x} cy={mark.y} r="5" class="f-fill-accent" />
+            </g>
+          ))}
+        </g>
+      ))
+    }
+
+    {
+      modelMarks.map(mark => (
+        <g data-from={mark.frame}>
+          <line
+            x1={mark.x}
+            x2={mark.x}
+            y1={mark.yLo}
+            y2={mark.yHi}
+            class="f-line"
+          />
+          <circle cx={mark.x} cy={mark.y} r="3.4" class="f-fill-line" />
+        </g>
+      ))
+    }
+
+    {
+      readouts.map(item => (
+        <g data-show={item.frame} data-final={item.frame === last}>
+          <text x={real.x0} y="58" class="f-small f-label f-num f-text-accent">
+            {item.real}
+          </text>
+          <text
+            x={simulated.x0}
+            y="58"
+            class="f-small f-label f-num f-text-accent"
+          >
+            {item.simulated}
+          </text>
+          <text
+            x={simulated.x1}
+            y={BOTTOM - 10}
+            text-anchor="end"
+            class="f-small f-text-muted f-num"
+          >
+            {item.above}
+          </text>
+        </g>
+      ))
+    }
+
+    <text
+      x={real.x1}
+      y={twoY - 6}
+      text-anchor="end"
+      class="f-small f-text-muted"
+    >
+      a 2-point gap
+    </text>
+
+    <line
+      x1="150"
+      x2="170"
+      y1={BOTTOM - 25}
+      y2={BOTTOM - 25}
+      class="f-accent f-thick"></line>
+    <text x="176" y={BOTTOM - 21} class="f-small f-text-muted">
+      difference in means
+    </text>
+    <line x1="160" x2="160" y1={BOTTOM - 15} y2={BOTTOM - 3} class="f-line"
+    ></line>
+    <circle cx="160" cy={BOTTOM - 9} r="3.4" class="f-fill-line"></circle>
+    <text x="176" y={BOTTOM - 5} class="f-small f-text-muted">
+      full model, 90% interval
+    </text>
+
+    <text x="16" y="70" class="f-small f-text-muted">points</text>
+    <text x="336" y="344" text-anchor="middle" class="f-small f-text-muted">
+      Share of the {openNominees} open nominees given a bucket after the result
+    </text>
+  </svg>
+</Figure>

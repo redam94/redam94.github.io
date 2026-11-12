@@ -1,0 +1,171 @@
+---
+/**
+ * The multiverse of E118, section 6: the full model's contrast (centre list
+ * minus left list) under 25 specifications, sorted by posterior median, each
+ * with its 90% interval and the difference in means that no model touches.
+ * The rows are the notebook's printed table; see data.ts for the cells.
+ */
+import Figure from "../Figure.astro";
+import { f1, scale } from "../lib";
+import { fullModel, signed, specifications } from "./data";
+
+const xAt = scale(-6, 6.5, 284, 562);
+const zeroX = f1(xAt(0));
+const rowTop = 84;
+const rowGap = 15.6;
+
+const rows = [...specifications]
+  .sort((a, b) => b.estimate.mid - a.estimate.mid)
+  .map((spec, i) => ({
+    ...spec,
+    y: f1(rowTop + i * rowGap),
+    x: f1(xAt(spec.estimate.mid)),
+    x0: f1(xAt(spec.estimate.lo)),
+    x1: f1(xAt(spec.estimate.hi)),
+    xNaive: f1(xAt(spec.noModel)),
+    main: spec.group === 0,
+  }));
+
+const axisY = f1(rowTop + rows.length * rowGap - 2);
+const ticks = [-6, -4, -2, 0, 2, 4, 6];
+const medians = specifications.map(spec => spec.estimate.mid);
+const lowest = Math.min(...medians);
+const highest = Math.max(...medians);
+const above = medians.filter(value => value > 0).length;
+const excluding = specifications.filter(
+  spec => spec.estimate.lo > 0 || spec.estimate.hi < 0
+).length;
+const main = rows.find(row => row.main)!;
+const groupSize = (group: number) =>
+  specifications.filter(spec => spec.group === group).length;
+---
+
+<Figure
+  frames={3}
+  interval={3200}
+  frameLabels={[
+    "The main specification: any dated list, all 184 races",
+    `${groupSize(1)} more: other lists, other subsets of races`,
+    `All ${rows.length}: single cycles, poll windows, scores, model variants`,
+  ]}
+  caption={`The same contrast under ${rows.length} specifications, sorted by posterior median. The medians run from ${signed(lowest)} to ${signed(highest)}, ${above} of them above zero, and ${excluding === 0 ? "no" : excluding} 90% interval excludes zero. The notebook refits the main specification inside this loop with a second sampling run, so it reads ${signed(main.estimate.mid, 2)} here and ${signed(fullModel.mid, 2)} in the fit quoted above. The two DW-NOMINATE rows use a continuous score, scaled so one unit is the distance between the bucket means.`}
+>
+  <svg
+    viewBox={`0 0 640 ${axisY + 48}`}
+    role="img"
+    aria-label={`Forest plot of ${rows.length} specifications of the contrast, centre list minus left list, in points of poll error, sorted from the highest posterior median to the lowest. ${rows
+      .map(
+        row =>
+          `${row.label} (${row.size}): ${signed(row.estimate.mid, 2)}, 90% interval ${signed(row.estimate.lo)} to ${signed(row.estimate.hi)}`
+      )
+      .join(". ")}. Every interval includes zero.`}
+  >
+    <circle cx="22" cy="18" r="4" class="f-fill-line"></circle>
+    <text x="32" y="22" class="f-small f-text-muted">
+      posterior median, 90% interval
+    </text>
+    <circle cx="232" cy="18" r="4" class="f-line f-fill-bg"></circle>
+    <text x="242" y="22" class="f-small f-text-muted">
+      uses scores from today's file
+    </text>
+    <line x1="22" x2="22" y1="33" y2="43" class="f-alt f-thick"></line>
+    <text x="32" y="42" class="f-small f-text-muted">
+      difference in means, no model
+    </text>
+    <circle cx="232" cy="38" r="4" class="f-fill-accent"></circle>
+    <text x="242" y="42" class="f-small f-text-accent f-label">
+      the main specification
+    </text>
+
+    <text x="272" y="68" text-anchor="end" class="f-small f-text-muted">
+      Specification
+    </text>
+    <text x="628" y="68" text-anchor="end" class="f-small f-text-muted">
+      left / centre
+    </text>
+
+    {
+      ticks.map(tick => (
+        <g>
+          <line
+            x1={xAt(tick)}
+            x2={xAt(tick)}
+            y1="74"
+            y2={axisY}
+            class={tick === 0 ? "f-axis" : "f-grid"}
+          />
+          <text
+            x={xAt(tick)}
+            y={axisY + 18}
+            text-anchor="middle"
+            class="f-small f-text-muted f-num"
+          >
+            {tick === 0 ? "0" : signed(tick, 0)}
+          </text>
+        </g>
+      ))
+    }
+    <line x1={xAt(-6)} x2={xAt(6.5)} y1={axisY} y2={axisY} class="f-axis"
+    ></line>
+    <text
+      x={zeroX}
+      y={axisY + 38}
+      text-anchor="middle"
+      class="f-small f-text-muted"
+    >
+      Centre minus left, points (right of 0: the commentators' direction)
+    </text>
+
+    {
+      rows.map(row => (
+        <g data-from={row.group}>
+          <text
+            x="272"
+            y={row.y + 4}
+            text-anchor="end"
+            class:list={[
+              "f-small",
+              row.main ? "f-label f-text-accent" : undefined,
+            ]}
+          >
+            {row.label}
+          </text>
+          <line
+            x1={row.x0}
+            x2={row.x1}
+            y1={row.y}
+            y2={row.y}
+            class={row.main ? "f-accent f-thick" : "f-line"}
+          />
+          <line
+            x1={row.xNaive}
+            x2={row.xNaive}
+            y1={row.y - 4.5}
+            y2={row.y + 4.5}
+            class="f-alt f-thick"
+          />
+          <circle
+            cx={row.x}
+            cy={row.y}
+            r={row.main ? 4.5 : 3.6}
+            class={
+              row.main
+                ? "f-fill-accent"
+                : row.dated
+                  ? "f-fill-line"
+                  : "f-line f-fill-bg"
+            }
+          />
+          <text
+            x="628"
+            y={row.y + 4}
+            text-anchor="end"
+            class="f-small f-text-muted f-num"
+          >
+            {row.size}
+          </text>
+        </g>
+      ))
+    }
+  </svg>
+</Figure>
