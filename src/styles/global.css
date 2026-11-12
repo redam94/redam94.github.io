@@ -103,6 +103,56 @@
   overflow: hidden;
 }
 
+/* Decorative photograph on a black surface. The parent needs `relative
+   isolate`; its own black shows if the image fails to load. */
+@utility surface-art {
+  position: absolute;
+  z-index: -1;
+  object-fit: cover;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Fills the hero behind the headline and falls away to black at its edges */
+@utility surface-art-hero {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.3;
+  -webkit-mask-image: radial-gradient(
+    ellipse 80% 75% at 50% 50%,
+    #000 25%,
+    transparent 100%
+  );
+  mask-image: radial-gradient(
+    ellipse 80% 75% at 50% 50%,
+    #000 25%,
+    transparent 100%
+  );
+}
+
+/* A band along the bottom of a tile, below its text, fading in from the
+   top and from the left so the tile's link stays on plain black */
+@utility surface-art-tile {
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 11rem;
+  object-position: right bottom;
+  opacity: 0.9;
+  -webkit-mask-image:
+    linear-gradient(to bottom, transparent, #000 45%),
+    linear-gradient(to right, transparent 30%, #000 65%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to bottom, transparent, #000 45%),
+    linear-gradient(to right, transparent 30%, #000 65%);
+  mask-composite: intersect;
+  @media (min-width: 640px) {
+    height: 13rem;
+  }
+}
+
 /* Anchors land below the sticky navigation */
 :target,
 [id] {
