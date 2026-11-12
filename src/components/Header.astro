@@ -46,7 +46,8 @@ const isActive = (path: string) => {
     class="wide-layout flex min-h-12 flex-wrap items-center justify-between gap-x-6"
   >
     <a
-      href={getRelativeLocaleUrl(locale, "")}
+      href="/"
+      data-astro-reload
       class="py-3 text-[15px] leading-6 font-semibold tracking-tight whitespace-nowrap"
     >
       {site.title}
@@ -68,6 +69,14 @@ const isActive = (path: string) => {
         id="menu-items"
         class="hidden grid-cols-2 gap-x-6 pb-4 text-sm text-[rgba(245,245,247,0.8)] sm:flex sm:items-center sm:gap-x-7 sm:pb-0 sm:text-xs [&_a]:hover:text-white [&>li>a]:block [&>li>a]:py-2"
       >
+        <li>
+          <a
+            href={getRelativeLocaleUrl(locale, "blog")}
+            class:list={{ "active-nav": isActive("/blog") }}
+          >
+            Blog
+          </a>
+        </li>
         <li>
           <a
             href={getRelativeLocaleUrl(locale, "posts")}
@@ -105,7 +114,7 @@ const isActive = (path: string) => {
           </a>
         </li>
         <li>
-          <a href="/portfolio/" data-astro-reload>Portfolio</a>
+          <a href="/" data-astro-reload>Portfolio</a>
         </li>
         {
           features.search !== false && (

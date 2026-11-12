@@ -24,13 +24,16 @@ import { githubPages, githubPageUrl } from "./src/data/githubPages";
 
 export default defineConfig({
   site: config.site.url,
+  // The portfolio (public/index.html) is the site root; keep old links working.
+  redirects: { "/portfolio": "/" },
   integrations: [
     mdx(),
     sitemap({
       filter: page =>
         config.features?.showArchives !== false || !page.endsWith("/archives/"),
       // Project sites served from the same host (see src/data/githubPages.ts).
-      customPages: githubPages.map(githubPageUrl),
+      // The portfolio root is a static file in public/, so list it explicitly.
+      customPages: [config.site.url, ...githubPages.map(githubPageUrl)],
       customSitemaps: githubPages
         .filter(page => page.hasSitemap)
         .map(page => `${githubPageUrl(page)}sitemap.xml`),
