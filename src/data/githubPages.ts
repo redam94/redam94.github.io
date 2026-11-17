@@ -47,6 +47,12 @@ export const githubPages: GithubPage[] = [
     hasSitemap: true,
   },
   {
+    repo: "propensity-modeling",
+    title: "Propensity Modeling & Brand Lift Analyzer",
+    description:
+      "Documentation for a tool that fits propensity-score models to exposed/control survey data and reports brand lift with overlap diagnostics.",
+  },
+  {
     repo: "abm",
     title: "ABM for Media & Marketing",
     description:
